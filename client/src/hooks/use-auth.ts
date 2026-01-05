@@ -37,6 +37,7 @@ export function useLogin() {
       return api.auth.login.responses[200].parse(await res.json());
     },
     onSuccess: (user) => {
+      queryClient.clear();
       queryClient.setQueryData([api.auth.me.path], user);
       if (user.role === 'curator') {
         setLocation("/curator");
@@ -103,7 +104,7 @@ export function useLogout() {
       });
     },
     onSuccess: () => {
-      queryClient.setQueryData([api.auth.me.path], null);
+      queryClient.clear();
       setLocation("/");
     },
   });
