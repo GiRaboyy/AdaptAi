@@ -1,13 +1,27 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Volume2, Moon, Bell } from "lucide-react";
-import { useState } from "react";
+import { Volume2, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function EmployeeSettings() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
@@ -49,7 +63,7 @@ export default function EmployeeSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Moon className="w-5 h-5" />
+            {darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             Внешний вид
           </CardTitle>
           <CardDescription>
@@ -69,34 +83,6 @@ export default function EmployeeSettings() {
               checked={darkMode}
               onCheckedChange={setDarkMode}
               data-testid="switch-dark-mode"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Уведомления
-          </CardTitle>
-          <CardDescription>
-            Настройте уведомления о курсах
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <Label htmlFor="notifications">Уведомления о курсах</Label>
-              <p className="text-sm text-muted-foreground">
-                Получать напоминания о незавершенных курсах
-              </p>
-            </div>
-            <Switch 
-              id="notifications" 
-              checked={notifications}
-              onCheckedChange={setNotifications}
-              data-testid="switch-notifications"
             />
           </div>
         </CardContent>

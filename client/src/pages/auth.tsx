@@ -66,7 +66,7 @@ export default function AuthPage() {
         toast({ variant: "destructive", title: "Ошибка", description: error.message || "Не удалось зарегистрироваться" });
       },
       onSuccess: () => {
-        toast({ title: "Аккаунт создан!", description: "Вы вошли в систему" });
+        toast({ title: "Добро пожаловать!", description: "Аккаунт успешно создан" });
       }
     });
   };

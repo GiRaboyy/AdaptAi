@@ -39,7 +39,7 @@ export function useLogin() {
     onSuccess: (user) => {
       queryClient.setQueryData([api.auth.me.path], user);
       if (user.role === 'curator') {
-        setLocation("/curator/dashboard");
+        setLocation("/curator");
       } else {
         setLocation("/app/join");
       }
@@ -76,7 +76,12 @@ export function useRegister() {
       return api.auth.register.responses[201].parse(await res.json());
     },
     onSuccess: (user) => {
-      setLocation("/auth");
+      queryClient.setQueryData([api.auth.me.path], user);
+      if (user.role === 'curator') {
+        setLocation("/curator");
+      } else {
+        setLocation("/app/join");
+      }
     },
   });
 

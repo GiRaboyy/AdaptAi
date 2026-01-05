@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, BookOpen, Copy, Users, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { Plus, BookOpen, Copy, Users, Loader2, Sparkles, ArrowRight, Upload, FileText, X } from "lucide-react";
 
 export default function CuratorLibrary() {
   const { data: tracks, isLoading } = useTracks();
@@ -66,21 +66,58 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [text, setText] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState<string>("");
   const [strictMode, setStrictMode] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { mutate: generate, isPending } = useGenerateTrack();
   const { toast } = useToast();
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ variant: "destructive", title: "Ошибка", description: "Файл слишком большой (макс. 5 МБ)" });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setFileContent(content);
+      setFileName(file.name);
+    };
+    reader.onerror = () => {
+      toast({ variant: "destructive", title: "Ошибка", description: "Не удалось прочитать файл" });
+    };
+    reader.readAsText(file);
+  };
+
+  const removeFile = () => {
+    setFileName(null);
+    setFileContent("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const combinedText = [text, fileContent].filter(Boolean).join("\n\n");
+  const hasContent = title && combinedText.length > 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !text) return;
+    if (!hasContent) return;
 
-    generate({ title, description, text, strictMode }, {
+    generate({ title, description, text: combinedText, strictMode }, {
       onSuccess: () => {
         toast({ title: "Успешно!", description: "Курс создан" });
         onOpenChange(false);
         setTitle("");
         setDescription("");
         setText("");
+        setFileName(null);
+        setFileContent("");
       },
       onError: () => {
         toast({ variant: "destructive", title: "Ошибка", description: "Не удалось создать курс" });
@@ -99,7 +136,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
         <DialogHeader>
           <DialogTitle>Создать новый курс</DialogTitle>
           <DialogDescription>
-            Вставьте текст учебных материалов, и ИИ создаст урок с тестами
+            Добавьте текст или загрузите файл с учебными материалами
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -123,20 +160,62 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               data-testid="input-description"
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="text">База знаний</Label>
+            <Label>Загрузить файл (опционально)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.doc,.docx"
+              onChange={handleFileUpload}
+              className="hidden"
+              data-testid="input-file"
+            />
+            {fileName ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50">
+                <FileText className="w-5 h-5 text-primary shrink-0" />
+                <span className="text-sm truncate flex-1">{fileName}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={removeFile}
+                  data-testid="button-remove-file"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="button-upload-file"
+              >
+                <Upload className="w-4 h-4 mr-2" /> Выбрать файл
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Поддерживаются .txt, .md, .doc, .docx (макс. 5 МБ)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="text">Текст базы знаний (опционально)</Label>
             <Textarea 
               id="text"
-              placeholder="Вставьте текст учебных материалов..." 
+              placeholder="Или вставьте текст учебных материалов здесь..." 
               value={text} 
               onChange={e => setText(e.target.value)}
-              className="h-40 resize-none"
+              className="h-32 resize-none"
               data-testid="input-knowledge"
             />
             <p className="text-xs text-muted-foreground text-right">
-              {text.length} символов
+              {combinedText.length} символов всего
             </p>
           </div>
+
           <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-secondary/50">
             <div>
               <Label htmlFor="strict">Строго по базе знаний</Label>
@@ -149,7 +228,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               data-testid="switch-strict"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isPending || !title || !text} data-testid="button-generate">
+          <Button type="submit" className="w-full" disabled={isPending || !hasContent} data-testid="button-generate">
             {isPending ? (
               <><Loader2 className="animate-spin mr-2" /> Генерация...</>
             ) : (
