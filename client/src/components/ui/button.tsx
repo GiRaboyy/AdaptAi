@@ -4,22 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-bold transition-transform duration-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/35 disabled:pointer-events-none disabled:opacity-50 border-[3px] border-foreground hover:-translate-y-0.5 active:translate-y-0.5",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-2xl text-sm font-bold transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:pointer-events-none disabled:opacity-55 hover:-translate-y-0.5 active:scale-[0.99]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground",
-        destructive: "bg-destructive text-destructive-foreground",
-        outline: "bg-background text-foreground",
-        secondary: "bg-secondary text-secondary-foreground",
-        ghost: "border-transparent hover:bg-accent hover:text-accent-foreground",
-        link: "border-transparent text-primary underline-offset-4 hover:underline",
+        default: "bg-gradient-to-b from-[#1ED760] to-[#14B854] text-[#071024] shadow-[0_10px_24px_rgba(7,16,36,0.14)] hover:shadow-[0_24px_60px_rgba(7,16,36,0.16)]",
+        destructive: "bg-destructive text-destructive-foreground shadow-[0_10px_24px_rgba(7,16,36,0.14)]",
+        outline: "glass border border-foreground/10 text-foreground shadow-[0_4px_12px_rgba(7,16,36,0.08)]",
+        secondary: "glass border border-foreground/10 text-foreground shadow-[0_4px_12px_rgba(7,16,36,0.08)]",
+        ghost: "hover:bg-accent/50 text-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-12 px-5 py-3",
-        sm: "h-10 px-4 text-sm",
-        lg: "h-14 px-8 text-base",
-        icon: "h-10 w-10",
+        sm: "h-10 px-4 text-sm rounded-xl",
+        lg: "h-14 px-8 text-base rounded-2xl",
+        icon: "h-11 w-11 rounded-xl",
       },
     },
     defaultVariants: {
