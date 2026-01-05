@@ -13,10 +13,9 @@ export default function Landing() {
         Мы запустились! Попробуйте бесплатно
         <ArrowRight className="w-4 h-4 inline ml-1" />
       </div>
-      
       <header className="sticky top-0 z-50 bg-white border-b border-[#0a1f12]/10">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="font-bold text-xl tracking-tight">ADAPT</span>
+          <span className="font-bold tracking-tight text-[30px]">ADAPT</span>
           <div className="flex items-center gap-4">
             <Link href="/auth">
               <span className="text-[#0a1f12]/70 hover:text-[#0a1f12] font-medium cursor-pointer" data-testid="button-login">
@@ -35,7 +34,6 @@ export default function Landing() {
           </div>
         </div>
       </header>
-
       <main>
         <section className="py-24 md:py-32 px-6">
           <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
@@ -55,7 +53,7 @@ export default function Landing() {
               </p>
               <Link href="/auth?role=curator">
                 <Button 
-                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-10 rounded-2xl text-lg font-bold"
+                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-10 rounded-2xl text-lg font-bold pl-[60px] pr-[60px] pt-[40px] pb-[40px]"
                   data-testid="button-cta-main"
                 >
                   <Sparkles className="w-5 h-5 mr-3" />
@@ -168,7 +166,6 @@ export default function Landing() {
           </div>
         </section>
       </main>
-
       <footer className="py-8 px-6 border-t border-[#0a1f12]/10 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="font-bold text-lg">ADAPT</span>
