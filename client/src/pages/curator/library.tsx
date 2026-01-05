@@ -82,16 +82,24 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
       return;
     }
 
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (ext === 'docx' || ext === 'doc') {
+      toast({ variant: "destructive", title: "Формат не поддерживается", description: "Пожалуйста, конвертируйте .doc/.docx в .txt и загрузите снова" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target?.result as string;
+      let content = event.target?.result as string;
+      content = content.replace(/\x00/g, '');
       setFileContent(content);
       setFileName(file.name);
     };
     reader.onerror = () => {
       toast({ variant: "destructive", title: "Ошибка", description: "Не удалось прочитать файл" });
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'utf-8');
   };
 
   const removeFile = () => {
@@ -165,20 +173,23 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
             <input
               ref={fileInputRef}
               type="file"
-              accept=".txt,.md,.doc,.docx"
+              accept=".txt,.md"
               onChange={handleFileUpload}
               className="hidden"
               data-testid="input-file"
             />
             {fileName ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 overflow-hidden">
                 <FileText className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-sm truncate flex-1">{fileName}</span>
+                <span className="text-sm truncate min-w-0 flex-1" title={fileName}>
+                  {fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName}
+                </span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={removeFile}
+                  className="shrink-0"
                   data-testid="button-remove-file"
                 >
                   <X className="w-4 h-4" />
@@ -196,7 +207,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               </Button>
             )}
             <p className="text-xs text-muted-foreground">
-              Поддерживаются .txt, .md, .doc, .docx (макс. 5 МБ)
+              Поддерживаются .txt, .md (макс. 5 МБ)
             </p>
           </div>
 

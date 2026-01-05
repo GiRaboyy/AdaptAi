@@ -178,15 +178,17 @@ export async function registerRoutes(
     try {
       const { title, text, strictMode } = api.tracks.generate.input.parse(req.body);
       
+      const cleanText = text.replace(/\x00/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+      
       const track = await storage.createTrack({
         curatorId: (req.user as any).id,
         title,
-        rawKnowledgeBase: text,
+        rawKnowledgeBase: cleanText,
         strictMode: strictMode !== false,
         joinCode: Math.random().toString().substring(2, 8)
       });
 
-      const generatedSteps = await generateTrackContent(title, text, strictMode !== false);
+      const generatedSteps = await generateTrackContent(title, cleanText, strictMode !== false);
       const stepsWithTrackId = generatedSteps.map(s => ({ ...s, trackId: track.id }));
       
       const createdSteps = await storage.createSteps(stepsWithTrackId);
