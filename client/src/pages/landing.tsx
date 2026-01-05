@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Users, CheckCircle, BarChart3, Play, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
 const trustedCompanies = ['Яндекс', 'Сбер', 'Тинькофф', 'VK', 'Авито', 'Ozon'];
 
@@ -53,10 +54,10 @@ export default function Landing() {
               </p>
               <Link href="/auth?role=curator">
                 <Button 
-                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-10 rounded-2xl font-bold text-[25px] pl-[50px] pr-[50px] pt-[40px] pb-[40px]"
+                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 rounded-2xl font-bold text-[25px] px-[50px] py-[40px]"
                   data-testid="button-cta-main"
                 >
-                  <Sparkles className="w-5 h-5 mr-3" />
+                  <Sparkles className="w-6 h-6 mr-3" />
                   Запросить демо
                 </Button>
               </Link>
@@ -68,33 +69,74 @@ export default function Landing() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative hidden md:block"
             >
-              <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-[#0a1f12]/10 p-6 max-w-sm ml-auto">
-                <div className="flex items-center gap-2 mb-5">
+              <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-[#0a1f12]/10 overflow-hidden max-w-md ml-auto">
+                <div className="flex items-center gap-2 px-4 py-3 bg-[#FAFAFA] border-b border-[#0a1f12]/10">
                   <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
                   <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
                   <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
                   <span className="ml-4 text-sm text-[#0a1f12]/40 font-medium">ADAPT Platform</span>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#A6E85B]/10">
-                    <div className="w-10 h-10 rounded-xl bg-[#A6E85B] flex items-center justify-center text-[#0a1f12] font-bold text-lg">
-                      1
+                
+                <div className="flex">
+                  <div className="w-48 bg-white border-r border-[#0a1f12]/10 p-3">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-lg bg-[#A6E85B] flex items-center justify-center">
+                        <span className="text-[#0a1f12] text-sm font-bold">A</span>
+                      </div>
+                      <span className="font-bold text-sm">ADAPT</span>
                     </div>
-                    <div className="flex-1 h-3 bg-[#0a1f12]/10 rounded-full" />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[#A6E85B]/15">
+                        <BookOpen className="w-4 h-4 text-[#3D7A1E]" />
+                        <span className="text-xs font-medium">Мои курсы</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 rounded-lg text-[#0a1f12]/50">
+                        <BarChart3 className="w-4 h-4" />
+                        <span className="text-xs">Аналитика</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 rounded-lg text-[#0a1f12]/50">
+                        <Users className="w-4 h-4" />
+                        <span className="text-xs">Профиль</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#A6E85B]/10">
-                    <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#A6E85B] flex items-center justify-center">
-                      <svg className="w-5 h-5 text-[#A6E85B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                  
+                  <div className="flex-1 p-4 bg-[#F8FAFC]">
+                    <div className="mb-4">
+                      <h3 className="font-bold text-sm mb-1">Продуктовые продажи</h3>
+                      <div className="flex items-center gap-2 text-xs text-[#0a1f12]/50">
+                        <span>Шаг 2 из 8</span>
+                        <Progress value={25} className="h-1.5 flex-1" />
+                      </div>
                     </div>
-                    <div className="flex-1 h-3 bg-[#0a1f12]/10 rounded-full" />
-                  </div>
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0a1f12]/[0.04]">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#0a1f12]/15 flex items-center justify-center text-[#0a1f12]/40 font-bold text-lg">
-                      3
+                    
+                    <div className="bg-white rounded-xl border border-[#0a1f12]/10 p-4 mb-3">
+                      <p className="text-xs text-[#0a1f12]/80 leading-relaxed mb-3">
+                        Клиент говорит: "Мне нужно подумать". Какой ваш следующий шаг?
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 p-2 rounded-lg border border-[#A6E85B] bg-[#A6E85B]/10 text-xs">
+                          <CheckCircle className="w-3 h-3 text-[#3D7A1E]" />
+                          <span>Уточнить сомнения</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 rounded-lg border border-[#0a1f12]/10 text-xs text-[#0a1f12]/60">
+                          <div className="w-3 h-3 rounded-full border border-[#0a1f12]/20" />
+                          <span>Предложить скидку</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 h-3 bg-[#0a1f12]/10 rounded-full" />
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <button className="w-8 h-8 rounded-lg bg-white border border-[#0a1f12]/10 flex items-center justify-center">
+                          <Volume2 className="w-4 h-4 text-[#0a1f12]/50" />
+                        </button>
+                      </div>
+                      <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#A6E85B] text-xs font-medium">
+                        <span>Далее</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -102,19 +144,21 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="py-6 px-6 border-y border-[#0a1f12]/10 bg-[#FAFAFA]">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-10 md:gap-16">
-            {trustedCompanies.map((company) => (
-              <span key={company} className="text-[#0a1f12]/30 font-semibold text-lg">{company}</span>
-            ))}
-            <Link href="/auth?role=curator">
-              <Button 
-                className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-12 rounded-2xl text-xl font-bold"
+        <section className="py-10 px-6 border-y border-[#0a1f12]/10 bg-[#FAFAFA]">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 mb-8">
+              {trustedCompanies.map((company) => (
+                <span key={company} className="text-[#0a1f12]/30 font-semibold text-lg">{company}</span>
+              ))}
+            </div>
+            <Link href="/auth?role=curator" className="block">
+              <button 
+                className="w-full bg-[#A6E85B] hover:bg-[#9AD94F] hover:shadow-lg transition-all duration-200 text-[#0a1f12] border-0 py-8 rounded-2xl text-2xl font-bold flex items-center justify-center gap-4"
                 data-testid="button-cta-companies"
               >
                 Получить доступ
-                <ArrowRight className="w-6 h-6 ml-3" />
-              </Button>
+                <ArrowRight className="w-7 h-7" />
+              </button>
             </Link>
           </div>
         </section>
