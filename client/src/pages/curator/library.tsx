@@ -112,9 +112,9 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
     }
 
     const ext = file.name.toLowerCase().split('.').pop();
-    const allowedExts = ['txt', 'md', 'pdf', 'docx'];
+    const allowedExts = ['txt', 'md', 'docx'];
     if (!ext || !allowedExts.includes(ext)) {
-      toast({ variant: "destructive", title: "Ошибка", description: `Формат файла "${file.name}" не поддерживается` });
+      toast({ variant: "destructive", title: "Ошибка", description: `Формат файла "${file.name}" не поддерживается. Используйте TXT, MD или DOCX.` });
       return false;
     }
 
@@ -221,7 +221,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.md,.pdf,.docx"
+                accept=".txt,.md,.docx"
                 multiple
                 onChange={handleFileUpload}
                 className="hidden"
@@ -248,7 +248,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
                   <Upload className="w-6 h-6 text-primary" />
                 </div>
                 <p className="font-medium text-foreground mb-1">Нажмите для загрузки</p>
-                <p className="text-sm text-muted-foreground">TXT, MD, PDF, DOCX</p>
+                <p className="text-sm text-muted-foreground">TXT, MD, DOCX (до 50 МБ)</p>
               </div>
 
               {files.length > 0 && (

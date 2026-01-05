@@ -9,11 +9,6 @@ import { seedDatabase } from "./seed";
 import OpenAI from "openai";
 import multer from "multer";
 import mammoth from "mammoth";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const pdfParseModule = require("pdf-parse");
-const pdfParse = pdfParseModule.default || pdfParseModule;
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -32,12 +27,7 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
     return result.value.replace(/\x00/g, '');
   }
   
-  if (ext === 'pdf') {
-    const data = await pdfParse(file.buffer);
-    return data.text.replace(/\x00/g, '');
-  }
-  
-  throw new Error(`Unsupported file format: ${ext}`);
+  throw new Error(`Неподдерживаемый формат: ${ext}. Используйте TXT, MD или DOCX.`);
 }
 
 const openai = new OpenAI({
@@ -270,8 +260,22 @@ export async function registerRoutes(
 
   app.get(api.tracks.get.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
     const track = await storage.getTrack(Number(req.params.id));
     if (!track) return res.status(404).json({ message: "Track not found" });
+    
+    // Check ownership for curators
+    if (user.role === 'curator' && track.curatorId !== user.id) {
+      return res.status(403).json({ message: "Доступ запрещён" });
+    }
+    
+    // For employees, check enrollment
+    if (user.role === 'employee') {
+      const enrollment = await storage.getEnrollment(user.id, track.id);
+      if (!enrollment) {
+        return res.status(403).json({ message: "Вы не записаны на этот курс" });
+      }
+    }
     
     const steps = await storage.getStepsByTrackId(track.id);
     res.json({ track, steps });
@@ -350,6 +354,14 @@ export async function registerRoutes(
     if (!req.isAuthenticated() || (req.user as any).role !== 'curator') return res.sendStatus(401);
     
     const trackId = Number(req.params.trackId);
+    const curatorId = (req.user as any).id;
+    
+    // Verify curator owns this track
+    const track = await storage.getTrack(trackId);
+    if (!track || track.curatorId !== curatorId) {
+      return res.status(403).json({ message: "Доступ запрещён" });
+    }
+    
     const analytics = await storage.getTrackAnalytics(trackId);
     res.json(analytics);
   });

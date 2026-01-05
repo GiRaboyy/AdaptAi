@@ -4,16 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Copy, Users, BookOpen, Edit3, FileText, Save, Plus, Trash2, GripVertical } from "lucide-react";
+import { Loader2, Copy, Users, BookOpen, FileText, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CuratorCourseDetails() {
   const { id } = useParams();
   const { data: trackData, isLoading } = useTrack(Number(id));
   const { toast } = useToast();
+
+  const { data: analytics } = useQuery({
+    queryKey: ['/api/analytics/track', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/analytics/track/${id}`, { credentials: 'include' });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!id
+  });
 
   const copyCode = () => {
     if (trackData?.track.joinCode) {
@@ -39,6 +47,9 @@ export default function CuratorCourseDetails() {
   }
 
   const { track, steps } = trackData;
+  const employeeCount = analytics?.employeeCount || 0;
+  const completedCount = analytics?.completedCount || 0;
+  const completionRate = employeeCount > 0 ? Math.round((completedCount / employeeCount) * 100) : 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -56,9 +67,8 @@ export default function CuratorCourseDetails() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview" data-testid="tab-overview">Обзор</TabsTrigger>
-          <TabsTrigger value="editor" data-testid="tab-editor">Редактор</TabsTrigger>
           <TabsTrigger value="employees" data-testid="tab-employees">Сотрудники</TabsTrigger>
           <TabsTrigger value="materials" data-testid="tab-materials">Материалы</TabsTrigger>
         </TabsList>
@@ -85,7 +95,7 @@ export default function CuratorCourseDetails() {
                 <Users className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">0</div>
+                <div className="text-3xl font-bold">{employeeCount}</div>
               </CardContent>
             </Card>
 
@@ -94,10 +104,10 @@ export default function CuratorCourseDetails() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Завершили
                 </CardTitle>
-                <Edit3 className="w-4 h-4 text-muted-foreground" />
+                <CheckCircle className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary">0%</div>
+                <div className="text-3xl font-bold text-primary">{completionRate}%</div>
               </CardContent>
             </Card>
           </div>
@@ -139,21 +149,48 @@ export default function CuratorCourseDetails() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="editor" className="mt-6">
-          <StepEditor steps={steps} trackId={track.id} />
-        </TabsContent>
-
         <TabsContent value="employees" className="mt-6">
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                <Users className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Нет сотрудников</h3>
-              <p className="text-muted-foreground max-w-sm">
-                Поделитесь кодом {track.joinCode} с сотрудниками для присоединения
-              </p>
-            </CardContent>
+            {analytics?.employees && analytics.employees.length > 0 ? (
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  {analytics.employees.map((emp: any) => (
+                    <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary">
+                            {emp.name?.charAt(0).toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{emp.name}</p>
+                          <p className="text-sm text-muted-foreground">{emp.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-medium">{emp.progress}%</p>
+                          <p className="text-xs text-muted-foreground">прогресс</p>
+                        </div>
+                        {emp.isCompleted && (
+                          <Badge className="bg-primary/10 text-primary">Завершил</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            ) : (
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Нет сотрудников</h3>
+                <p className="text-muted-foreground max-w-sm">
+                  Поделитесь кодом {track.joinCode} с сотрудниками для присоединения
+                </p>
+              </CardContent>
+            )}
           </Card>
         </TabsContent>
 
@@ -175,97 +212,6 @@ export default function CuratorCourseDetails() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-function StepEditor({ steps, trackId }: { steps: any[], trackId: number }) {
-  const [editingStep, setEditingStep] = useState<number | null>(null);
-  const { toast } = useToast();
-
-  const handleSave = () => {
-    toast({ title: "Сохранено!", description: "Изменения применены" });
-    setEditingStep(null);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          Редактируйте шаги курса
-        </p>
-        <Button variant="outline" size="sm" data-testid="button-add-step">
-          <Plus className="w-4 h-4 mr-2" /> Добавить шаг
-        </Button>
-      </div>
-
-      <div className="space-y-3">
-        {steps.map((step, idx) => (
-          <Card key={step.id} data-testid={`editor-step-${step.id}`}>
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <div className="cursor-grab text-muted-foreground">
-                  <GripVertical className="w-5 h-5" />
-                </div>
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant="outline">
-                      {step.type === 'content' && 'Контент'}
-                      {step.type === 'quiz' && 'Тест'}
-                      {step.type === 'open' && 'Открытый вопрос'}
-                      {step.type === 'roleplay' && 'Ролевая игра'}
-                    </Badge>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setEditingStep(editingStep === idx ? null : idx)}
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {editingStep === idx ? (
-                    <div className="space-y-3">
-                      {step.type === 'content' && (
-                        <Textarea 
-                          defaultValue={(step.content as any).text}
-                          className="min-h-[100px]"
-                        />
-                      )}
-                      {step.type === 'quiz' && (
-                        <>
-                          <Input defaultValue={(step.content as any).question} placeholder="Вопрос" />
-                          {(step.content as any).options?.map((opt: string, i: number) => (
-                            <Input key={i} defaultValue={opt} placeholder={`Вариант ${i + 1}`} />
-                          ))}
-                        </>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Input placeholder="Тег (например: Возражения)" defaultValue={step.tag || ''} />
-                        <Button onClick={handleSave}>
-                          <Save className="w-4 h-4 mr-2" /> Сохранить
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm">
-                      {step.type === 'content' && (step.content as any).text?.slice(0, 100) + '...'}
-                      {step.type === 'quiz' && (step.content as any).question}
-                      {step.type === 'open' && (step.content as any).question}
-                      {step.type === 'roleplay' && (step.content as any).scenario}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }

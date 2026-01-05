@@ -13,7 +13,6 @@ import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth";
 import NotFound from "@/pages/not-found";
 
-import EmployeeOverview from "@/pages/employee/overview";
 import EmployeeCourses from "@/pages/employee/courses";
 import EmployeeProfile from "@/pages/employee/profile";
 import EmployeeSettings from "@/pages/employee/settings";
@@ -42,7 +41,7 @@ function EmployeeLayout() {
           </header>
           <main className="flex-1 overflow-auto p-6">
             <Switch>
-              <Route path="/app" component={EmployeeOverview} />
+              <Route path="/app" component={EmployeeCourses} />
               <Route path="/app/courses" component={EmployeeCourses} />
               <Route path="/app/profile" component={EmployeeProfile} />
               <Route path="/app/settings" component={EmployeeSettings} />
@@ -122,7 +121,7 @@ function AuthenticatedRouter() {
   }
 
   if (location === "/" || location === "/auth") {
-    const redirectPath = user.role === "curator" ? "/curator" : "/app";
+    const redirectPath = user.role === "curator" ? "/curator" : "/app/courses";
     window.location.href = redirectPath;
     return null;
   }

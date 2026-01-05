@@ -13,10 +13,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, BookOpen, User, Settings, LogOut } from "lucide-react";
+import { BookOpen, User, Settings, LogOut } from "lucide-react";
 
 const menuItems = [
-  { title: "Обзор", url: "/app", icon: LayoutDashboard },
   { title: "Мои курсы", url: "/app/courses", icon: BookOpen },
   { title: "Профиль", url: "/app/profile", icon: User },
   { title: "Настройки", url: "/app/settings", icon: Settings },
@@ -47,7 +46,7 @@ export function EmployeeSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => {
                 const isActive = location === item.url || 
-                  (item.url !== "/app" && location.startsWith(item.url));
+                  (item.url !== "/app/courses" && location.startsWith(item.url));
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive}>
