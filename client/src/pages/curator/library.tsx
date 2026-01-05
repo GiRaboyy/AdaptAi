@@ -1,16 +1,15 @@
 import { useTracks, useGenerateTrack } from "@/hooks/use-tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, BookOpen, Copy, Users, Loader2, Sparkles, ArrowRight, Upload, FileText, X } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
 
 export default function CuratorLibrary() {
   const { data: tracks, isLoading } = useTracks();
@@ -53,7 +52,7 @@ export default function CuratorLibrary() {
               Создайте первый курс на основе ваших учебных материалов
             </p>
             <Button size="lg" onClick={() => setIsDialogOpen(true)} data-testid="button-create-first">
-              <Plus className="w-5 h-5 mr-2" /> Создать курс
+              <Plus className="w-5 h-5 mr-2" /> Создать тренинг
             </Button>
           </CardContent>
         </Card>
@@ -62,191 +61,240 @@ export default function CuratorLibrary() {
   );
 }
 
+interface UploadedFile {
+  file: File;
+  name: string;
+  size: number;
+}
+
 function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [text, setText] = useState("");
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string>("");
-  const [strictMode, setStrictMode] = useState(true);
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { mutate: generate, isPending } = useGenerateTrack();
   const { toast } = useToast();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const generateMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/tracks/generate', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Ошибка генерации');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tracks'] });
+      toast({ title: "Успешно!", description: "Тренинг создан" });
+      onOpenChange(false);
+      resetForm();
+    },
+    onError: (err: Error) => {
+      toast({ variant: "destructive", title: "Ошибка", description: err.message || "Не удалось создать тренинг" });
+    }
+  });
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "Ошибка", description: "Файл слишком большой (макс. 5 МБ)" });
-      return;
+  const resetForm = () => {
+    setTitle("");
+    setFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const validateFile = (file: File): boolean => {
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({ variant: "destructive", title: "Ошибка", description: `Файл "${file.name}" слишком большой (макс. 50 МБ)` });
+      return false;
     }
 
     const ext = file.name.toLowerCase().split('.').pop();
-    if (ext === 'docx' || ext === 'doc') {
-      toast({ variant: "destructive", title: "Формат не поддерживается", description: "Пожалуйста, конвертируйте .doc/.docx в .txt и загрузите снова" });
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+    const allowedExts = ['txt', 'md', 'pdf', 'docx'];
+    if (!ext || !allowedExts.includes(ext)) {
+      toast({ variant: "destructive", title: "Ошибка", description: `Формат файла "${file.name}" не поддерживается` });
+      return false;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      let content = event.target?.result as string;
-      content = content.replace(/\x00/g, '');
-      setFileContent(content);
-      setFileName(file.name);
-    };
-    reader.onerror = () => {
-      toast({ variant: "destructive", title: "Ошибка", description: "Не удалось прочитать файл" });
-    };
-    reader.readAsText(file, 'utf-8');
+    return true;
   };
 
-  const removeFile = () => {
-    setFileName(null);
-    setFileContent("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const addFiles = (newFiles: FileList | File[]) => {
+    const validFiles: UploadedFile[] = [];
+    Array.from(newFiles).forEach(file => {
+      if (validateFile(file)) {
+        if (!files.some(f => f.name === file.name && f.size === file.size)) {
+          validFiles.push({ file, name: file.name, size: file.size });
+        }
+      }
+    });
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
     }
   };
 
-  const combinedText = [text, fileContent].filter(Boolean).join("\n\n");
-  const hasContent = title && combinedText.length > 0;
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      addFiles(e.target.files);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files) {
+      addFiles(e.dataTransfer.files);
+    }
+  }, [files]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const truncateName = (name: string): string => {
+    if (name.length <= 35) return name;
+    return name.slice(0, 18) + '...' + name.slice(-12);
+  };
+
+  const hasContent = title.trim() && files.length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasContent) return;
 
-    generate({ title, description, text: combinedText, strictMode }, {
-      onSuccess: () => {
-        toast({ title: "Успешно!", description: "Курс создан" });
-        onOpenChange(false);
-        setTitle("");
-        setDescription("");
-        setText("");
-        setFileName(null);
-        setFileContent("");
-      },
-      onError: () => {
-        toast({ variant: "destructive", title: "Ошибка", description: "Не удалось создать курс" });
-      }
+    const formData = new FormData();
+    formData.append('title', title);
+    files.forEach(f => {
+      formData.append('files', f.file);
     });
+
+    generateMutation.mutate(formData);
   };
 
   return (
     <>
       <Button size="lg" onClick={() => onOpenChange(true)} data-testid="button-create-track">
-        <Plus className="w-5 h-5 mr-2" /> Создать курс
+        <Plus className="w-5 h-5 mr-2" /> Создать тренинг
       </Button>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Создать новый курс</DialogTitle>
-          <DialogDescription>
-            Добавьте текст или загрузите файл с учебными материалами
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Название курса</Label>
-            <Input 
-              id="title"
-              placeholder="Например: Работа с возражениями" 
-              value={title} 
-              onChange={e => setTitle(e.target.value)}
-              data-testid="input-title"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Описание (опционально)</Label>
-            <Input 
-              id="description"
-              placeholder="Краткое описание курса" 
-              value={description} 
-              onChange={e => setDescription(e.target.value)}
-              data-testid="input-description"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Загрузить файл (опционально)</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".txt,.md"
-              onChange={handleFileUpload}
-              className="hidden"
-              data-testid="input-file"
-            />
-            {fileName ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 overflow-hidden">
-                <FileText className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-sm truncate min-w-0 flex-1" title={fileName}>
-                  {fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={removeFile}
-                  className="shrink-0"
-                  data-testid="button-remove-file"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => fileInputRef.current?.click()}
-                data-testid="button-upload-file"
-              >
-                <Upload className="w-4 h-4 mr-2" /> Выбрать файл
-              </Button>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Поддерживаются .txt, .md (макс. 5 МБ)
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="text">Текст базы знаний (опционально)</Label>
-            <Textarea 
-              id="text"
-              placeholder="Или вставьте текст учебных материалов здесь..." 
-              value={text} 
-              onChange={e => setText(e.target.value)}
-              className="h-32 resize-none"
-              data-testid="input-knowledge"
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {combinedText.length} символов всего
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-secondary/50">
-            <div>
-              <Label htmlFor="strict">Строго по базе знаний</Label>
-              <p className="text-xs text-muted-foreground">Не выдумывать информацию</p>
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Создать тренинг</DialogTitle>
+            <DialogDescription>
+              Загрузите базу знаний и AI создаст уроки
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-base font-medium">Название тренинга</Label>
+              <Input 
+                id="title"
+                placeholder="Онбординг менеджера по продажам" 
+                value={title} 
+                onChange={e => setTitle(e.target.value)}
+                className="h-11"
+                data-testid="input-title"
+              />
             </div>
-            <Switch 
-              id="strict" 
-              checked={strictMode}
-              onCheckedChange={setStrictMode}
-              data-testid="switch-strict"
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isPending || !hasContent} data-testid="button-generate">
-            {isPending ? (
-              <><Loader2 className="animate-spin mr-2" /> Генерация...</>
-            ) : (
-              <><Sparkles className="w-4 h-4 mr-2" /> Создать с ИИ</>
-            )}
-          </Button>
-        </form>
-      </DialogContent>
+
+            <div className="space-y-2">
+              <Label className="text-base font-medium">База знаний</Label>
+              <p className="text-sm text-muted-foreground">Загрузите документы с материалами</p>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.md,.pdf,.docx"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                data-testid="input-file"
+              />
+              
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`
+                  relative cursor-pointer rounded-xl border-2 border-dashed p-8
+                  flex flex-col items-center justify-center text-center
+                  transition-all duration-200
+                  ${isDragOver 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+                  }
+                `}
+                data-testid="dropzone"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                  <Upload className="w-6 h-6 text-primary" />
+                </div>
+                <p className="font-medium text-foreground mb-1">Нажмите для загрузки</p>
+                <p className="text-sm text-muted-foreground">TXT, MD, PDF, DOCX</p>
+              </div>
+
+              {files.length > 0 && (
+                <div className="space-y-2 mt-4">
+                  {files.map((file, index) => (
+                    <div 
+                      key={`${file.name}-${index}`}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50"
+                    >
+                      <FileText className="w-5 h-5 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" title={file.name}>
+                          {truncateName(file.name)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFile(index)}
+                        className="shrink-0"
+                        data-testid={`button-remove-file-${index}`}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base" 
+              disabled={generateMutation.isPending || !hasContent} 
+              data-testid="button-generate"
+            >
+              {generateMutation.isPending ? (
+                <><Loader2 className="animate-spin mr-2" /> Генерация...</>
+              ) : (
+                <><Sparkles className="w-5 h-5 mr-2" /> Сгенерировать тренинг с AI</>
+              )}
+            </Button>
+          </form>
+        </DialogContent>
       </Dialog>
     </>
   );

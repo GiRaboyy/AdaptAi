@@ -7,6 +7,37 @@ import { z } from "zod";
 import { insertDrillAttemptSchema } from "@shared/schema";
 import { seedDatabase } from "./seed";
 import OpenAI from "openai";
+import multer from "multer";
+import mammoth from "mammoth";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }
+});
+
+async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
+  const ext = file.originalname.toLowerCase().split('.').pop();
+  
+  if (ext === 'txt' || ext === 'md') {
+    return file.buffer.toString('utf-8').replace(/\x00/g, '');
+  }
+  
+  if (ext === 'docx') {
+    const result = await mammoth.extractRawText({ buffer: file.buffer });
+    return result.value.replace(/\x00/g, '');
+  }
+  
+  if (ext === 'pdf') {
+    const data = await pdfParse(file.buffer);
+    return data.text.replace(/\x00/g, '');
+  }
+  
+  throw new Error(`Unsupported file format: ${ext}`);
+}
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -171,35 +202,56 @@ export async function registerRoutes(
 ): Promise<Server> {
   setupAuth(app);
 
-  // Tracks
-  app.post(api.tracks.generate.path, async (req, res) => {
+  // Tracks - File upload endpoint
+  app.post(api.tracks.generate.path, upload.array('files', 20), async (req, res) => {
     if (!req.isAuthenticated() || (req.user as any).role !== 'curator') return res.sendStatus(401);
     
     try {
-      const { title, text, strictMode } = api.tracks.generate.input.parse(req.body);
+      const title = req.body.title;
+      if (!title || typeof title !== 'string' || !title.trim()) {
+        return res.status(400).json({ message: "Название тренинга обязательно" });
+      }
       
-      const cleanText = text.replace(/\x00/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "Загрузите хотя бы один файл" });
+      }
+      
+      const textParts: string[] = [];
+      for (const file of files) {
+        try {
+          const text = await extractTextFromFile(file);
+          if (text.trim()) {
+            textParts.push(`=== ${file.originalname} ===\n${text}`);
+          }
+        } catch (err) {
+          console.error(`Error processing file ${file.originalname}:`, err);
+        }
+      }
+      
+      if (textParts.length === 0) {
+        return res.status(400).json({ message: "Не удалось извлечь текст из файлов" });
+      }
+      
+      const combinedText = textParts.join('\n\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
       
       const track = await storage.createTrack({
         curatorId: (req.user as any).id,
-        title,
-        rawKnowledgeBase: cleanText,
-        strictMode: strictMode !== false,
+        title: title.trim(),
+        rawKnowledgeBase: combinedText,
+        strictMode: true,
         joinCode: Math.random().toString().substring(2, 8)
       });
 
-      const generatedSteps = await generateTrackContent(title, cleanText, strictMode !== false);
+      const generatedSteps = await generateTrackContent(title, combinedText, true);
       const stepsWithTrackId = generatedSteps.map(s => ({ ...s, trackId: track.id }));
       
       const createdSteps = await storage.createSteps(stepsWithTrackId);
       
       res.status(201).json({ track, steps: createdSteps });
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
-      }
       console.error("Track generation error:", err);
-      res.status(500).json({ message: "Ошибка генерации курса" });
+      res.status(500).json({ message: "Ошибка генерации тренинга" });
     }
   });
 
