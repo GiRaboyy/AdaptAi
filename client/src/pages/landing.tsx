@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, BookOpen, Users, CheckCircle, BarChart3, Play, Volume2 } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Users, CheckCircle, BarChart3, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 
@@ -14,7 +14,7 @@ export default function Landing() {
         Мы запустились! Попробуйте бесплатно
         <ArrowRight className="w-4 h-4 inline ml-1" />
       </div>
-      <header className="sticky top-0 z-50 bg-white border-b border-[#0a1f12]/10">
+      <header className="sticky top-0 z-50 bg-white border-b border-[#0a1f12]/20">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="font-bold tracking-tight text-[30px]">ADAPT</span>
           <div className="flex items-center gap-4">
@@ -69,72 +69,72 @@ export default function Landing() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative hidden md:block"
             >
-              <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-[#0a1f12]/10 overflow-hidden max-w-md ml-auto">
-                <div className="flex items-center gap-2 px-4 py-3 bg-[#FAFAFA] border-b border-[#0a1f12]/10">
-                  <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-                  <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                  <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-                  <span className="ml-4 text-sm text-[#0a1f12]/40 font-medium">ADAPT Platform</span>
+              <div className="bg-white rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.15)] border-2 border-[#0a1f12]/20 overflow-hidden">
+                <div className="flex items-center gap-2 px-6 py-4 bg-[#FAFAFA] border-b-2 border-[#0a1f12]/20">
+                  <div className="w-4 h-4 rounded-full bg-[#FF5F56]" />
+                  <div className="w-4 h-4 rounded-full bg-[#FFBD2E]" />
+                  <div className="w-4 h-4 rounded-full bg-[#27C93F]" />
+                  <span className="ml-6 text-base text-[#0a1f12]/60 font-medium">ADAPT Platform</span>
                 </div>
                 
                 <div className="flex">
-                  <div className="w-48 bg-white border-r border-[#0a1f12]/10 p-3">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-[#A6E85B] flex items-center justify-center">
-                        <span className="text-[#0a1f12] text-sm font-bold">A</span>
+                  <div className="w-64 bg-white border-r-2 border-[#0a1f12]/20 p-5">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-xl bg-[#A6E85B] flex items-center justify-center">
+                        <span className="text-[#0a1f12] text-lg font-bold">A</span>
                       </div>
-                      <span className="font-bold text-sm">ADAPT</span>
+                      <span className="font-bold text-lg">ADAPT</span>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[#A6E85B]/15">
-                        <BookOpen className="w-4 h-4 text-[#3D7A1E]" />
-                        <span className="text-xs font-medium">Мои курсы</span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-[#A6E85B]/20 border border-[#A6E85B]">
+                        <BookOpen className="w-5 h-5 text-[#3D7A1E]" />
+                        <span className="text-sm font-semibold">Мои курсы</span>
                       </div>
-                      <div className="flex items-center gap-2 p-2 rounded-lg text-[#0a1f12]/50">
-                        <BarChart3 className="w-4 h-4" />
-                        <span className="text-xs">Аналитика</span>
+                      <div className="flex items-center gap-3 p-3 rounded-xl text-[#0a1f12]/60 border border-transparent">
+                        <BarChart3 className="w-5 h-5" />
+                        <span className="text-sm">Аналитика</span>
                       </div>
-                      <div className="flex items-center gap-2 p-2 rounded-lg text-[#0a1f12]/50">
-                        <Users className="w-4 h-4" />
-                        <span className="text-xs">Профиль</span>
+                      <div className="flex items-center gap-3 p-3 rounded-xl text-[#0a1f12]/60 border border-transparent">
+                        <Users className="w-5 h-5" />
+                        <span className="text-sm">Профиль</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex-1 p-4 bg-[#F8FAFC]">
-                    <div className="mb-4">
-                      <h3 className="font-bold text-sm mb-1">Продуктовые продажи</h3>
-                      <div className="flex items-center gap-2 text-xs text-[#0a1f12]/50">
+                  <div className="flex-1 p-6 bg-[#F8FAFC]">
+                    <div className="mb-6">
+                      <h3 className="font-bold text-lg mb-2">Продуктовые продажи</h3>
+                      <div className="flex items-center gap-3 text-sm text-[#0a1f12]/60">
                         <span>Шаг 2 из 8</span>
-                        <Progress value={25} className="h-1.5 flex-1" />
+                        <Progress value={25} className="h-2 flex-1" />
                       </div>
                     </div>
                     
-                    <div className="bg-white rounded-xl border border-[#0a1f12]/10 p-4 mb-3">
-                      <p className="text-xs text-[#0a1f12]/80 leading-relaxed mb-3">
+                    <div className="bg-white rounded-2xl border-2 border-[#0a1f12]/20 p-5 mb-4">
+                      <p className="text-sm text-[#0a1f12] leading-relaxed mb-4">
                         Клиент говорит: "Мне нужно подумать". Какой ваш следующий шаг?
                       </p>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 p-2 rounded-lg border border-[#A6E85B] bg-[#A6E85B]/10 text-xs">
-                          <CheckCircle className="w-3 h-3 text-[#3D7A1E]" />
-                          <span>Уточнить сомнения</span>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#A6E85B] bg-[#A6E85B]/15 text-sm">
+                          <CheckCircle className="w-5 h-5 text-[#3D7A1E]" />
+                          <span className="font-medium">Уточнить сомнения</span>
                         </div>
-                        <div className="flex items-center gap-2 p-2 rounded-lg border border-[#0a1f12]/10 text-xs text-[#0a1f12]/60">
-                          <div className="w-3 h-3 rounded-full border border-[#0a1f12]/20" />
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#0a1f12]/20 text-sm text-[#0a1f12]/70">
+                          <div className="w-5 h-5 rounded-full border-2 border-[#0a1f12]/30" />
                           <span>Предложить скидку</span>
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <button className="w-8 h-8 rounded-lg bg-white border border-[#0a1f12]/10 flex items-center justify-center">
-                          <Volume2 className="w-4 h-4 text-[#0a1f12]/50" />
+                      <div className="flex items-center gap-3">
+                        <button className="w-10 h-10 rounded-xl bg-white border-2 border-[#0a1f12]/20 flex items-center justify-center">
+                          <Volume2 className="w-5 h-5 text-[#0a1f12]/60" />
                         </button>
                       </div>
-                      <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#A6E85B] text-xs font-medium">
+                      <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#A6E85B] text-sm font-bold border-2 border-[#A6E85B]">
                         <span>Далее</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -144,20 +144,18 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="py-10 px-6 border-y border-[#0a1f12]/10 bg-[#FAFAFA]">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 mb-8">
-              {trustedCompanies.map((company) => (
-                <span key={company} className="text-[#0a1f12]/30 font-semibold text-lg">{company}</span>
-              ))}
-            </div>
-            <Link href="/auth?role=curator" className="block">
+        <section className="py-6 px-6 border-y-2 border-[#0a1f12]/20 bg-[#FAFAFA]">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            {trustedCompanies.map((company) => (
+              <span key={company} className="text-[#0a1f12]/40 font-semibold text-lg">{company}</span>
+            ))}
+            <Link href="/auth?role=curator">
               <button 
-                className="w-full bg-[#A6E85B] hover:bg-[#9AD94F] hover:shadow-lg transition-all duration-200 text-[#0a1f12] border-0 py-8 rounded-2xl text-2xl font-bold flex items-center justify-center gap-4"
+                className="bg-[#A6E85B] hover:bg-[#9AD94F] hover:shadow-lg transition-all duration-200 text-[#0a1f12] border-0 py-4 px-10 rounded-xl text-lg font-bold flex items-center gap-3"
                 data-testid="button-cta-companies"
               >
                 Получить доступ
-                <ArrowRight className="w-7 h-7" />
+                <ArrowRight className="w-5 h-5" />
               </button>
             </Link>
           </div>
@@ -178,9 +176,9 @@ export default function Landing() {
                 { num: '2', title: 'AI создаст курс', desc: 'Уроки, тесты и ролевые сценарии сгенерируются автоматически' },
                 { num: '3', title: 'Пригласите команду', desc: 'Поделитесь кодом и отслеживайте прогресс в реальном времени' },
               ].map((step) => (
-                <div key={step.num} className="text-center p-8 rounded-3xl bg-[#FAFAFA] border border-[#0a1f12]/5">
-                  <div className="w-16 h-16 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center mx-auto mb-6">
-                    <span className="text-2xl font-bold text-[#A6E85B]">{step.num}</span>
+                <div key={step.num} className="text-center p-8 rounded-3xl bg-[#FAFAFA] border-2 border-[#0a1f12]/15">
+                  <div className="w-16 h-16 rounded-2xl bg-[#A6E85B]/25 border-2 border-[#A6E85B] flex items-center justify-center mx-auto mb-6">
+                    <span className="text-2xl font-bold text-[#3D7A1E]">{step.num}</span>
                   </div>
                   <h3 className="text-xl font-bold mb-3">{step.title}</h3>
                   <p className="text-[#0a1f12]/50 leading-relaxed">{step.desc}</p>
@@ -210,7 +208,7 @@ export default function Landing() {
           </div>
         </section>
       </main>
-      <footer className="py-8 px-6 border-t border-[#0a1f12]/10 bg-white">
+      <footer className="py-8 px-6 border-t-2 border-[#0a1f12]/20 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="font-bold text-lg">ADAPT</span>
           <p className="text-sm text-[#0a1f12]/40">
