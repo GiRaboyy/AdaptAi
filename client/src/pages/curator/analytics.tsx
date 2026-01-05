@@ -1,12 +1,40 @@
-import { useTracks } from "@/hooks/use-tracks";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Users, BookOpen, Target, TrendingUp, AlertTriangle } from "lucide-react";
+import { Loader2, Users, BookOpen, Target, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+
+type EmployeeStats = {
+  id: number;
+  name: string;
+  email: string;
+  progress: number;
+  isCompleted: boolean;
+};
+
+type TrackStats = {
+  trackId: number;
+  title: string;
+  employeeCount: number;
+  avgProgress: number;
+  completedCount: number;
+  accuracy: number;
+  employees: EmployeeStats[];
+};
+
+type AnalyticsData = {
+  totalTracks: number;
+  totalEmployees: number;
+  avgCompletion: number;
+  avgAccuracy: number;
+  trackStats: TrackStats[];
+};
 
 export default function CuratorAnalytics() {
-  const { data: tracks, isLoading } = useTracks();
+  const { data: analytics, isLoading } = useQuery<AnalyticsData>({
+    queryKey: ['/api/analytics'],
+  });
 
   if (isLoading) {
     return (
@@ -16,7 +44,7 @@ export default function CuratorAnalytics() {
     );
   }
 
-  const totalTracks = tracks?.length || 0;
+  const { totalTracks = 0, totalEmployees = 0, avgCompletion = 0, avgAccuracy = 0, trackStats = [] } = analytics || {};
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -48,31 +76,31 @@ export default function CuratorAnalytics() {
             <Users className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">0</div>
+            <div className="text-3xl font-bold">{totalEmployees}</div>
           </CardContent>
         </Card>
 
         <Card data-testid="stat-completion">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Завершений
+              Средний прогресс
             </CardTitle>
             <Target className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">0%</div>
+            <div className="text-3xl font-bold text-primary">{avgCompletion}%</div>
           </CardContent>
         </Card>
 
         <Card data-testid="stat-accuracy">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Точность
+              Точность ответов
             </CardTitle>
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
+            <div className="text-3xl font-bold">{avgAccuracy > 0 ? `${avgAccuracy}%` : '-'}</div>
           </CardContent>
         </Card>
       </div>
@@ -86,7 +114,7 @@ export default function CuratorAnalytics() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
-          {totalTracks === 0 ? (
+          {trackStats.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
@@ -105,13 +133,16 @@ export default function CuratorAnalytics() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {tracks?.map(track => (
-                    <div key={track.id} className="space-y-2" data-testid={`analytics-track-${track.id}`}>
+                  {trackStats.map(track => (
+                    <div key={track.trackId} className="space-y-2" data-testid={`analytics-track-${track.trackId}`}>
                       <div className="flex items-center justify-between gap-4">
                         <span className="font-medium truncate">{track.title}</span>
-                        <span className="text-sm text-muted-foreground">0 сотрудников</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{track.employeeCount} сотр.</Badge>
+                          <span className="text-sm text-muted-foreground">{track.avgProgress}%</span>
+                        </div>
                       </div>
-                      <Progress value={0} className="h-2" />
+                      <Progress value={track.avgProgress} className="h-2" />
                     </div>
                   ))}
                 </div>
@@ -120,42 +151,132 @@ export default function CuratorAnalytics() {
           )}
         </TabsContent>
 
-        <TabsContent value="courses" className="mt-6">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground">
-                Детальная аналитика по курсам появится после активности сотрудников
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="courses" className="mt-6 space-y-4">
+          {trackStats.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-muted-foreground">
+                  Нет курсов для отображения
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            trackStats.map(track => (
+              <Card key={track.trackId}>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-4">
+                    <CardTitle>{track.title}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{track.completedCount}/{track.employeeCount} завершили</Badge>
+                      {track.accuracy > 0 && (
+                        <Badge variant={track.accuracy >= 70 ? "default" : "destructive"}>
+                          {track.accuracy}% точность
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {track.employees.length > 0 ? (
+                    <div className="space-y-3">
+                      {track.employees.map(emp => (
+                        <div key={emp.id} className="flex items-center justify-between gap-4 p-3 rounded-lg bg-secondary/30">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-sm font-medium">{emp.name.charAt(0)}</span>
+                            </div>
+                            <div>
+                              <p className="font-medium">{emp.name}</p>
+                              <p className="text-xs text-muted-foreground">{emp.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Progress value={emp.progress} className="w-24 h-2" />
+                            <span className="text-sm font-medium w-10">{emp.progress}%</span>
+                            {emp.isCompleted && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">
+                      Нет сотрудников на этом курсе
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="employees" className="mt-6">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                <Users className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Нет сотрудников</h3>
-              <p className="text-muted-foreground max-w-sm">
-                Поделитесь кодами курсов для приглашения сотрудников
-              </p>
-            </CardContent>
-          </Card>
+          {totalEmployees === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Нет сотрудников</h3>
+                <p className="text-muted-foreground max-w-sm">
+                  Поделитесь кодами курсов для приглашения сотрудников
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Все сотрудники</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {trackStats.flatMap(track => 
+                    track.employees.map(emp => ({
+                      ...emp,
+                      trackTitle: track.title,
+                      trackId: track.trackId
+                    }))
+                  ).map((emp, idx) => (
+                    <div key={`${emp.trackId}-${emp.id}-${idx}`} className="flex items-center justify-between gap-4 p-3 rounded-lg bg-secondary/30">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-medium">{emp.name.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{emp.name}</p>
+                          <p className="text-xs text-muted-foreground">{emp.trackTitle}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Progress value={emp.progress} className="w-24 h-2" />
+                        <span className="text-sm font-medium w-10">{emp.progress}%</span>
+                        {emp.isCompleted && <CheckCircle className="w-4 h-4 text-green-500" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="gaps" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-warning" />
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
                 Темы, требующие повторения
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Проблемные темы будут отображаться после прохождения тестов</p>
-              </div>
+              {avgAccuracy === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Проблемные темы будут отображаться после прохождения тестов</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Детальный анализ проблемных тем доступен в разделе "По курсам"</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

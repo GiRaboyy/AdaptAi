@@ -104,6 +104,21 @@ export const insertStepSchema = createInsertSchema(steps).omit({ id: true });
 export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({ id: true, updatedAt: true });
 export const insertDrillAttemptSchema = createInsertSchema(drillAttempts).omit({ id: true, timestamp: true });
 
+// Chat tables for AI integration
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull(),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -111,3 +126,5 @@ export type Track = typeof tracks.$inferSelect;
 export type Step = typeof steps.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type DrillAttempt = typeof drillAttempts.$inferSelect;
+export type Conversation = typeof conversations.$inferSelect;
+export type Message = typeof messages.$inferSelect;

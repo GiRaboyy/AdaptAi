@@ -25,7 +25,7 @@ export default function Player() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [openAnswer, setOpenAnswer] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [drillAttempt, setDrillAttempt] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -40,6 +40,25 @@ export default function Player() {
       setCurrentStepIndex(Math.min(enrollment.lastStepIndex || 0, steps.length - 1));
     }
   }, [enrollment, steps.length]);
+
+  useEffect(() => {
+    if (voiceEnabled && currentStep?.type === 'content') {
+      const content = currentStep.content as any;
+      if (content?.text) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(content.text);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+        setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+      }
+    }
+    return () => {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    };
+  }, [currentStepIndex, voiceEnabled, currentStep]);
 
   const speak = (text: string) => {
     if (!voiceEnabled) return;
