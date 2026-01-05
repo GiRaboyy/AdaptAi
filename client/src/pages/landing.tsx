@@ -118,7 +118,7 @@ export default function Landing() {
             <span className="text-[#0A1F12]/40 font-medium">Ozon</span>
             <Link href="/auth?role=curator">
               <Button 
-                className="bg-[#A6E85B] hover:bg-[#95D14A] text-[#0A1F12] border-0 h-14 px-8 rounded-[16px] text-lg font-semibold"
+                className="bg-[#A6E85B] hover:bg-[#95D14A] text-[#0A1F12] border-0 rounded-[16px] font-extrabold px-[50px] py-[40px] text-[26px]"
                 data-testid="button-cta-companies"
               >
                 Получить доступ
