@@ -103,7 +103,6 @@ export default function AuthPage() {
           </p>
         </div>
       </div>
-
       <div className="flex-1 flex flex-col">
         <div className="p-6 lg:hidden">
           <Link href="/">
@@ -130,18 +129,14 @@ export default function AuthPage() {
             <div className="flex p-1 bg-secondary rounded-2xl">
               <button
                 onClick={() => setMode("login")}
-                className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${
-                  mode === "login" ? "bg-white dark:bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex-1 py-3 text-sm font-medium rounded-xl transition-all dark:bg-card shadow-sm bg-[#b2e65d] text-[#062014]"
                 data-testid="button-tab-login"
               >
                 Вход
               </button>
               <button
                 onClick={() => setMode("register")}
-                className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${
-                  mode === "register" ? "bg-white dark:bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex-1 py-3 text-sm font-medium rounded-xl transition-all hover:text-foreground bg-[#b2e65c] text-[#06140d]"
                 data-testid="button-tab-register"
               >
                 Регистрация

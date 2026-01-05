@@ -35,10 +35,12 @@ function EmployeeLayout() {
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full">
         <EmployeeSidebar />
+        <div className="divider-v h-full" />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="h-14 border-b flex items-center px-4 gap-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className="h-14 flex items-center px-4 gap-4 glass-strong border-0">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
           </header>
+          <div className="divider-h w-full" />
           <main className="flex-1 overflow-auto p-6">
             <Switch>
               <Route path="/app" component={EmployeeCourses} />
@@ -66,10 +68,12 @@ function CuratorLayout() {
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full">
         <CuratorSidebar />
+        <div className="divider-v h-full" />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="h-14 border-b flex items-center px-4 gap-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className="h-14 flex items-center px-4 gap-4 glass-strong border-0">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
           </header>
+          <div className="divider-h w-full" />
           <main className="flex-1 overflow-auto p-6">
             <Switch>
               <Route path="/curator" component={CuratorLibrary} />

@@ -29,14 +29,14 @@ export function CuratorSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
+      <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground text-lg font-black">A</span>
+          <div className="w-10 h-10 rounded-[12px] gradient-primary flex items-center justify-center">
+            <span className="text-[#062014] text-lg font-black">A</span>
           </div>
           <div>
-            <h1 className="font-display font-bold text-lg">ADAPT</h1>
-            <p className="text-xs text-muted-foreground">Куратор</p>
+            <h1 className="font-bold text-lg text-white/92">ADAPT</h1>
+            <p className="text-xs text-white/48">Куратор</p>
           </div>
         </div>
       </SidebarHeader>
@@ -64,17 +64,17 @@ export function CuratorSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
+      <SidebarFooter className="p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar className="w-9 h-9">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+              <AvatarFallback className="bg-[#A6E85B]/14 text-[#A6E85B] text-sm font-medium">
                 {user?.name?.charAt(0).toUpperCase() || "C"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <p className="text-sm font-medium truncate text-white/90">{user?.name}</p>
+              <p className="text-xs text-white/48 truncate">{user?.email}</p>
             </div>
           </div>
           <Button 

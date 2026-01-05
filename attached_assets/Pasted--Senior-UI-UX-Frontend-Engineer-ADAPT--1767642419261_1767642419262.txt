@@ -1,0 +1,149 @@
+Ты Senior UI/UX + Frontend Engineer. Проект ADAPT. Нужно улучшить дизайн-систему и ВСЕ экраны, ориентируясь на референс: dark forest background + subtle glassmorphism + lime accent + floating cards. ВАЖНО: UX/флоу/IA не менять. Бизнес-логика/роутинг/API/данные не трогать. Работай через дизайн-токены и рефактор общих компонентов.
+
+Критические ограничения:
+1) НЕ переписывать логику, состояния, API, роуты. Только UI/стили/компоненты и условный рендер видимых элементов.
+2) НЕ менять смысл и расположение основных блоков: sidebar/topbar/табы/кнопки назад/продолжить. Никаких “редизайн с нуля”.
+3) Лендинг можно освежить по визуалу и копирайту, но он остаётся коротким (5–7 блоков) и с теми же CTA.
+4) Anti-gamification: интерфейс не должен выглядеть как “миссии в игре”. Никаких трофеев/ачивок/XP/квестов, минимум анимаций.
+
+=== A) Дизайн система: токены ===
+Создай единый набор tokens (CSS variables или tailwind theme) и используй их во всех компонентах:
+
+Background:
+--bg: #04140D
+--bg-2: #062014
+
+Glass surfaces:
+--surface: rgba(255,255,255,0.06)
+--surface-strong: rgba(255,255,255,0.10)
+
+Borders/text:
+--border: rgba(255,255,255,0.10)
+--border-strong: rgba(255,255,255,0.14)
+--text: rgba(255,255,255,0.92)
+--muted: rgba(255,255,255,0.64)
+--muted-2: rgba(255,255,255,0.48)
+
+Accent (НЕ неон, спокойный лайм):
+--primary: #A6E85B
+--primary-hover: #93D94B
+--primary-soft: rgba(166,232,91,0.14)
+--primary-ink: #062014
+
+Secondary accents:
+--teal: #2DD4BF
+--blue: #60A5FA
+
+Semantic:
+--success: #A6E85B
+--warning: #FBBF24
+--error: #FB7185
+--info: #60A5FA
+
+Effects:
+blur desktop: 14px; mobile: 10px
+shadow-sm: 0 1px 2px rgba(0,0,0,0.35)
+shadow-md: 0 12px 28px rgba(0,0,0,0.45)
+shadow-lg: 0 24px 60px rgba(0,0,0,0.55)
+
+Radii (НЕ pill):
+--r-sm: 12px
+--r-md: 14px  (inputs/buttons)
+--r-lg: 18px  (cards)
+--r-xl: 22px  (modals/hero)
+Запрещено: border-radius 9999px для кнопок/карточек/табов. Допустимо 9999px только для тонкого progress bar.
+
+Typography:
+Выбери один шрифт (Manrope или Inter) и используй везде.
+Base text 16px, line-height 1.55.
+Headings 700, body 500/400.
+
+Spacing:
+base 8px; container 1120–1200px; gap 24px desktop / 16px mobile.
+
+=== B) Фон приложения (как в референсе) ===
+Сделай subtle фон:
+radial-gradient(... primary at 20% 10% opacity ~0.08) +
+radial-gradient(... teal at 70% 30% opacity ~0.06) +
+linear-gradient(--bg to --bg-2)
+Без яркого свечения и кислотных градиентов.
+
+=== C) App Shell (sidebar/topbar) и ровные линии ===
+Проблема: “рваные стыки” из-за двойных border.
+Решение:
+- Сделай ОДИН вертикальный разделитель между sidebar и main (1px, --border) на всю высоту.
+- Сделай ОДИН горизонтальный разделитель под topbar (1px, --border) по ширине main.
+- Убери лишние border-right/left/bottom у вложенных контейнеров, чтобы не было двойных линий.
+Sidebar и Topbar должны быть glass (surface-strong + blur + border-strong), но разделители рисуем единообразно.
+
+=== D) Компоненты (унификация обязательна) ===
+
+Buttons:
+Правило иерархии: на экране только 1 главный primary CTA. Остальное secondary/ghost.
+- Primary: height 44px (base), radius 14px, padding 10px 14px, gradient из --primary/--primary-hover, текст --primary-ink, shadow-md.
+- Secondary: glass (surface-strong), border 1px --border, текст --text.
+- Ghost: прозрачная, hover -> surface-strong.
+
+Responsive увеличение кнопок на больших экранах:
+- Base (<=1023): h 44, pad 10x14
+- Desktop (>=1024): h 48, pad 12x16
+- Large (>=1280): h 52, pad 14x18
+Важно: в карточках курсов кнопки всегда auto/fit-content по ширине (НЕ full-width).
+
+Inputs:
+- glass input: surface-strong + border + blur
+- focus ring: 0 0 0 3px rgba(166,232,91,0.20)
+- error: border rgba(251,113,133,0.60) + bg rgba(251,113,133,0.08)
+
+Cards:
+- glass card: surface + border + blur + shadow-sm, radius 18px, padding 16–20px
+- hover: слегка усиливать border (border-strong), без сильных “подпрыгиваний”.
+
+Tabs/filters/chips:
+- не pill: radius 14px
+- active: bg primary-soft + border primary-soft + текст --text
+- hover: surface-strong
+
+Badges:
+- маленькие, нейтральные: surface-strong + border, цветная точка может быть primary/teal.
+
+Progress:
+- высота 6px, track rgba(255,255,255,0.10), fill --primary, без glow.
+
+Modal/Drawer:
+- surface-strong + blur + border-strong + radius 22px
+- ESC/overlay close.
+
+=== E) Anti-gamification (ОЧЕНЬ ВАЖНО) ===
+Пользователи — обычные сотрудники/клерки.
+Запрещено: “миссия/квест/уровень/XP/ачивки/награды/стрик”, трофеи/медали, “игровые” бейджи, прыгающие анимации.
+Разрешено: “Курс/Раздел/Урок/Шаг/Проверка/Повторение/Прогресс/Ошибки/Рекомендации”.
+Тон текста: нейтральный, короткий, деловой.
+
+=== F) Страница “Мои курсы” (исправить тяжесть) ===
+Проблемы: слишком широкие кнопки и слишком много primary-заливки.
+Сделать:
+1) Убрать full-width кнопки внутри карточек курса.
+   Карточка: прогресс (тонкий) + снизу action-row:
+   слева: “Шаг X • строгий режим” (muted)
+   справа: compact button “Продолжить →” (secondary glass) или “Начать”.
+2) Primary (залитый лаймом) использовать только для главного CTA страницы (например верхний баннер “Продолжить обучение”), а в карточках — secondary.
+3) Join-code UX:
+   - Если coursesCount > 0: НЕ показывать input на странице. Только кнопка “+ Присоединиться” → открывает modal/drawer с input и кнопкой.
+   - Если coursesCount == 0: empty-state (“У вас пока нет курсов”) + primary “Присоединиться по коду” и можно сразу input.
+
+=== G) Остальные экраны (обновить стиль без изменения UX) ===
+- Landing: короткий (5–7 блоков), тот же UX (CTA/якоря), стиль как референс (hero + floating glass cards).
+- Auth: чисто и понятно, без “игры”, большие поля, 1 primary CTA, ясные ошибки.
+- Библиотека куратора: карточки + join-code копировать как иконка-кнопка; меньше визуального шума.
+- Аналитика: glass cards, тонкие графики, понятные подписи, без декоративной “игровухи”.
+- Course details / Editor: панели glass, но текст максимально читабелен.
+- Lesson Player: фокус-режим, 1 primary CTA, drill назвать “Повторение/Закрепление”, оформление как деловая подсказка (“Почему” + “Как правильно”), без эмоций/ачивок.
+
+=== H) Критерии приемки ===
+1) Все страницы используют единые токены и общие компоненты.
+2) Нет кислотного зелёного и нет огромных full-width зелёных кнопок в карточках.
+3) Join-code input скрыт при наличии курсов (только через кнопку → модалка).
+4) Ровные 1px разделители (sidebar/main и topbar) без двойных линий.
+5) Не выглядит как игра: язык и UI строго “деловой и простой”.
+6) UX/логика/роутинг не изменены — только визуальная система и UI.

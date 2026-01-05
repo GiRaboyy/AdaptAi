@@ -4,22 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-2xl text-sm font-bold transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:pointer-events-none disabled:opacity-55 hover:-translate-y-0.5 active:scale-[0.99]",
+  "inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#A6E85B]/20 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-b from-[#1ED760] to-[#14B854] text-[#071024] shadow-[0_10px_24px_rgba(7,16,36,0.14)] hover:shadow-[0_24px_60px_rgba(7,16,36,0.16)]",
-        destructive: "bg-destructive text-destructive-foreground shadow-[0_10px_24px_rgba(7,16,36,0.14)]",
-        outline: "glass border border-foreground/10 text-foreground shadow-[0_4px_12px_rgba(7,16,36,0.08)]",
-        secondary: "glass border border-foreground/10 text-foreground shadow-[0_4px_12px_rgba(7,16,36,0.08)]",
-        ghost: "hover:bg-accent/50 text-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "gradient-primary text-[#062014] shadow-glass rounded-[14px]",
+        destructive: "bg-destructive text-destructive-foreground rounded-[14px]",
+        outline: "glass-strong text-white/90 rounded-[14px] hover:bg-white/[0.12] hover:border-white/[0.14]",
+        secondary: "glass-strong text-white/90 rounded-[14px] hover:bg-white/[0.12] hover:border-white/[0.14]",
+        ghost: "text-white/90 rounded-[14px] hover:bg-white/[0.10]",
+        link: "text-[#A6E85B] underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-12 px-5 py-3",
-        sm: "h-10 px-4 text-sm rounded-xl",
-        lg: "h-14 px-8 text-base rounded-2xl",
-        icon: "h-11 w-11 rounded-xl",
+        default: "h-11 px-[14px] py-[10px] text-sm lg:h-12 lg:px-4 lg:py-3 xl:h-[52px] xl:px-[18px] xl:py-[14px]",
+        sm: "h-9 px-3 text-sm rounded-[12px]",
+        lg: "h-12 px-5 text-base lg:h-[52px] lg:px-6 xl:h-14 xl:px-7",
+        icon: "h-11 w-11 rounded-[12px]",
       },
     },
     defaultVariants: {
