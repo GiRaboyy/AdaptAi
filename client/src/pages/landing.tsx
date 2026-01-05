@@ -53,7 +53,7 @@ export default function Landing() {
               </p>
               <Link href="/auth?role=curator">
                 <Button 
-                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-10 rounded-2xl text-lg font-bold pl-[60px] pr-[60px] pt-[40px] pb-[40px]"
+                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-10 rounded-2xl font-bold text-[25px] pl-[50px] pr-[50px] pt-[40px] pb-[40px]"
                   data-testid="button-cta-main"
                 >
                   <Sparkles className="w-5 h-5 mr-3" />
