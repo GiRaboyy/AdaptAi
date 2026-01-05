@@ -143,3 +143,6 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
   }
   return url;
 }
+
+// Type exports
+export type InsertUser = z.infer<typeof insertUserSchema>;

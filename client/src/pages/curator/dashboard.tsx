@@ -22,8 +22,11 @@ export default function CuratorDashboard() {
     <div className="min-h-screen bg-secondary/20 pb-20">
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-display font-bold text-xl">
-            <span className="text-primary">Curator</span> Workspace
+          <div className="flex items-center gap-3 font-display font-bold text-xl">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground text-sm font-black">A</span>
+            </div>
+            <span><span className="text-primary">ADAPT</span> Curator</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:inline">Hello, {user?.name}</span>

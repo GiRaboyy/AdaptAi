@@ -33,7 +33,12 @@ export default function JoinTrack() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="p-6 flex justify-between items-center max-w-4xl mx-auto w-full">
-        <span className="font-display font-bold text-xl">Mentora</span>
+        <div className="flex items-center gap-2 font-display font-bold text-xl">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground text-sm font-black">A</span>
+          </div>
+          <span>ADAPT</span>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">{user?.name}</span>
           <Button variant="ghost" size="icon" onClick={() => logout()}>
