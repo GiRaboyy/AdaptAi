@@ -18,7 +18,7 @@ export function useLogin() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
       const res = await fetch(api.auth.login.path, {
         method: api.auth.login.method,
@@ -45,13 +45,18 @@ export function useLogin() {
       }
     },
   });
+
+  return {
+    login: mutation.mutateAsync,
+    isPending: mutation.isPending
+  };
 }
 
 export function useRegister() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (data: InsertUser) => {
       const res = await fetch(api.auth.register.path, {
         method: api.auth.register.method,
@@ -71,13 +76,14 @@ export function useRegister() {
       return api.auth.register.responses[201].parse(await res.json());
     },
     onSuccess: (user) => {
-      // Auto login logic usually happens on backend or requires second call. 
-      // For now, let's assume register doesn't auto-login session, but we redirect to login
-      // Or if your backend auto-logs in on register, update cache:
-      // queryClient.setQueryData([api.auth.me.path], user);
-      setLocation("/auth"); // Go to login to confirm
+      setLocation("/auth");
     },
   });
+
+  return {
+    register: mutation.mutate,
+    isPending: mutation.isPending
+  };
 }
 
 export function useLogout() {

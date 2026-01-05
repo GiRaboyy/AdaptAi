@@ -28,7 +28,7 @@ type AuthMode = "login" | "register";
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login");
   const { login, isPending: isLoginPending } = useLogin();
-  const { mutate: register, isPending: isRegisterPending } = useRegister();
+  const { register, isPending: isRegisterPending } = useRegister();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
