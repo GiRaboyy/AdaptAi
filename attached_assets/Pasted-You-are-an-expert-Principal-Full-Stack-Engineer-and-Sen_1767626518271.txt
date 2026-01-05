@@ -1,0 +1,89 @@
+You are an expert Principal Full-Stack Engineer and Senior Product Designer.
+Your goal is to build "ADAPT" — a premium AI-powered onboarding platform.
+
+**Product Reference & Vibe:**
+- **Visuals:** "Apple Minimal". Heavy use of whitespace, large typography (SF Pro style), rounded corners (20px), soft shadows, blur effects.
+- **Interactions:** "Duolingo-like" smoothness. Instant feedback, progress bars, satisfying completion animations.
+- **Core Feature:** "Dailo-like" simulation. Employees use voice to answer situational questions; if they fail, they enter "Drill Mode" (practice loop).
+
+**Technical Stack (Strict Constraints):**
+1.  **Frontend:** React, Vite, Tailwind CSS, Framer Motion (for all transitions), Lucide React.
+2.  **Backend:** Node.js with Express.
+    - **SECURITY RULE:** Do NOT use the Supabase Client on the frontend. Do NOT expose `anon` keys. All DB operations must go through the Node.js backend.
+3.  **Database:** PostgreSQL (use `pg` or `drizzle-orm`).
+4.  **AI:** Connect to an external Ollama instance via HTTP.
+    - Env: `OLLAMA_BASE_URL` (default to a mock if missing).
+    - **Mocking:** If the API key/URL is missing, you MUST mock the AI response with realistic JSON data so the UI is fully testable immediately.
+5.  **Voice:** Use the native Browser Web Speech API (`speechSynthesis` for TTS, `speechRecognition` for STT). No external paid APIs.
+
+**Database Schema (Create these tables):**
+- `users` (id, email, password_hash, role: 'curator'|'employee', name)
+- `tracks` (id, curator_id, title, raw_knowledge_base_text, join_code)
+- `steps` (id, track_id, type: 'content'|'quiz'|'roleplay', content_json, order_index)
+- `enrollments` (id, user_id, track_id, progress_pct, is_completed)
+- `drill_attempts` (id, user_id, step_id, is_correct, transcript, timestamp)
+
+---
+
+**CORE FLOWS TO IMPLEMENT (In Order):**
+
+### 1. Public Landing Page (Apple Style)
+- **Header:** Minimal, sticky. Logo "ADAPT". Buttons: "Demo", "Login".
+- **Hero:** Big H1: "The AI Mentor for Onboarding". Subtext: "No boring PDFs. Train with voice, drills, and feedback."
+- **Visuals:** Clean cards, lots of "air" between sections.
+- **CTA:** "Try Demo" (Leads to Login).
+
+### 2. Authentication & Roles
+- **Login/Register:** Simple form.
+- **Role Logic:**
+    - **Curator:** Redirect to `/curator/dashboard`.
+    - **Employee:** Redirect to `/app/join`.
+
+### 3. Curator Flow: The "2-Minute Magic"
+- **Create Track:**
+    - Input: Title + Large Text Area ("Paste your internal docs here").
+    - Action: "Generate Training".
+    - **Backend Logic (Crucial):** The backend calls the AI (or Mock). The AI must convert the text into a JSON array of steps:
+        - `type: 'content'` (Short theory, max 3 sentences).
+        - `type: 'quiz'` (Multiple choice).
+        - `type: 'roleplay'` (Open question: "A client is angry about X. What do you say?").
+- **Share:** Display a large 6-digit `join_code`.
+
+### 4. Employee Flow: The "Immersive Player" (The Main Feature)
+- **Join:** Enter code -> Load Track.
+- **Player UI:** Full screen, no distractions. One card centered.
+- **Step Types:**
+    - **Content:** Text + "Speaker" icon (Click to read aloud via TTS). Button: "Got it".
+    - **Quiz:** Select option. Immediate Green/Red feedback.
+    - **Roleplay (Voice):**
+        - UI: Question text + Large Pulsing Microphone Button.
+        - Interaction: User holds/clicks Mic -> Speaks -> Text appears (STT).
+        - Feedback: AI grades the answer (0-10).
+- **DRILL MODE LOGIC (Must Implement):**
+    - If user answers **WRONG** (Quiz or Roleplay score < 6/10):
+        1.  Do NOT advance to the next step.
+        2.  Show an "Assistant" avatar/icon.
+        3.  Show a **Hint** derived from the knowledge base.
+        4.  Reset the input and force the user to try again immediately.
+        5.  Log the failure as a "Risk" in the DB.
+
+### 5. Curator Analytics
+- **Dashboard:**
+    - List of employees.
+    - Status: "On Track" (Green) or "Needs Help" (Red - if they triggered Drill Mode > 3 times).
+    - Button: "Nudge" (Mock action).
+
+---
+
+**Execution Plan for Agent:**
+1.  **Setup:** Initialize Node/Express server and PostgreSQL connection.
+2.  **Schema:** Run migrations for the tables.
+3.  **Backend API:** Create endpoints for `auth`, `tracks/generate` (with AI mock), `tracks/join`, `progress/update`.
+4.  **Frontend Core:** Setup Layout, Landing Page, and Auth.
+5.  **The Player:** Build the step-by-step player with Framer Motion transitions.
+6.  **Voice & Drill:** Integrate Web Speech API and the "Retry on Fail" logic.
+
+**Refinement Instruction:**
+Make the UI look expensive. Use subtle borders (`border-gray-200`), large blurry shadows (`shadow-xl`), and a very limited color palette (White bg, Black text, Deep Emerald Green for primary actions).
+
+Start by setting up the server and database, then move to the Landing Page.
