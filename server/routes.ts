@@ -136,9 +136,27 @@ export async function registerRoutes(
     const { stepIndex, isCompleted } = api.enrollments.updateProgress.input.parse(req.body);
     const id = Number(req.params.id);
     
-    // Verify ownership
-    // In a real app we'd fetch enrollment first to check user_id
     const updated = await storage.updateEnrollmentProgress(id, stepIndex, isCompleted);
+    res.json(updated);
+  });
+
+  app.patch("/api/enrollments/progress", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const trackId = Number(req.body.trackId);
+    const stepIndex = Number(req.body.stepIndex);
+    const isCompleted = req.body.isCompleted === true;
+    
+    if (isNaN(trackId) || isNaN(stepIndex)) {
+      return res.status(400).json({ message: "Invalid trackId or stepIndex" });
+    }
+    
+    const userId = (req.user as any).id;
+    
+    const enrollment = await storage.getEnrollment(userId, trackId);
+    if (!enrollment) return res.status(404).json({ message: "Enrollment not found" });
+    
+    const updated = await storage.updateEnrollmentProgress(enrollment.id, stepIndex, isCompleted);
     res.json(updated);
   });
 

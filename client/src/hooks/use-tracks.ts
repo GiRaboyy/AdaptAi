@@ -28,7 +28,7 @@ export function useTrack(id: number) {
 export function useGenerateTrack() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; text: string }) => {
+    mutationFn: async (data: { title: string; description?: string; text: string; strictMode?: boolean }) => {
       const res = await fetch(api.tracks.generate.path, {
         method: api.tracks.generate.method,
         headers: { "Content-Type": "application/json" },
@@ -76,16 +76,15 @@ export function useEnrollments() {
 export function useUpdateProgress() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, stepIndex, isCompleted }: { id: number; stepIndex: number; isCompleted?: boolean }) => {
-      const url = buildUrl(api.enrollments.updateProgress.path, { id });
-      const res = await fetch(url, {
-        method: api.enrollments.updateProgress.method,
+    mutationFn: async ({ trackId, stepIndex, completed }: { trackId: number; stepIndex: number; completed?: boolean }) => {
+      const res = await fetch("/api/enrollments/progress", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stepIndex, isCompleted }),
+        body: JSON.stringify({ trackId, stepIndex, isCompleted: completed }),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to update progress");
-      return api.enrollments.updateProgress.responses[200].parse(await res.json());
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.enrollments.list.path] });

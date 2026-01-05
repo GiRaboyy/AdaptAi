@@ -13,8 +13,8 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
-  username: z.string().email("Please enter a valid email"),
-  password: z.string().min(1, "Password is required"),
+  username: z.string().email("Введите корректный email"),
+  password: z.string().min(1, "Введите пароль"),
 });
 
 const registerSchema = insertUserSchema.extend({
@@ -54,26 +54,25 @@ export default function AuthPage() {
   const onLogin = async (data: z.infer<typeof loginSchema>) => {
     try {
       await login(data);
-      toast({ title: "Welcome back!", description: "Successfully logged in." });
+      toast({ title: "Добро пожаловать!", description: "Вы успешно вошли" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message || "Login failed" });
+      toast({ variant: "destructive", title: "Ошибка", description: error.message || "Не удалось войти" });
     }
   };
 
   const onRegister = (data: z.infer<typeof registerSchema>) => {
     registerUser(data, {
       onError: (error: any) => {
-        toast({ variant: "destructive", title: "Error", description: error.message || "Registration failed" });
+        toast({ variant: "destructive", title: "Ошибка", description: error.message || "Не удалось зарегистрироваться" });
       },
       onSuccess: () => {
-        toast({ title: "Account created!", description: "You are now logged in." });
+        toast({ title: "Аккаунт создан!", description: "Вы вошли в систему" });
       }
     });
   };
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 -left-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
@@ -92,26 +91,25 @@ export default function AuthPage() {
 
           <div className="max-w-md">
             <h2 className="text-4xl lg:text-5xl font-display font-bold mb-6 leading-tight">
-              Master your craft through conversation.
+              Обучение через практику
             </h2>
             <p className="text-lg opacity-80 leading-relaxed">
-              Join thousands of professionals using AI-driven roleplay to refine their skills before they matter.
+              Короткие уроки, тесты и ролевые сценарии для эффективного обучения сотрудников
             </p>
           </div>
 
           <p className="text-sm opacity-60">
-            © 2025 ADAPT Inc.
+            © 2026 ADAPT
           </p>
         </div>
       </div>
 
-      {/* Right Panel - Forms */}
       <div className="flex-1 flex flex-col">
         <div className="p-6 lg:hidden">
           <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              Назад
             </Button>
           </Link>
         </div>
@@ -120,34 +118,33 @@ export default function AuthPage() {
           <div className="w-full max-w-md space-y-8">
             <div className="text-center lg:text-left">
               <h1 className="text-3xl font-display font-bold" data-testid="text-auth-title">
-                {mode === "login" ? "Welcome back" : "Create account"}
+                {mode === "login" ? "Вход в систему" : "Регистрация"}
               </h1>
               <p className="mt-2 text-muted-foreground">
                 {mode === "login" 
-                  ? "Enter your credentials to continue." 
-                  : "Get started with your free account."}
+                  ? "Введите данные для входа" 
+                  : "Создайте бесплатный аккаунт"}
               </p>
             </div>
 
-            {/* Tab Switcher */}
             <div className="flex p-1 bg-secondary rounded-2xl">
               <button
                 onClick={() => setMode("login")}
                 className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${
-                  mode === "login" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  mode === "login" ? "bg-white dark:bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
                 data-testid="button-tab-login"
               >
-                Sign In
+                Вход
               </button>
               <button
                 onClick={() => setMode("register")}
                 className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${
-                  mode === "register" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  mode === "register" ? "bg-white dark:bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
                 data-testid="button-tab-register"
               >
-                Register
+                Регистрация
               </button>
             </div>
 
@@ -168,7 +165,7 @@ export default function AuthPage() {
                       type="email" 
                       placeholder="name@example.com" 
                       {...loginForm.register("username")} 
-                      className="h-12 rounded-xl"
+                      className="h-12"
                       data-testid="input-login-email"
                     />
                     {loginForm.formState.errors.username && (
@@ -176,21 +173,21 @@ export default function AuthPage() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Пароль</Label>
                     <Input 
                       id="password" 
                       type="password" 
-                      placeholder="Enter your password" 
+                      placeholder="Введите пароль" 
                       {...loginForm.register("password")} 
-                      className="h-12 rounded-xl"
+                      className="h-12"
                       data-testid="input-login-password"
                     />
                     {loginForm.formState.errors.password && (
                       <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full h-12 text-base rounded-xl" disabled={isLoginPending} data-testid="button-login-submit">
-                    {isLoginPending ? <Loader2 className="animate-spin" /> : "Sign In"}
+                  <Button type="submit" className="w-full h-12 text-base" disabled={isLoginPending} data-testid="button-login-submit">
+                    {isLoginPending ? <Loader2 className="animate-spin" /> : "Войти"}
                   </Button>
                 </motion.form>
               ) : (
@@ -203,12 +200,12 @@ export default function AuthPage() {
                   className="space-y-5"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="reg-name">Full Name</Label>
+                    <Label htmlFor="reg-name">Имя</Label>
                     <Input 
                       id="reg-name" 
-                      placeholder="John Doe" 
+                      placeholder="Иван Иванов" 
                       {...registerForm.register("name")} 
-                      className="h-12 rounded-xl"
+                      className="h-12"
                       data-testid="input-register-name"
                     />
                   </div>
@@ -219,23 +216,23 @@ export default function AuthPage() {
                       type="email" 
                       placeholder="name@example.com" 
                       {...registerForm.register("email")} 
-                      className="h-12 rounded-xl"
+                      className="h-12"
                       data-testid="input-register-email"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reg-pass">Password</Label>
+                    <Label htmlFor="reg-pass">Пароль</Label>
                     <Input 
                       id="reg-pass" 
                       type="password" 
-                      placeholder="Create a password" 
+                      placeholder="Создайте пароль" 
                       {...registerForm.register("password")} 
-                      className="h-12 rounded-xl"
+                      className="h-12"
                       data-testid="input-register-password"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>I am a...</Label>
+                    <Label>Я...</Label>
                     <div className="grid grid-cols-2 gap-3">
                       <label className={`
                         flex items-center justify-center px-4 py-3 border-2 rounded-xl cursor-pointer transition-all
@@ -249,7 +246,7 @@ export default function AuthPage() {
                           className="hidden" 
                           {...registerForm.register("role")} 
                         />
-                        Learner
+                        Сотрудник
                       </label>
                       <label className={`
                         flex items-center justify-center px-4 py-3 border-2 rounded-xl cursor-pointer transition-all
@@ -263,12 +260,12 @@ export default function AuthPage() {
                           className="hidden" 
                           {...registerForm.register("role")} 
                         />
-                        Curator
+                        Куратор
                       </label>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full h-12 text-base rounded-xl" disabled={isRegisterPending} data-testid="button-register-submit">
-                    {isRegisterPending ? <Loader2 className="animate-spin" /> : "Create Account"}
+                  <Button type="submit" className="w-full h-12 text-base" disabled={isRegisterPending} data-testid="button-register-submit">
+                    {isRegisterPending ? <Loader2 className="animate-spin" /> : "Создать аккаунт"}
                   </Button>
                 </motion.form>
               )}
