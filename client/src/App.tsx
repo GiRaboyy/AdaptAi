@@ -33,15 +33,13 @@ function EmployeeLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
+      <div className="flex h-screen w-full bg-background">
         <EmployeeSidebar />
-        <div className="divider-v h-full" />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="h-14 flex items-center px-4 gap-4 glass-strong border-0">
+        <div className="flex flex-col flex-1 overflow-hidden border-l border-border">
+          <header className="h-14 flex items-center px-4 gap-4 bg-white border-b border-border">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
           </header>
-          <div className="divider-h w-full" />
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-6 bg-background">
             <Switch>
               <Route path="/app" component={EmployeeCourses} />
               <Route path="/app/courses" component={EmployeeCourses} />
@@ -66,15 +64,13 @@ function CuratorLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
+      <div className="flex h-screen w-full bg-background">
         <CuratorSidebar />
-        <div className="divider-v h-full" />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="h-14 flex items-center px-4 gap-4 glass-strong border-0">
+        <div className="flex flex-col flex-1 overflow-hidden border-l border-border">
+          <header className="h-14 flex items-center px-4 gap-4 bg-white border-b border-border">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
           </header>
-          <div className="divider-h w-full" />
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-6 bg-background">
             <Switch>
               <Route path="/curator" component={CuratorLibrary} />
               <Route path="/curator/course/:id" component={CuratorCourseDetails} />
@@ -96,8 +92,8 @@ function AuthenticatedRouter() {
 
   if (isLoading) {
     return (
-      <div className="h-screen grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-primary" />
+      <div className="h-screen grid place-items-center bg-background">
+        <Loader2 className="animate-spin w-8 h-8 text-[#A6E85B]" />
       </div>
     );
   }

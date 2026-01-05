@@ -91,26 +91,26 @@ export default function EmployeeCourses() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {latestInProgress && (
-        <Card className="bg-[#A6E85B]/[0.08] border-[#A6E85B]/20 overflow-hidden">
+        <Card className="bg-[#A6E85B]/10 border-[#A6E85B]/25 overflow-hidden">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-[14px] bg-[#A6E85B]/20 flex items-center justify-center shrink-0">
-                  <Play className="w-7 h-7 text-[#A6E85B]" />
+                <div className="w-14 h-14 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center shrink-0">
+                  <Play className="w-7 h-7 text-[#3D7A1E]" />
                 </div>
                 <div>
-                  <p className="text-sm text-white/64 mb-1">Продолжить обучение</p>
-                  <h2 className="text-xl font-bold mb-2 text-white/92">
+                  <p className="text-sm text-muted-foreground mb-1">Продолжить обучение</p>
+                  <h2 className="text-xl font-bold mb-2 text-foreground">
                     {latestInProgress.track.title}
                   </h2>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <Progress value={latestInProgress.enrollment.progressPct || 0} className="w-24" />
-                      <span className="text-white/64">
+                      <span className="text-muted-foreground">
                         {latestInProgress.enrollment.progressPct || 0}%
                       </span>
                     </div>
-                    <span className="text-white/48">
+                    <span className="text-muted-foreground">
                       Шаг {(latestInProgress.enrollment.lastStepIndex || 0) + 1}
                     </span>
                   </div>
@@ -129,48 +129,48 @@ export default function EmployeeCourses() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card data-testid="stat-total">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[12px] bg-[#A6E85B]/14 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-[#A6E85B]" />
+            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/15 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-[#3D7A1E]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white/92">{enrollments?.length || 0}</p>
-              <p className="text-xs text-white/48">Всего курсов</p>
+              <p className="text-2xl font-bold text-foreground">{enrollments?.length || 0}</p>
+              <p className="text-xs text-muted-foreground">Всего курсов</p>
             </div>
           </CardContent>
         </Card>
 
         <Card data-testid="stat-in-progress">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[12px] bg-[#60A5FA]/14 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-[#60A5FA]" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white/92">{inProgressCount}</p>
-              <p className="text-xs text-white/48">В процессе</p>
+              <p className="text-2xl font-bold text-foreground">{inProgressCount}</p>
+              <p className="text-xs text-muted-foreground">В процессе</p>
             </div>
           </CardContent>
         </Card>
 
         <Card data-testid="stat-completed">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[12px] bg-[#A6E85B]/14 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-[#A6E85B]" />
+            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/15 flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-[#3D7A1E]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white/92">{completedCount}</p>
-              <p className="text-xs text-white/48">Завершено</p>
+              <p className="text-2xl font-bold text-foreground">{completedCount}</p>
+              <p className="text-xs text-muted-foreground">Завершено</p>
             </div>
           </CardContent>
         </Card>
 
         <Card data-testid="stat-avg">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[12px] bg-[#2DD4BF]/14 flex items-center justify-center">
-              <Target className="w-5 h-5 text-[#2DD4BF]" />
+            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+              <Target className="w-5 h-5 text-teal-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white/92">{avgProgress}%</p>
-              <p className="text-xs text-white/48">Средний прогресс</p>
+              <p className="text-2xl font-bold text-foreground">{avgProgress}%</p>
+              <p className="text-xs text-muted-foreground">Средний прогресс</p>
             </div>
           </CardContent>
         </Card>
@@ -183,10 +183,10 @@ export default function EmployeeCourses() {
               key={filter.key}
               onClick={() => setActiveFilter(filter.key)}
               className={cn(
-                "px-4 py-2 rounded-[14px] text-sm font-medium transition-all shrink-0",
+                "px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0",
                 activeFilter === filter.key
-                  ? "bg-[#A6E85B]/14 border border-[#A6E85B]/14 text-white/92"
-                  : "bg-white/[0.06] border border-white/[0.10] text-white/64 hover:bg-white/[0.10]"
+                  ? "bg-[#A6E85B]/15 border border-[#A6E85B]/35 text-foreground"
+                  : "bg-white border border-border text-muted-foreground hover:border-border-strong"
               )}
               data-testid={`filter-${filter.key}`}
             >
@@ -196,7 +196,7 @@ export default function EmployeeCourses() {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/48" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Поиск курсов..."
               value={searchQuery}
@@ -207,7 +207,7 @@ export default function EmployeeCourses() {
           </div>
           {hasCourses && (
             <Button 
-              variant="secondary" 
+              variant="outline" 
               onClick={() => setJoinDialogOpen(true)}
               data-testid="button-join-new"
             >
@@ -224,23 +224,23 @@ export default function EmployeeCourses() {
           ))}
         </div>
       ) : hasCourses ? (
-        <Card className="border-dashed border-white/[0.10]">
+        <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Filter className="w-12 h-12 text-white/48 mb-4" />
-            <h3 className="text-lg font-bold mb-2 text-white/92">Нет результатов</h3>
-            <p className="text-white/64 max-w-sm">
+            <Filter className="w-12 h-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-bold mb-2 text-foreground">Нет результатов</h3>
+            <p className="text-muted-foreground max-w-sm">
               Попробуйте изменить фильтры или поисковый запрос
             </p>
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-dashed border-white/[0.10]">
+        <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-full bg-[#A6E85B]/14 flex items-center justify-center mb-6">
-              <GraduationCap className="w-10 h-10 text-[#A6E85B]" />
+            <div className="w-20 h-20 rounded-full bg-[#A6E85B]/15 flex items-center justify-center mb-6">
+              <GraduationCap className="w-10 h-10 text-[#3D7A1E]" />
             </div>
-            <h3 className="text-xl font-bold mb-2 text-white/92">У вас пока нет курсов</h3>
-            <p className="text-white/64 mb-6 max-w-sm">
+            <h3 className="text-xl font-bold mb-2 text-foreground">У вас пока нет курсов</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm">
               Введите код приглашения от вашего куратора, чтобы присоединиться к курсу
             </p>
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
@@ -337,20 +337,20 @@ function CourseCard({ enrollment, track }: { enrollment: any; track: any }) {
   const getActionButton = () => {
     if (isCompleted) {
       return (
-        <Button variant="secondary" size="sm" data-testid={`button-review-${track.id}`}>
+        <Button variant="outline" size="sm" data-testid={`button-review-${track.id}`}>
           Повторить <RotateCcw className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       );
     }
     if (hasStarted) {
       return (
-        <Button variant="secondary" size="sm" data-testid={`button-continue-${track.id}`}>
+        <Button variant="outline" size="sm" data-testid={`button-continue-${track.id}`}>
           Продолжить <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       );
     }
     return (
-      <Button variant="secondary" size="sm" data-testid={`button-start-${track.id}`}>
+      <Button variant="outline" size="sm" data-testid={`button-start-${track.id}`}>
         Начать <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
       </Button>
     );
@@ -360,16 +360,16 @@ function CourseCard({ enrollment, track }: { enrollment: any; track: any }) {
     <Card className="overflow-hidden" data-testid={`card-course-${track.id}`}>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="w-11 h-11 rounded-[12px] bg-[#A6E85B]/14 flex items-center justify-center shrink-0">
-            <BookOpen className="w-5 h-5 text-[#A6E85B]" />
+          <div className="w-11 h-11 rounded-xl bg-[#A6E85B]/15 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 text-[#3D7A1E]" />
           </div>
           {getStatusBadge()}
         </div>
         
         <div>
-          <h3 className="font-bold text-base line-clamp-2 mb-1 text-white/92">{track.title}</h3>
+          <h3 className="font-bold text-base line-clamp-2 mb-1 text-foreground">{track.title}</h3>
           {track.description && (
-            <p className="text-sm text-white/48 line-clamp-2">{track.description}</p>
+            <p className="text-sm text-muted-foreground line-clamp-2">{track.description}</p>
           )}
         </div>
 
@@ -377,8 +377,8 @@ function CourseCard({ enrollment, track }: { enrollment: any; track: any }) {
           <Progress value={progress} />
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-white/48">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">
             Шаг {(enrollment.lastStepIndex || 0) + 1}
             {track.strictMode && " • Строгий режим"}
           </span>

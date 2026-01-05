@@ -27,15 +27,15 @@ export function EmployeeSidebar() {
   const { mutate: logout } = useLogout();
 
   return (
-    <Sidebar>
+    <Sidebar className="bg-white border-r-0">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[12px] gradient-primary flex items-center justify-center">
-            <span className="text-[#062014] text-lg font-black">A</span>
+          <div className="w-10 h-10 rounded-xl bg-[#A6E85B] flex items-center justify-center">
+            <span className="text-[#0B1220] text-lg font-black">A</span>
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white/92">ADAPT</h1>
-            <p className="text-xs text-white/48">Обучение</p>
+            <h1 className="font-bold text-lg text-foreground">ADAPT</h1>
+            <p className="text-xs text-muted-foreground">Обучение</p>
           </div>
         </div>
       </SidebarHeader>
@@ -67,13 +67,13 @@ export function EmployeeSidebar() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Avatar className="w-9 h-9">
-              <AvatarFallback className="bg-[#A6E85B]/14 text-[#A6E85B] text-sm font-medium">
+              <AvatarFallback className="bg-[#A6E85B]/15 text-[#3D7A1E] text-sm font-medium">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate text-white/90">{user?.name}</p>
-              <p className="text-xs text-white/48 truncate">{user?.email}</p>
+              <p className="text-sm font-medium truncate text-foreground">{user?.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
           <Button 

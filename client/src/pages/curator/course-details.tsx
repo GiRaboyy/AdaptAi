@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useTrack, useUpdateStep } from "@/hooks/use-tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Loader2, Copy, Users, BookOpen, FileText, CheckCircle, 
-  Edit2, Save, X, GripVertical, Trash2, Plus 
+  Edit2, Save, X, Pencil
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 export default function CuratorCourseDetails() {
@@ -75,7 +69,7 @@ export default function CuratorCourseDetails() {
   if (!trackData) {
     return (
       <div className="h-full grid place-items-center">
-        <p className="text-white/64">Курс не найден</p>
+        <p className="text-muted-foreground">Курс не найден</p>
       </div>
     );
   }
@@ -89,15 +83,17 @@ export default function CuratorCourseDetails() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-white/92">{track.title}</h1>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">{track.title}</h1>
           {track.description && (
-            <p className="text-white/64">{track.description}</p>
+            <p className="text-muted-foreground">{track.description}</p>
           )}
         </div>
-        <Button variant="secondary" onClick={copyCode} data-testid="button-copy-code">
-          <Copy className="w-4 h-4 mr-2" />
-          Код: {track.joinCode}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={copyCode} data-testid="button-copy-code">
+            <Copy className="w-4 h-4 mr-2" />
+            Код: {track.joinCode}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
@@ -111,36 +107,36 @@ export default function CuratorCourseDetails() {
           <div className="grid gap-4 md:grid-cols-3 mb-6">
             <Card>
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-[14px] bg-[#A6E85B]/14 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-[#A6E85B]" />
+                <div className="w-12 h-12 rounded-2xl bg-[#A6E85B]/15 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-[#3D7A1E]" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white/92">{steps.length}</p>
-                  <p className="text-sm text-white/48">Шагов</p>
+                  <p className="text-3xl font-bold text-foreground">{steps.length}</p>
+                  <p className="text-sm text-muted-foreground">Шагов</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-[14px] bg-[#60A5FA]/14 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-[#60A5FA]" />
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white/92">{employeeCount}</p>
-                  <p className="text-sm text-white/48">Сотрудников</p>
+                  <p className="text-3xl font-bold text-foreground">{employeeCount}</p>
+                  <p className="text-sm text-muted-foreground">Сотрудников</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-[14px] bg-[#2DD4BF]/14 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-[#2DD4BF]" />
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-teal-600" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-[#A6E85B]">{completionRate}%</p>
-                  <p className="text-sm text-white/48">Завершили</p>
+                  <p className="text-3xl font-bold text-[#3D7A1E]">{completionRate}%</p>
+                  <p className="text-sm text-muted-foreground">Завершили</p>
                 </div>
               </CardContent>
             </Card>
@@ -148,7 +144,11 @@ export default function CuratorCourseDetails() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
-              <CardTitle className="text-white/92">Структура курса</CardTitle>
+              <CardTitle className="text-foreground">Структура курса</CardTitle>
+              <Button data-testid="button-edit-training">
+                <Pencil className="w-4 h-4 mr-2" />
+                Редактировать тренинг
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -179,23 +179,23 @@ export default function CuratorCourseDetails() {
                   {analytics.employees.map((emp: any) => (
                     <div 
                       key={emp.id} 
-                      className="flex items-center justify-between p-4 rounded-[14px] bg-white/[0.04] border border-white/[0.06]"
+                      className="flex items-center justify-between p-4 rounded-xl bg-muted border border-border"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#A6E85B]/14 flex items-center justify-center">
-                          <span className="text-sm font-medium text-[#A6E85B]">
+                        <div className="w-10 h-10 rounded-full bg-[#A6E85B]/15 flex items-center justify-center">
+                          <span className="text-sm font-medium text-[#3D7A1E]">
                             {emp.name?.charAt(0).toUpperCase() || 'U'}
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-white/92">{emp.name}</p>
-                          <p className="text-sm text-white/48">{emp.email}</p>
+                          <p className="font-medium text-foreground">{emp.name}</p>
+                          <p className="text-sm text-muted-foreground">{emp.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="font-medium text-white/92">{emp.progress}%</p>
-                          <p className="text-xs text-white/48">прогресс</p>
+                          <p className="font-medium text-foreground">{emp.progress}%</p>
+                          <p className="text-xs text-muted-foreground">прогресс</p>
                         </div>
                         {emp.isCompleted && (
                           <Badge variant="success">Завершил</Badge>
@@ -207,12 +207,12 @@ export default function CuratorCourseDetails() {
               </CardContent>
             ) : (
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-white/48" />
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-bold mb-2 text-white/92">Нет сотрудников</h3>
-                <p className="text-white/64 max-w-sm">
-                  Поделитесь кодом <span className="font-mono text-[#A6E85B]">{track.joinCode}</span> с сотрудниками
+                <h3 className="text-lg font-bold mb-2 text-foreground">Нет сотрудников</h3>
+                <p className="text-muted-foreground max-w-sm">
+                  Поделитесь кодом <span className="font-mono text-[#3D7A1E]">{track.joinCode}</span> с сотрудниками
                 </p>
               </CardContent>
             )}
@@ -222,14 +222,14 @@ export default function CuratorCourseDetails() {
         <TabsContent value="materials" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white/92">
-                <FileText className="w-5 h-5 text-[#A6E85B]" />
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <FileText className="w-5 h-5 text-[#3D7A1E]" />
                 База знаний
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="p-4 rounded-[14px] bg-white/[0.04] border border-white/[0.06] max-h-96 overflow-auto">
-                <pre className="whitespace-pre-wrap text-sm text-white/80 font-mono">
+              <div className="p-4 rounded-xl bg-muted border border-border max-h-96 overflow-auto">
+                <pre className="whitespace-pre-wrap text-sm text-foreground font-mono">
                   {track.rawKnowledgeBase}
                 </pre>
               </div>
@@ -296,12 +296,12 @@ function StepItem({
   if (isEditing) {
     return (
       <div 
-        className="p-4 rounded-[14px] bg-[#A6E85B]/[0.08] border border-[#A6E85B]/20"
+        className="p-4 rounded-xl bg-[#A6E85B]/10 border border-[#A6E85B]/25"
         data-testid={`step-edit-${step.id}`}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-[#A6E85B]/20 flex items-center justify-center text-sm font-medium text-[#A6E85B]">
+            <span className="w-7 h-7 rounded-full bg-[#A6E85B]/20 flex items-center justify-center text-sm font-medium text-[#3D7A1E]">
               {index + 1}
             </span>
             <Badge variant={getBadgeVariant(step.type) as any}>
@@ -342,7 +342,7 @@ function StepItem({
         {step.type === 'quiz' && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Вопрос</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Вопрос</label>
               <Input
                 value={editContent?.question || ''}
                 onChange={(e) => setEditContent({ ...editContent, question: e.target.value })}
@@ -350,7 +350,7 @@ function StepItem({
               />
             </div>
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Варианты ответов</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Варианты ответов</label>
               {editContent?.options?.map((opt: string, i: number) => (
                 <div key={i} className="flex items-center gap-2 mb-2">
                   <Input
@@ -366,7 +366,7 @@ function StepItem({
                     data-testid={`input-option-${step.id}-${i}`}
                   />
                   <Button
-                    variant={editContent.correctIdx === i ? "default" : "secondary"}
+                    variant={editContent.correctIdx === i ? "default" : "outline"}
                     size="sm"
                     onClick={() => setEditContent({ ...editContent, correctIdx: i })}
                     data-testid={`button-correct-${step.id}-${i}`}
@@ -382,7 +382,7 @@ function StepItem({
         {step.type === 'open' && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Вопрос</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Вопрос</label>
               <Input
                 value={editContent?.question || ''}
                 onChange={(e) => setEditContent({ ...editContent, question: e.target.value })}
@@ -390,7 +390,7 @@ function StepItem({
               />
             </div>
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Эталонный ответ</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Эталонный ответ</label>
               <Textarea
                 value={editContent?.idealAnswer || ''}
                 onChange={(e) => setEditContent({ ...editContent, idealAnswer: e.target.value })}
@@ -404,7 +404,7 @@ function StepItem({
         {step.type === 'roleplay' && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Сценарий</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Сценарий</label>
               <Textarea
                 value={editContent?.scenario || ''}
                 onChange={(e) => setEditContent({ ...editContent, scenario: e.target.value })}
@@ -413,7 +413,7 @@ function StepItem({
               />
             </div>
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Роль AI</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Роль AI</label>
               <Input
                 value={editContent?.aiRole || ''}
                 onChange={(e) => setEditContent({ ...editContent, aiRole: e.target.value })}
@@ -421,7 +421,7 @@ function StepItem({
               />
             </div>
             <div>
-              <label className="text-sm text-white/64 mb-1 block">Роль пользователя</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Роль пользователя</label>
               <Input
                 value={editContent?.userRole || ''}
                 onChange={(e) => setEditContent({ ...editContent, userRole: e.target.value })}
@@ -436,15 +436,15 @@ function StepItem({
 
   return (
     <div 
-      className="group flex items-center gap-3 p-4 rounded-[14px] bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.10] transition-colors cursor-pointer"
+      className="group flex items-center gap-3 p-4 rounded-xl bg-muted border border-border hover:border-border-strong transition-colors cursor-pointer"
       onClick={onStartEdit}
       data-testid={`step-${step.id}`}
     >
-      <span className="w-7 h-7 rounded-full bg-[#A6E85B]/14 flex items-center justify-center text-sm font-medium text-[#A6E85B]">
+      <span className="w-7 h-7 rounded-full bg-[#A6E85B]/15 flex items-center justify-center text-sm font-medium text-[#3D7A1E]">
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate text-white/92">
+        <p className="font-medium truncate text-foreground">
           {getStepPreview(step)}
         </p>
       </div>

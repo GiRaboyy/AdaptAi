@@ -42,23 +42,11 @@ export default function Player() {
   }, [enrollment, steps.length]);
 
   useEffect(() => {
-    if (voiceEnabled && currentStep?.type === 'content') {
-      const content = currentStep.content as any;
-      if (content?.text) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(content.text);
-        utterance.lang = 'ru-RU';
-        utterance.rate = 1.0;
-        window.speechSynthesis.speak(utterance);
-        setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-      }
-    }
     return () => {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     };
-  }, [currentStepIndex, voiceEnabled, currentStep]);
+  }, [currentStepIndex]);
 
   const speak = (text: string) => {
     if (!voiceEnabled) return;
