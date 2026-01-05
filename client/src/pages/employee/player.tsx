@@ -94,7 +94,7 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
               "w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all",
               isRecording 
                 ? "bg-red-500 animate-pulse border-2 border-red-600" 
-                : "bg-[#A6E85B] border-2 border-black hover:bg-[#93D94B]"
+                : "bg-[#A6E85B] border-2 border-black hover-elevate"
             )}
             data-testid="button-voice-record"
           >

@@ -192,7 +192,7 @@ export default function AuthPage() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 text-base bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] font-semibold rounded-xl" 
+                    className="w-full h-12 text-base bg-[#A6E85B] text-[#0a1f12] font-semibold rounded-xl" 
                     disabled={isLoginPending} 
                     data-testid="button-login-submit"
                   >
@@ -275,7 +275,7 @@ export default function AuthPage() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 text-base bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] font-semibold rounded-xl" 
+                    className="w-full h-12 text-base bg-[#A6E85B] text-[#0a1f12] font-semibold rounded-xl" 
                     disabled={isRegisterPending} 
                     data-testid="button-register-submit"
                   >

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useTrack, useUpdateStep } from "@/hooks/use-tracks";
+import { useTrack, useUpdateStep, useCreateStep } from "@/hooks/use-tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,11 +9,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Loader2, Copy, Users, BookOpen, FileText, CheckCircle, 
-  Edit2, Save, X, Pencil
+  Edit2, Save, X, Pencil, Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CuratorCourseDetails() {
   const { id } = useParams();
@@ -21,7 +34,12 @@ export default function CuratorCourseDetails() {
   const { toast } = useToast();
   const [editingStep, setEditingStep] = useState<number | null>(null);
   const [editContent, setEditContent] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [addStepDialogOpen, setAddStepDialogOpen] = useState(false);
+  const [newStepType, setNewStepType] = useState<string>("content");
+  const [newStepContent, setNewStepContent] = useState<any>({});
   const updateStep = useUpdateStep();
+  const createStep = useCreateStep();
 
   const { data: analytics } = useQuery({
     queryKey: ['/api/analytics/track', id],
@@ -56,6 +74,52 @@ export default function CuratorCourseDetails() {
     setEditingStep(null);
     setEditContent(null);
     refetch();
+  };
+
+  const handleAddStep = async () => {
+    let content: any = {};
+    switch (newStepType) {
+      case "content":
+        content = { text: newStepContent.text || "" };
+        break;
+      case "quiz":
+        content = {
+          question: newStepContent.question || "",
+          options: newStepContent.options || ["Вариант 1", "Вариант 2"],
+          correctIdx: newStepContent.correctIdx || 0,
+        };
+        break;
+      case "open":
+        content = {
+          question: newStepContent.question || "",
+          idealAnswer: newStepContent.idealAnswer || "",
+        };
+        break;
+      case "roleplay":
+        content = {
+          scenario: newStepContent.scenario || "",
+          aiRole: newStepContent.aiRole || "",
+          userRole: newStepContent.userRole || "",
+        };
+        break;
+    }
+
+    try {
+      const order = trackData?.steps?.length ?? 0;
+      await createStep.mutateAsync({
+        trackId: Number(id),
+        type: newStepType,
+        content,
+        order,
+      });
+      toast({ title: "Шаг добавлен" });
+      setAddStepDialogOpen(false);
+      setNewStepType("content");
+      setNewStepContent({});
+      refetch();
+    } catch (err) {
+      toast({ title: "Ошибка при добавлении", variant: "destructive" });
+    }
   };
 
   if (isLoading) {
@@ -145,10 +209,36 @@ export default function CuratorCourseDetails() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-foreground">Структура курса</CardTitle>
-              <Button data-testid="button-edit-training">
-                <Pencil className="w-4 h-4 mr-2" />
-                Редактировать тренинг
-              </Button>
+              <div className="flex items-center gap-2">
+                {editMode ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAddStepDialogOpen(true)}
+                      data-testid="button-add-step"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Добавить шаг
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setEditMode(false)}
+                      data-testid="button-finish-edit"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Готово
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    onClick={() => setEditMode(true)} 
+                    data-testid="button-edit-training"
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Редактировать тренинг
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -237,6 +327,160 @@ export default function CuratorCourseDetails() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={addStepDialogOpen} onOpenChange={setAddStepDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Добавить шаг</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Тип шага</label>
+              <Select value={newStepType} onValueChange={setNewStepType}>
+                <SelectTrigger data-testid="select-step-type">
+                  <SelectValue placeholder="Выберите тип" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="content">Контент</SelectItem>
+                  <SelectItem value="quiz">Тест</SelectItem>
+                  <SelectItem value="open">Открытый вопрос</SelectItem>
+                  <SelectItem value="roleplay">Ролевая игра</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newStepType === "content" && (
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Текст контента</label>
+                <Textarea
+                  value={newStepContent.text || ""}
+                  onChange={(e) => setNewStepContent({ ...newStepContent, text: e.target.value })}
+                  rows={6}
+                  placeholder="Введите текст урока..."
+                  data-testid="input-new-content"
+                />
+              </div>
+            )}
+
+            {newStepType === "quiz" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Вопрос</label>
+                  <Input
+                    value={newStepContent.question || ""}
+                    onChange={(e) => setNewStepContent({ ...newStepContent, question: e.target.value })}
+                    placeholder="Введите вопрос..."
+                    data-testid="input-new-question"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Варианты ответов</label>
+                  {(newStepContent.options || ["", ""]).map((opt: string, i: number) => (
+                    <div key={i} className="flex items-center gap-2 mb-2">
+                      <Input
+                        value={opt}
+                        onChange={(e) => {
+                          const opts = [...(newStepContent.options || ["", ""])];
+                          opts[i] = e.target.value;
+                          setNewStepContent({ ...newStepContent, options: opts });
+                        }}
+                        placeholder={`Вариант ${i + 1}`}
+                        className={cn((newStepContent.correctIdx || 0) === i && "border-[#A6E85B]")}
+                      />
+                      <Button
+                        variant={(newStepContent.correctIdx || 0) === i ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setNewStepContent({ ...newStepContent, correctIdx: i })}
+                      >
+                        {(newStepContent.correctIdx || 0) === i ? "Верный" : "Выбрать"}
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const opts = [...(newStepContent.options || ["", ""])];
+                      opts.push("");
+                      setNewStepContent({ ...newStepContent, options: opts });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Добавить вариант
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {newStepType === "open" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Вопрос</label>
+                  <Input
+                    value={newStepContent.question || ""}
+                    onChange={(e) => setNewStepContent({ ...newStepContent, question: e.target.value })}
+                    placeholder="Введите вопрос..."
+                    data-testid="input-new-open-question"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Эталонный ответ</label>
+                  <Textarea
+                    value={newStepContent.idealAnswer || ""}
+                    onChange={(e) => setNewStepContent({ ...newStepContent, idealAnswer: e.target.value })}
+                    rows={3}
+                    placeholder="Введите эталонный ответ..."
+                    data-testid="input-new-ideal"
+                  />
+                </div>
+              </div>
+            )}
+
+            {newStepType === "roleplay" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Сценарий</label>
+                  <Textarea
+                    value={newStepContent.scenario || ""}
+                    onChange={(e) => setNewStepContent({ ...newStepContent, scenario: e.target.value })}
+                    rows={3}
+                    placeholder="Опишите ситуацию..."
+                    data-testid="input-new-scenario"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Роль AI</label>
+                  <Input
+                    value={newStepContent.aiRole || ""}
+                    onChange={(e) => setNewStepContent({ ...newStepContent, aiRole: e.target.value })}
+                    placeholder="Например: клиент"
+                    data-testid="input-new-airole"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Роль пользователя</label>
+                  <Input
+                    value={newStepContent.userRole || ""}
+                    onChange={(e) => setNewStepContent({ ...newStepContent, userRole: e.target.value })}
+                    placeholder="Например: менеджер"
+                    data-testid="input-new-userrole"
+                  />
+                </div>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleAddStep} 
+              disabled={createStep.isPending}
+              className="w-full"
+              data-testid="button-create-step"
+            >
+              {createStep.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+              Добавить шаг
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

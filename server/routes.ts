@@ -389,6 +389,28 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // Create new step
+  app.post("/api/steps", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    if (user.role !== 'curator') return res.sendStatus(403);
+    
+    const { trackId, type, content, order } = req.body;
+    
+    if (!trackId || !type || !content) {
+      return res.status(400).json({ message: "trackId, type, and content are required" });
+    }
+    
+    // Verify curator owns this track
+    const track = await storage.getTrack(trackId);
+    if (!track || track.curatorId !== user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    
+    const newStep = await storage.createStep({ trackId, type, content, order: order || 0 });
+    res.status(201).json(newStep);
+  });
+
   // AI Answer Evaluation
   app.post("/api/evaluate-answer", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

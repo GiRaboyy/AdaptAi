@@ -125,3 +125,22 @@ export function useUpdateStep() {
     }
   });
 }
+
+export function useCreateStep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { trackId: number; type: string; content: any; order: number }) => {
+      const res = await fetch("/api/steps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create step");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.tracks.get.path] });
+    }
+  });
+}
