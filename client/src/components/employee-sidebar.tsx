@@ -63,26 +63,27 @@ export function EmployeeSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-4">
-        <div className="flex items-center justify-between gap-2">
+      <SidebarFooter className="p-4 border-t-2 border-[#0a1f12]/20 mt-auto">
+        <div className="flex items-center justify-between gap-2 bg-[#F8FAFC] rounded-xl p-3 border-2 border-[#0a1f12]/20">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="w-9 h-9">
-              <AvatarFallback className="bg-[#A6E85B]/15 text-[#3D7A1E] text-sm font-medium">
+            <Avatar className="w-10 h-10 border-2 border-[#A6E85B]">
+              <AvatarFallback className="bg-[#A6E85B]/20 text-[#0a1f12] text-sm font-bold">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate text-foreground">{user?.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <p className="text-sm font-bold truncate text-[#0a1f12]">{user?.name}</p>
+              <p className="text-xs text-[#0a1f12]/60 truncate">{user?.email}</p>
             </div>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => logout()}
+            className="border-2 border-[#0a1f12]/20 hover:border-[#0a1f12] hover:bg-red-50"
             data-testid="button-logout"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-5 h-5 text-[#0a1f12]" />
           </Button>
         </div>
       </SidebarFooter>

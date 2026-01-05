@@ -250,12 +250,15 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
     
-    console.log(`[DEBUG] GET /api/tracks - User: ${user.email} (id: ${user.id}, role: ${user.role})`);
-    
     if (user.role === 'curator') {
       const tracks = await storage.getTracksByCurator(user.id);
-      console.log(`[DEBUG] Returning ${tracks.length} tracks for curator ${user.id}: ${tracks.map(t => `${t.id}(curator:${t.curatorId})`).join(', ')}`);
-      res.json(tracks);
+      const tracksWithCounts = await Promise.all(
+        tracks.map(async (track) => {
+          const enrollments = await storage.getEnrollmentsByTrackId(track.id);
+          return { ...track, employeeCount: enrollments.length };
+        })
+      );
+      res.json(tracksWithCounts);
     } else {
       res.json([]);
     }

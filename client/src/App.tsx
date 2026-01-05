@@ -33,10 +33,10 @@ function EmployeeLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-background">
+      <div className="flex h-screen w-full bg-[#F8FAFC]">
         <EmployeeSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden border-l border-border">
-          <header className="h-14 flex items-center px-4 gap-4 bg-white border-b border-border">
+        <div className="flex flex-col flex-1 overflow-hidden border-l-2 border-[#0a1f12]/20">
+          <header className="h-14 flex items-center px-4 gap-4 bg-white border-b-2 border-[#0a1f12]/20">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
           </header>
           <main className="flex-1 overflow-auto p-6 bg-background">
@@ -64,10 +64,10 @@ function CuratorLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-background">
+      <div className="flex h-screen w-full bg-[#F8FAFC]">
         <CuratorSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden border-l border-border">
-          <header className="h-14 flex items-center px-4 gap-4 bg-white border-b border-border">
+        <div className="flex flex-col flex-1 overflow-hidden border-l-2 border-[#0a1f12]/20">
+          <header className="h-14 flex items-center px-4 gap-4 bg-white border-b-2 border-[#0a1f12]/20">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
           </header>
           <main className="flex-1 overflow-auto p-6 bg-background">

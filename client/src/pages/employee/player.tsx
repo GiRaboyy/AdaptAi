@@ -11,6 +11,152 @@ import { cn } from "@/lib/utils";
 
 type StepType = 'content' | 'quiz' | 'open' | 'roleplay';
 
+function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: { 
+  question: string; 
+  onAnswer: (answer: string) => void;
+  currentAnswer: string;
+}) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  
+  const hasSpeechSupport = typeof window !== 'undefined' && 
+    (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window));
+
+  const startListening = () => {
+    if (!hasSpeechSupport) {
+      setShowTextInput(true);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.lang = 'ru-RU';
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = true;
+
+    recognitionRef.current.onstart = () => setIsRecording(true);
+    
+    recognitionRef.current.onresult = (event: any) => {
+      let finalTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcriptText = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcriptText;
+        }
+      }
+      
+      if (finalTranscript) {
+        const newAnswer = (currentAnswer ? currentAnswer + ' ' : '') + finalTranscript;
+        onAnswer(newAnswer);
+      }
+    };
+
+    recognitionRef.current.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+      setShowTextInput(true);
+    };
+
+    recognitionRef.current.onend = () => setIsRecording(false);
+    
+    recognitionRef.current.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-bold text-[#0a1f12]" data-testid="open-question">
+        {question}
+      </h3>
+      
+      {hasSpeechSupport && !showTextInput ? (
+        <div className="bg-[#F8FAFC] rounded-2xl border-2 border-[#0a1f12]/20 p-6 text-center">
+          <div className="mb-4">
+            <p className="text-sm text-[#0a1f12]/70 font-medium mb-2">
+              Ответьте голосом на этот вопрос
+            </p>
+            <p className="text-xs text-[#0a1f12]/50">
+              Нажмите на микрофон и говорите
+            </p>
+          </div>
+          
+          <button
+            onClick={isRecording ? stopListening : startListening}
+            className={cn(
+              "w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all",
+              isRecording 
+                ? "bg-red-500 animate-pulse" 
+                : "bg-[#A6E85B] border-2 border-[#0a1f12] hover:bg-[#93D94B]"
+            )}
+            data-testid="button-voice-record"
+          >
+            <Mic className={cn("w-8 h-8", isRecording ? "text-white" : "text-[#0a1f12]")} />
+          </button>
+          
+          <p className="mt-4 text-sm font-medium text-[#0a1f12]">
+            {isRecording ? "Слушаю..." : "Нажмите для записи"}
+          </p>
+          
+          <button 
+            onClick={() => setShowTextInput(true)}
+            className="mt-3 text-xs text-[#0a1f12]/50 underline"
+            data-testid="button-switch-text"
+          >
+            Ввести текстом
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <textarea
+            value={currentAnswer}
+            onChange={(e) => onAnswer(e.target.value)}
+            placeholder="Введите ваш ответ..."
+            className="w-full p-4 rounded-xl border-2 border-[#0a1f12]/20 min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-[#A6E85B] focus:border-[#A6E85B] text-[#0a1f12]"
+            data-testid="input-open-answer"
+          />
+          {hasSpeechSupport && (
+            <button 
+              onClick={() => setShowTextInput(false)}
+              className="text-xs text-[#0a1f12]/50 underline flex items-center gap-1"
+              data-testid="button-switch-voice"
+            >
+              <Mic className="w-3 h-3" /> Голосовой ввод
+            </button>
+          )}
+        </div>
+      )}
+
+      {currentAnswer && hasSpeechSupport && !showTextInput && (
+        <div className="bg-white rounded-xl border-2 border-[#A6E85B] p-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <p className="text-sm font-bold text-[#0a1f12]">Ваш ответ:</p>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onAnswer("")}
+              className="text-xs"
+              data-testid="button-clear-answer"
+            >
+              Очистить
+            </Button>
+          </div>
+          <p className="text-[#0a1f12]/80" data-testid="text-voice-answer">
+            {currentAnswer}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Player() {
   const { trackId } = useParams();
   const [, setLocation] = useLocation();
@@ -248,23 +394,11 @@ export default function Player() {
           )}
 
           {(currentStep.type === 'open' || currentStep.type === 'roleplay') && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium" data-testid="open-question">
-                {content.scenario || content.question}
-              </h3>
-              <textarea
-                value={openAnswer}
-                onChange={(e) => setOpenAnswer(e.target.value)}
-                placeholder="Введите ваш ответ..."
-                className="w-full p-4 rounded-lg border min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                data-testid="input-open-answer"
-              />
-              {voiceEnabled && (
-                <Button variant="outline" size="sm" data-testid="button-voice-input">
-                  <Mic className="w-4 h-4 mr-2" /> Голосовой ввод
-                </Button>
-              )}
-            </div>
+            <VoiceOnlyQuestion 
+              question={content.scenario || content.question}
+              onAnswer={(answer) => setOpenAnswer(answer)}
+              currentAnswer={openAnswer}
+            />
           )}
         </CardContent>
       </Card>

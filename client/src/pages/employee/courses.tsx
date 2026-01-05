@@ -91,26 +91,26 @@ export default function EmployeeCourses() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {latestInProgress && (
-        <Card className="bg-[#A6E85B]/10 border-[#A6E85B]/25 overflow-hidden">
+        <Card className="bg-[#A6E85B]/10 border-2 border-[#A6E85B] overflow-hidden">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center shrink-0">
-                  <Play className="w-7 h-7 text-[#3D7A1E]" />
+                <div className="w-14 h-14 rounded-2xl bg-[#A6E85B]/30 border-2 border-[#A6E85B] flex items-center justify-center shrink-0">
+                  <Play className="w-7 h-7 text-[#0a1f12]" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Продолжить обучение</p>
-                  <h2 className="text-xl font-bold mb-2 text-foreground">
+                  <p className="text-sm text-[#0a1f12]/70 font-medium mb-1">Продолжить обучение</p>
+                  <h2 className="text-xl font-bold mb-2 text-[#0a1f12]">
                     {latestInProgress.track.title}
                   </h2>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <Progress value={latestInProgress.enrollment.progressPct || 0} className="w-24" />
-                      <span className="text-muted-foreground">
+                      <span className="text-[#0a1f12]/70 font-medium">
                         {latestInProgress.enrollment.progressPct || 0}%
                       </span>
                     </div>
-                    <span className="text-muted-foreground">
+                    <span className="text-[#0a1f12]/70 font-medium">
                       Шаг {(latestInProgress.enrollment.lastStepIndex || 0) + 1}
                     </span>
                   </div>
@@ -127,50 +127,50 @@ export default function EmployeeCourses() {
       )}
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card data-testid="stat-total">
+        <Card className="border-2 border-[#0a1f12]/20" data-testid="stat-total">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/15 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-[#3D7A1E]" />
+            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/20 border-2 border-[#A6E85B] flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-[#0a1f12]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{enrollments?.length || 0}</p>
-              <p className="text-xs text-muted-foreground">Всего курсов</p>
+              <p className="text-2xl font-bold text-[#0a1f12]">{enrollments?.length || 0}</p>
+              <p className="text-xs text-[#0a1f12]/60 font-medium">Всего курсов</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-in-progress">
+        <Card className="border-2 border-[#0a1f12]/20" data-testid="stat-in-progress">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#0a1f12]/30 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-[#0a1f12]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{inProgressCount}</p>
-              <p className="text-xs text-muted-foreground">В процессе</p>
+              <p className="text-2xl font-bold text-[#0a1f12]">{inProgressCount}</p>
+              <p className="text-xs text-[#0a1f12]/60 font-medium">В процессе</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-completed">
+        <Card className="border-2 border-[#0a1f12]/20" data-testid="stat-completed">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/15 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-[#3D7A1E]" />
+            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/20 border-2 border-[#A6E85B] flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-[#0a1f12]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{completedCount}</p>
-              <p className="text-xs text-muted-foreground">Завершено</p>
+              <p className="text-2xl font-bold text-[#0a1f12]">{completedCount}</p>
+              <p className="text-xs text-[#0a1f12]/60 font-medium">Завершено</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-avg">
+        <Card className="border-2 border-[#0a1f12]/20" data-testid="stat-avg">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-              <Target className="w-5 h-5 text-teal-600" />
+            <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#0a1f12]/30 flex items-center justify-center">
+              <Target className="w-5 h-5 text-[#0a1f12]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{avgProgress}%</p>
-              <p className="text-xs text-muted-foreground">Средний прогресс</p>
+              <p className="text-2xl font-bold text-[#0a1f12]">{avgProgress}%</p>
+              <p className="text-xs text-[#0a1f12]/60 font-medium">Средний прогресс</p>
             </div>
           </CardContent>
         </Card>
