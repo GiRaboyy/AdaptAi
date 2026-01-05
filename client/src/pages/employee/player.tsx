@@ -73,17 +73,17 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-[#0a1f12]" data-testid="open-question">
+      <h3 className="text-lg font-bold" data-testid="open-question">
         {question}
       </h3>
       
       {hasSpeechSupport && !showTextInput ? (
-        <div className="bg-[#F8FAFC] rounded-2xl border-2 border-[#0a1f12]/20 p-6 text-center">
+        <div className="bg-secondary rounded-2xl border border-black p-6 text-center">
           <div className="mb-4">
-            <p className="text-sm text-[#0a1f12]/70 font-medium mb-2">
+            <p className="text-sm text-muted-foreground font-medium mb-2">
               Ответьте голосом на этот вопрос
             </p>
-            <p className="text-xs text-[#0a1f12]/50">
+            <p className="text-xs text-muted-foreground">
               Нажмите на микрофон и говорите
             </p>
           </div>
@@ -93,21 +93,21 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
             className={cn(
               "w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all",
               isRecording 
-                ? "bg-red-500 animate-pulse" 
-                : "bg-[#A6E85B] border-2 border-[#0a1f12] hover:bg-[#93D94B]"
+                ? "bg-red-500 animate-pulse border-2 border-red-600" 
+                : "bg-[#A6E85B] border-2 border-black hover:bg-[#93D94B]"
             )}
             data-testid="button-voice-record"
           >
-            <Mic className={cn("w-8 h-8", isRecording ? "text-white" : "text-[#0a1f12]")} />
+            <Mic className={cn("w-8 h-8", isRecording ? "text-white" : "text-black")} />
           </button>
           
-          <p className="mt-4 text-sm font-medium text-[#0a1f12]">
+          <p className="mt-4 text-sm font-medium">
             {isRecording ? "Слушаю..." : "Нажмите для записи"}
           </p>
           
           <button 
             onClick={() => setShowTextInput(true)}
-            className="mt-3 text-xs text-[#0a1f12]/50 underline"
+            className="mt-3 text-xs text-muted-foreground underline"
             data-testid="button-switch-text"
           >
             Ввести текстом
@@ -119,13 +119,13 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
             value={currentAnswer}
             onChange={(e) => onAnswer(e.target.value)}
             placeholder="Введите ваш ответ..."
-            className="w-full p-4 rounded-xl border-2 border-[#0a1f12]/20 min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-[#A6E85B] focus:border-[#A6E85B] text-[#0a1f12]"
+            className="w-full p-4 rounded-xl border border-black bg-secondary min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-[#A6E85B] focus:border-[#A6E85B]"
             data-testid="input-open-answer"
           />
           {hasSpeechSupport && (
             <button 
               onClick={() => setShowTextInput(false)}
-              className="text-xs text-[#0a1f12]/50 underline flex items-center gap-1"
+              className="text-xs text-muted-foreground underline flex items-center gap-1"
               data-testid="button-switch-voice"
             >
               <Mic className="w-3 h-3" /> Голосовой ввод
@@ -135,9 +135,9 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
       )}
 
       {currentAnswer && hasSpeechSupport && !showTextInput && (
-        <div className="bg-white rounded-xl border-2 border-[#A6E85B] p-4">
+        <div className="rounded-xl border border-[#A6E85B] bg-[#A6E85B]/10 p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="text-sm font-bold text-[#0a1f12]">Ваш ответ:</p>
+            <p className="text-sm font-bold">Ваш ответ:</p>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -148,7 +148,7 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
               Очистить
             </Button>
           </div>
-          <p className="text-[#0a1f12]/80" data-testid="text-voice-answer">
+          <p className="text-muted-foreground" data-testid="text-voice-answer">
             {currentAnswer}
           </p>
         </div>
@@ -174,6 +174,8 @@ export default function Player() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [drillAttempt, setDrillAttempt] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluation, setEvaluation] = useState<{ score: number; feedback: string; isCorrect: boolean; improvements: string | null } | null>(null);
 
   const enrollment = enrollments?.find(e => e.enrollment.trackId === Number(trackId))?.enrollment;
   const steps = trackData?.steps || [];
@@ -211,6 +213,7 @@ export default function Player() {
     setOpenAnswer("");
     setShowFeedback(false);
     setDrillAttempt(0);
+    setEvaluation(null);
     
     if (currentStepIndex < totalSteps - 1) {
       const nextIndex = currentStepIndex + 1;
@@ -220,6 +223,49 @@ export default function Player() {
       updateProgress({ trackId: Number(trackId), stepIndex: totalSteps, completed: true });
       toast({ title: "Поздравляем!", description: "Вы завершили курс!" });
       setLocation("/app/courses");
+    }
+  };
+
+  const handleOpenSubmit = async () => {
+    if (!openAnswer.trim() || !currentStep) return;
+    
+    setIsEvaluating(true);
+    const content = currentStep.content as any;
+    
+    try {
+      const response = await fetch('/api/evaluate-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          question: content.scenario || content.question,
+          userAnswer: openAnswer,
+          idealAnswer: content.ideal_answer || content.ideal,
+          context: content.context
+        })
+      });
+      
+      const result = await response.json();
+      setEvaluation(result);
+      setFeedbackState(result.isCorrect ? 'correct' : 'incorrect');
+      setShowFeedback(true);
+      
+      recordDrill({
+        stepId: currentStep.id,
+        trackId: Number(trackId),
+        isCorrect: result.isCorrect,
+        userAnswer: openAnswer,
+        correctAnswer: content.ideal_answer || content.ideal || '',
+        tag: currentStep.tag || undefined,
+        attemptType: 'initial',
+        score: result.score
+      });
+    } catch (error) {
+      setEvaluation({ score: 5, feedback: "Ответ принят", isCorrect: true, improvements: null });
+      setShowFeedback(true);
+      setFeedbackState('correct');
+    } finally {
+      setIsEvaluating(false);
     }
   };
 
@@ -394,11 +440,49 @@ export default function Player() {
           )}
 
           {(currentStep.type === 'open' || currentStep.type === 'roleplay') && (
-            <VoiceOnlyQuestion 
-              question={content.scenario || content.question}
-              onAnswer={(answer) => setOpenAnswer(answer)}
-              currentAnswer={openAnswer}
-            />
+            <div className="space-y-4">
+              <VoiceOnlyQuestion 
+                question={content.scenario || content.question}
+                onAnswer={(answer) => setOpenAnswer(answer)}
+                currentAnswer={openAnswer}
+              />
+              
+              {evaluation && showFeedback && (
+                <div className={cn(
+                  "p-4 rounded-lg border",
+                  evaluation.isCorrect 
+                    ? "bg-green-500/10 border-green-500/30" 
+                    : "bg-red-500/10 border-red-500/30"
+                )}>
+                  <div className="flex items-start gap-3">
+                    {evaluation.isCorrect ? (
+                      <CheckCircle className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="font-bold">
+                          {evaluation.isCorrect ? "Хорошо!" : "Можно лучше"}
+                        </p>
+                        <Badge 
+                          variant={evaluation.score >= 6 ? "default" : "destructive"}
+                          className="text-sm font-bold"
+                        >
+                          {evaluation.score}/10
+                        </Badge>
+                      </div>
+                      <p className="text-sm">{evaluation.feedback}</p>
+                      {evaluation.improvements && (
+                        <p className="text-sm mt-2 text-muted-foreground">
+                          <strong>Рекомендация:</strong> {evaluation.improvements}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -443,13 +527,26 @@ export default function Player() {
             </Button>
           )}
 
-          {(currentStep.type === 'open' || currentStep.type === 'roleplay') && (
+          {(currentStep.type === 'open' || currentStep.type === 'roleplay') && !showFeedback && (
             <Button 
-              onClick={handleNext} 
-              disabled={!openAnswer.trim()}
+              onClick={handleOpenSubmit} 
+              disabled={!openAnswer.trim() || isEvaluating}
               data-testid="button-submit"
             >
-              Отправить <ArrowRight className="w-4 h-4 ml-2" />
+              {isEvaluating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Оценка...
+                </>
+              ) : (
+                <>Проверить</>
+              )}
+            </Button>
+          )}
+
+          {(currentStep.type === 'open' || currentStep.type === 'roleplay') && showFeedback && (
+            <Button onClick={handleNext} data-testid="button-next">
+              {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
         </div>

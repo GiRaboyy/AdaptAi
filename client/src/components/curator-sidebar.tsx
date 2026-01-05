@@ -28,14 +28,14 @@ export function CuratorSidebar() {
   const { mutate: logout } = useLogout();
 
   return (
-    <Sidebar className="bg-white border-r-0">
+    <Sidebar className="border-r border-black">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#A6E85B] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-[#A6E85B] border border-black flex items-center justify-center">
             <span className="text-[#0B1220] text-lg font-black">A</span>
           </div>
           <div>
-            <h1 className="font-bold text-lg text-foreground">ADAPT</h1>
+            <h1 className="font-bold text-lg">ADAPT</h1>
             <p className="text-xs text-muted-foreground">Куратор</p>
           </div>
         </div>
@@ -50,7 +50,14 @@ export function CuratorSidebar() {
                   (item.url !== "/curator" && location.startsWith(item.url));
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActive}
+                      className={isActive 
+                        ? "bg-[#A6E85B] text-black border border-black" 
+                        : "hover:bg-[#A6E85B]/30 hover:border-black border border-transparent transition-all"
+                      }
+                    >
                       <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}>
                         <item.icon className="w-5 h-5" />
                         <span>{item.title}</span>
@@ -64,27 +71,27 @@ export function CuratorSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-4 border-t-2 border-[#0a1f12]/20 mt-auto">
-        <div className="flex items-center justify-between gap-2 bg-[#F8FAFC] rounded-xl p-3 border-2 border-[#0a1f12]/20">
+      <SidebarFooter className="p-4 border-t border-black mt-auto">
+        <div className="flex items-center justify-between gap-2 rounded-xl p-3 border border-black bg-secondary">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="w-10 h-10 border-2 border-[#A6E85B]">
-              <AvatarFallback className="bg-[#A6E85B]/20 text-[#0a1f12] text-sm font-bold">
+            <Avatar className="w-10 h-10 border border-black">
+              <AvatarFallback className="bg-[#A6E85B] text-black text-sm font-bold">
                 {user?.name?.charAt(0).toUpperCase() || "C"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-sm font-bold truncate text-[#0a1f12]">{user?.name}</p>
-              <p className="text-xs text-[#0a1f12]/60 truncate">{user?.email}</p>
+              <p className="text-sm font-bold truncate">{user?.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => logout()}
-            className="border-2 border-[#0a1f12]/20 hover:border-[#0a1f12] hover:bg-red-50"
+            className="border border-black hover:bg-red-500/20"
             data-testid="button-logout"
           >
-            <LogOut className="w-5 h-5 text-[#0a1f12]" />
+            <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </SidebarFooter>

@@ -318,11 +318,11 @@ function TrackCard({ track }: { track: any }) {
 
   return (
     <Link href={`/curator/course/${track.id}`}>
-      <Card className="hover-elevate cursor-pointer h-full border-2 border-[#0a1f12]/20" data-testid={`card-track-${track.id}`}>
+      <Card className="hover-elevate cursor-pointer h-full border border-black" data-testid={`card-track-${track.id}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/20 border-2 border-[#A6E85B] flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5 text-[#0a1f12]" />
+            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/20 border border-[#A6E85B] flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 text-[#A6E85B]" />
             </div>
             <Button
               variant="outline"
@@ -334,15 +334,15 @@ function TrackCard({ track }: { track: any }) {
               {track.joinCode} <Copy className="w-3 h-3 ml-1" />
             </Button>
           </div>
-          <CardTitle className="text-lg line-clamp-2 mt-3 text-[#0a1f12]">{track.title}</CardTitle>
+          <CardTitle className="text-lg line-clamp-2 mt-3">{track.title}</CardTitle>
           {track.description && (
-            <p className="text-sm text-[#0a1f12]/70 line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2">
               {track.description}
             </p>
           )}
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex items-center justify-between gap-2 text-sm text-[#0a1f12]/70 font-medium">
+          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground font-medium">
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
               <span>{employeeCount} {employeeCount === 1 ? 'сотрудник' : employeeCount > 1 && employeeCount < 5 ? 'сотрудника' : 'сотрудников'}</span>

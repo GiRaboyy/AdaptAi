@@ -389,6 +389,74 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // AI Answer Evaluation
+  app.post("/api/evaluate-answer", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const { question, userAnswer, idealAnswer, context } = req.body;
+    
+    if (!question || !userAnswer) {
+      return res.status(400).json({ message: "Вопрос и ответ обязательны" });
+    }
+    
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Ты — строгий оценщик ответов на учебные вопросы. Оценивай ответ по шкале от 0 до 10.
+Отвечай ТОЛЬКО в формате JSON:
+{
+  "score": число от 0 до 10,
+  "feedback": "краткий отзыв на русском (1-2 предложения)",
+  "isCorrect": true если балл >= 6, иначе false,
+  "improvements": "что можно улучшить (если балл < 10)"
+}
+
+Критерии оценки:
+- 0-3: Ответ неверный или не по теме
+- 4-5: Частично верно, много ошибок
+- 6-7: В целом верно, есть недочёты
+- 8-9: Хороший ответ с незначительными упущениями
+- 10: Идеальный ответ`
+          },
+          {
+            role: "user",
+            content: `Вопрос/сценарий: ${question}
+${context ? `Контекст: ${context}` : ''}
+${idealAnswer ? `Примерный идеальный ответ: ${idealAnswer}` : ''}
+
+Ответ пользователя: ${userAnswer}
+
+Оцени ответ.`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 300,
+        response_format: { type: "json_object" }
+      });
+      
+      const content = response.choices[0]?.message?.content || '{}';
+      const evaluation = JSON.parse(content);
+      
+      res.json({
+        score: Math.min(10, Math.max(0, Number(evaluation.score) || 0)),
+        feedback: evaluation.feedback || "Ответ оценён",
+        isCorrect: evaluation.isCorrect === true || (Number(evaluation.score) >= 6),
+        improvements: evaluation.improvements || null
+      });
+    } catch (error) {
+      console.error("Evaluation error:", error);
+      res.json({
+        score: 5,
+        feedback: "Ответ принят",
+        isCorrect: true,
+        improvements: null
+      });
+    }
+  });
+
   // Drills
   app.post(api.drills.record.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
