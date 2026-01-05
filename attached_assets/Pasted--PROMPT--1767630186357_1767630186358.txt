@@ -1,0 +1,205 @@
+Ок — вот **обновлённый PROMPT** с учётом правок:
+
+* **“Вернуться позже” убираем** (всё через “Мои курсы” + resume).
+* **Создание трека и редактор** — **внутри библиотеки курсов куратора** (клик по курсу → детали/редактор).
+* В Drill/проверках при ошибке показываем: **причину**, **правильный ответ/эталон**, и **насколько ошибся** (оценка/скор).
+
+---
+
+## PROMPT (Add Drill Mode + Real Analytics from scratch inside ADAPT — Russian UI, no “Return later” page)
+
+You are a **Product Lead + Senior UX/UI Designer + QA Lead**. The current ADAPT app is missing two core pillars: **Drill Mode** and **Analytics** (they do not exist at all). Your task is to add them end-to-end and reshape the product so it fully satisfies the core Jobs.
+
+### 1) MVP must-have outcomes (non-negotiable)
+
+Deliver a working product where:
+
+* Employees complete short lessons with **quizzes + open answers + roleplay**.
+* **Drill Mode** exists and triggers automatically on mistakes.
+* Curators have **real analytics** based on actual employee actions (no placeholders).
+* UI is fully in **Russian**, with **Russian TTS narration** on button.
+* Navigation is safe: **Back** + **Resume**; skipping “return later” page is NOT required.
+
+### 2) Core Jobs (what this MVP must satisfy)
+
+**Curator Jobs**
+
+* Generate training quickly based on materials.
+* Identify gaps early and reduce repeated newbie questions.
+* See measurable results and “needs practice” areas per employee.
+
+**Employee Jobs**
+
+* Short steps, easy to finish.
+* Immediate feedback and repetition when wrong (Drill).
+* Voice support (listen + optionally answer by voice).
+
+### 3) Build the required structure (add missing sections)
+
+**Employee**
+
+* **Обзор**
+* **Мои курсы** (acts as library + resume hub)
+* **Профиль**
+* **Настройки**
+
+**Curator**
+
+* **Мои курсы/треки (Библиотека)** ← this is the main place
+* **Аналитика**
+* **Профиль**
+* **Настройки**
+
+### 4) Curator Library-first UX (creation + editor inside library)
+
+Curator’s “Мои курсы/треки” must include:
+
+* A clear **“+ Создать трек”** button in the library header
+* Course cards showing: title, short description, join code (copy), enrollments, avg progress
+
+**Create Track Flow (from library)**
+
+* Minimal wizard/modal:
+
+  * Title + optional description
+  * KB upload (multiple files: PDF, DOC/DOCX, images) + paste text fallback
+  * Toggle: “Строго по базе знаний (не выдумывать)”
+  * Generate
+* After generation, new course appears in library and opens **Course Details**.
+
+**Course Details (opened by clicking a course card)**
+Tabs:
+
+1. **Обзор**
+2. **Редактор**
+3. **Сотрудники**
+4. **Материалы (База знаний)**
+
+**Редактор (mandatory)**
+Curator can:
+
+* Edit lesson titles
+* Edit steps:
+
+  * MCQ: question + options + correct answer + explanation
+  * Open: question + rubric + ideal answer
+  * Roleplay: scenario prompt + rubric
+* Reorder steps
+* Delete steps
+* Add a new step manually
+* Save + Preview as employee
+
+### 5) Drill Mode — must be implemented (P0)
+
+Drill Mode is reinforcement linked to “skills/topics” tags.
+
+**Definition**
+
+* Each Quiz/Open/Roleplay step has a tag (e.g., “Возражения”, “Активное слушание”).
+* When the employee answers incorrectly:
+
+  1. Show compact feedback including:
+
+     * **Почему это ошибка** (reason)
+     * **Как правильно** (correct answer / ideal response)
+     * **Насколько ошибся** (error distance score)
+  2. Immediately trigger a **Drill attempt**: a similar question on the same tag.
+  3. Allow max **2 drill retries**.
+  4. If still incorrect: mark tag as **“Нужно повторить”** and continue.
+
+**“Насколько ошибся” (error distance)**
+
+* For MCQ: show “Выбрано: X, Верно: Y” + confidence message, and a simple score:
+
+  * 0% / 50% / 100% is OK for MVP (or 0–10 scale)
+* For open answers/roleplay: show:
+
+  * score 0–10
+  * highlight missing key points (2–4 bullet points)
+  * 1–2 example phrases to improve
+
+**Employee visibility**
+
+* During lesson: “Мини-дрилл (1/2)” indicator
+* After drill: “Закрепили ✅” or “Отмечено: нужно повторить”
+
+### 6) Real Analytics — must be built (P0)
+
+Analytics must be computed from real tracking events/records.
+
+**Curator analytics must show**
+Track-level:
+
+* joined employees count (by join code)
+* completion %
+* last activity distribution
+* average quiz accuracy
+* average open/roleplay score (0–10)
+* top “Нужно повторить” tags/topics
+* drop-off points (where users stop)
+
+Employee-level:
+
+* timeline: steps done + incorrect + drill triggered
+* accuracy trend
+* needs repeat tags list
+* final summary:
+
+  * readiness level
+  * key gaps
+  * recommended drills/next steps
+
+**No fake metrics.** If no data, show empty states.
+
+### 7) Lesson player UX (must support drill + safe navigation)
+
+* Full-width lesson screen, short text (2–4 lines).
+* Header: progress bar + “Шаг 3/12” + toggles:
+
+  * 🔊 Озвучка: Вкл/Выкл
+* Bottom actions:
+
+  * **Назад**
+  * Primary: **Проверить / Далее / Отправить**
+* Resume behavior:
+
+  * “Мои курсы” shows each course with progress and a **Continue** CTA that always works.
+
+### 8) Voice (Russian) — must exist
+
+* Each step has “🔊 Озвучить” button (Russian TTS).
+* Open answer + roleplay support voice input (push-to-talk).
+* Must not overwrite typed input.
+* Settings: “Озвучка по умолчанию”.
+
+### 9) KB upload (minimum)
+
+KB upload supports multi-file:
+
+* PDF + DOC/DOCX + images (JPG/PNG)
+* If some format parsing not available: show clear message and allow paste text fallback.
+  Do not break generation flow.
+
+### 10) UI/visual consistency (Russian UI)
+
+* Entire UI in Russian: menus, buttons, errors, headings.
+* Pleasant green accent consistent across auth, dashboards, lesson screens.
+* Add empty states, loading states, and toasts.
+* No dead clicks, no silent failures.
+
+### 11) Acceptance checklist (must pass)
+
+1. Curator library has “Создать трек” and clicking course opens Course Details with tabs.
+2. Editor exists inside course details and saving changes works.
+3. Employee “Мои курсы” is the hub: list courses + progress + Continue always works.
+4. Drill Mode triggers on wrong answers and shows:
+
+   * why wrong
+   * correct answer
+   * how wrong (score/distance)
+5. Curator analytics shows real joined employees and real progress/drill data.
+6. Russian TTS works via button; voice input works where required.
+
+**Final rule:** prioritize P0: Drill Mode + Real Analytics + Library-first curator UX + strong feedback on mistakes. Everything else is secondary.
+
+---
