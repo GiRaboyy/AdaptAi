@@ -2,7 +2,7 @@ import { useTracks, useGenerateTrack } from "@/hooks/use-tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -126,13 +126,12 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button size="lg" data-testid="button-create-track">
-          <Plus className="w-5 h-5 mr-2" /> Создать курс
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+    <>
+      <Button size="lg" onClick={() => onOpenChange(true)} data-testid="button-create-track">
+        <Plus className="w-5 h-5 mr-2" /> Создать курс
+      </Button>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Создать новый курс</DialogTitle>
           <DialogDescription>
@@ -237,7 +236,8 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
           </Button>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+    </>
   );
 }
 
