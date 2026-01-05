@@ -1,35 +1,31 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Send } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+
+const trustedCompanies = ['Яндекс', 'Сбер', 'Тинькофф', 'VK', 'Авито', 'Ozon'];
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-white text-[#0A1F12]">
-      <div className="bg-[#A6E85B] text-[#0A1F12] text-center py-2 text-sm font-medium">
+    <div className="min-h-screen bg-white text-[#0a1f12]">
+      <div className="bg-[#A6E85B] text-[#0a1f12] text-center py-3 text-sm font-medium">
         <Sparkles className="w-4 h-4 inline mr-2" />
         Мы запустились! Попробуйте бесплатно
         <ArrowRight className="w-4 h-4 inline ml-1" />
       </div>
       
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-[#0A1F12]/10">
+      <header className="sticky top-0 z-50 bg-white border-b border-[#0a1f12]/10">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-xl tracking-tight">ADAPT</span>
-          </div>
-          <div className="flex items-center gap-3">
+          <span className="font-bold text-xl tracking-tight">ADAPT</span>
+          <div className="flex items-center gap-4">
             <Link href="/auth">
-              <Button 
-                variant="ghost" 
-                className="text-[#0A1F12] hover:bg-[#0A1F12]/5"
-                data-testid="button-login"
-              >
+              <span className="text-[#0a1f12]/70 hover:text-[#0a1f12] font-medium cursor-pointer" data-testid="button-login">
                 Войти
-              </Button>
+              </span>
             </Link>
             <Link href="/auth?role=curator">
               <Button 
-                className="bg-[#A6E85B] hover:bg-[#95D14A] text-[#0A1F12] border-0 h-11 px-6 rounded-[14px] font-semibold"
+                className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-11 px-6 rounded-full font-semibold text-sm"
                 data-testid="button-start"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
@@ -41,66 +37,66 @@ export default function Landing() {
       </header>
 
       <main>
-        <section className="py-20 md:py-28 px-6">
-          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+        <section className="py-24 md:py-32 px-6">
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6 }}
             >
-              <h1 className="text-5xl md:text-6xl font-bold leading-[1.1] mb-6">
+              <h1 className="text-[52px] md:text-[64px] lg:text-[72px] font-bold leading-[1.05] mb-8 tracking-tight">
                 Платформа<br />
                 для обучения,<br />
                 <span className="text-[#A6E85B]">которую<br />полюбят.</span>
               </h1>
-              <p className="text-lg text-[#0A1F12]/70 mb-8 max-w-md">
+              <p className="text-lg text-[#0a1f12]/60 mb-10 max-w-md leading-relaxed">
                 ADAPT — современный способ обучать команду.
                 Загрузите материалы, AI создаст интерактивный тренинг.
               </p>
               <Link href="/auth?role=curator">
                 <Button 
-                  className="bg-[#A6E85B] hover:bg-[#95D14A] text-[#0A1F12] border-0 h-14 px-8 rounded-[16px] text-lg font-semibold"
+                  className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-10 rounded-2xl text-lg font-bold"
                   data-testid="button-cta-main"
                 >
-                  <Send className="w-5 h-5 mr-2" />
+                  <Sparkles className="w-5 h-5 mr-3" />
                   Запросить демо
                 </Button>
               </Link>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative hidden md:block"
             >
-              <div className="bg-white rounded-2xl shadow-2xl border border-[#0A1F12]/10 p-6 max-w-md ml-auto">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="bg-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-[#0a1f12]/10 p-6 max-w-sm ml-auto">
+                <div className="flex items-center gap-2 mb-5">
                   <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
                   <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
                   <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-                  <span className="ml-4 text-sm text-[#0A1F12]/50">ADAPT Platform</span>
+                  <span className="ml-4 text-sm text-[#0a1f12]/40 font-medium">ADAPT Platform</span>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-[#A6E85B]/10">
-                    <div className="w-8 h-8 rounded-lg bg-[#A6E85B] flex items-center justify-center text-[#0A1F12] font-bold">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#A6E85B]/10">
+                    <div className="w-10 h-10 rounded-xl bg-[#A6E85B] flex items-center justify-center text-[#0a1f12] font-bold text-lg">
                       1
                     </div>
-                    <div className="flex-1 h-2 bg-[#0A1F12]/10 rounded-full" />
+                    <div className="flex-1 h-3 bg-[#0a1f12]/10 rounded-full" />
                   </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-[#A6E85B]/10">
-                    <div className="w-8 h-8 rounded-lg bg-white border-2 border-[#A6E85B] flex items-center justify-center">
-                      <svg className="w-4 h-4 text-[#A6E85B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#A6E85B]/10">
+                    <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#A6E85B] flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#A6E85B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <div className="flex-1 h-2 bg-[#0A1F12]/10 rounded-full" />
+                    <div className="flex-1 h-3 bg-[#0a1f12]/10 rounded-full" />
                   </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0A1F12]/5">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-[#0A1F12]/20 flex items-center justify-center text-[#0A1F12]/50 font-bold">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-[#0a1f12]/[0.04]">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#0a1f12]/15 flex items-center justify-center text-[#0a1f12]/40 font-bold text-lg">
                       3
                     </div>
-                    <div className="flex-1 h-2 bg-[#0A1F12]/10 rounded-full" />
+                    <div className="flex-1 h-3 bg-[#0a1f12]/10 rounded-full" />
                   </div>
                 </div>
               </div>
@@ -108,80 +104,61 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="py-12 px-6 border-t border-[#0A1F12]/10 bg-[#FAFAFA]">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            <span className="text-[#0A1F12]/40 font-medium">Яндекс</span>
-            <span className="text-[#0A1F12]/40 font-medium">Сбер</span>
-            <span className="text-[#0A1F12]/40 font-medium">Тинькофф</span>
-            <span className="text-[#0A1F12]/40 font-medium">VK</span>
-            <span className="text-[#0A1F12]/40 font-medium">Авито</span>
-            <span className="text-[#0A1F12]/40 font-medium">Ozon</span>
+        <section className="py-6 px-6 border-y border-[#0a1f12]/10 bg-[#FAFAFA]">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-10 md:gap-16">
+            {trustedCompanies.map((company) => (
+              <span key={company} className="text-[#0a1f12]/30 font-semibold text-lg">{company}</span>
+            ))}
             <Link href="/auth?role=curator">
               <Button 
-                className="bg-[#A6E85B] hover:bg-[#95D14A] text-[#0A1F12] border-0 rounded-[16px] font-extrabold px-[50px] py-[40px] text-[26px]"
+                className="bg-[#A6E85B] hover:bg-[#9AD94F] text-[#0a1f12] border-0 h-16 px-12 rounded-2xl text-xl font-bold"
                 data-testid="button-cta-companies"
               >
                 Получить доступ
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight className="w-6 h-6 ml-3" />
               </Button>
             </Link>
           </div>
         </section>
 
-        <section className="py-20 px-6">
-          <div className="max-w-6xl mx-auto">
+        <section className="py-24 px-6 bg-white">
+          <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">Как это работает</h2>
-              <p className="text-[#0A1F12]/60 max-w-xl mx-auto text-lg">
+              <h2 className="text-4xl md:text-5xl font-bold mb-5 tracking-tight">Как это работает</h2>
+              <p className="text-[#0a1f12]/50 max-w-lg mx-auto text-lg">
                 Три простых шага для запуска обучения
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center p-8 rounded-2xl bg-[#FAFAFA] border border-[#0A1F12]/5">
-                <div className="w-16 h-16 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-[#A6E85B]">1</span>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { num: '1', title: 'Загрузите материалы', desc: 'Вставьте текст или загрузите документы с базой знаний' },
+                { num: '2', title: 'AI создаст курс', desc: 'Уроки, тесты и ролевые сценарии сгенерируются автоматически' },
+                { num: '3', title: 'Пригласите команду', desc: 'Поделитесь кодом и отслеживайте прогресс в реальном времени' },
+              ].map((step) => (
+                <div key={step.num} className="text-center p-8 rounded-3xl bg-[#FAFAFA] border border-[#0a1f12]/5">
+                  <div className="w-16 h-16 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center mx-auto mb-6">
+                    <span className="text-2xl font-bold text-[#A6E85B]">{step.num}</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                  <p className="text-[#0a1f12]/50 leading-relaxed">{step.desc}</p>
                 </div>
-                <h3 className="text-xl font-bold mb-3">Загрузите материалы</h3>
-                <p className="text-[#0A1F12]/60">
-                  Вставьте текст или загрузите документы с базой знаний
-                </p>
-              </div>
-
-              <div className="text-center p-8 rounded-2xl bg-[#FAFAFA] border border-[#0A1F12]/5">
-                <div className="w-16 h-16 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-[#A6E85B]">2</span>
-                </div>
-                <h3 className="text-xl font-bold mb-3">AI создаст курс</h3>
-                <p className="text-[#0A1F12]/60">
-                  Уроки, тесты и ролевые сценарии сгенерируются автоматически
-                </p>
-              </div>
-
-              <div className="text-center p-8 rounded-2xl bg-[#FAFAFA] border border-[#0A1F12]/5">
-                <div className="w-16 h-16 rounded-2xl bg-[#A6E85B]/20 flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-[#A6E85B]">3</span>
-                </div>
-                <h3 className="text-xl font-bold mb-3">Пригласите команду</h3>
-                <p className="text-[#0A1F12]/60">
-                  Поделитесь кодом и отслеживайте прогресс в реальном времени
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="py-20 px-6 bg-[#A6E85B]">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#0A1F12]">
+        <section className="py-24 px-6 bg-[#A6E85B]">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#0a1f12] tracking-tight">
               Готовы начать обучение?
             </h2>
-            <p className="text-xl text-[#0A1F12]/70 mb-10 max-w-xl mx-auto">
+            <p className="text-xl text-[#0a1f12]/60 mb-12 max-w-lg mx-auto">
               Создайте первый курс бесплатно и оцените возможности платформы
             </p>
             <Link href="/auth?role=curator">
               <Button 
-                className="bg-[#0A1F12] hover:bg-[#0A1F12]/90 text-white border-0 h-16 px-10 rounded-[18px] text-xl font-semibold"
+                className="bg-[#0a1f12] hover:bg-[#0a1f12]/90 text-white border-0 h-[72px] px-14 rounded-2xl text-xl font-bold"
                 data-testid="button-cta-final"
               >
                 Создать курс бесплатно
@@ -192,10 +169,10 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="py-8 px-6 border-t border-[#0A1F12]/10 bg-white">
+      <footer className="py-8 px-6 border-t border-[#0a1f12]/10 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="font-bold text-lg">ADAPT</span>
-          <p className="text-sm text-[#0A1F12]/50">
+          <p className="text-sm text-[#0a1f12]/40">
             © 2026 ADAPT. Платформа адаптивного обучения.
           </p>
         </div>
