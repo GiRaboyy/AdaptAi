@@ -1,0 +1,255 @@
+# Design System Specification
+
+You are implementing a "Friendly Neo-Brutalism" design system characterized by high contrast, thick outlines, bold CTAs, and playful-but-controlled energy. It must still feel professional for B2B HR. Russian UI only.
+
+## Core Visual Language
+Principles:
+1) Maximum legibility and obvious actions
+2) Bold hierarchy via size + outlines (not shadows)
+3) Strong feedback loops (Drill Mode feels unavoidable)
+4) Conversion-focused landing components
+Goal: "Make the next step impossible to miss."
+
+## Color Palette
+
+### Primary Colors
+- Primary: #2EE66B (Electric green) — primary CTA fill
+- Primary-hover: #20C85A
+- Primary-light: #E7FFEF (success/learning backgrounds)
+
+### Neutral Scale
+- neutral-50:  #FFFDF7 (Warm off-white background)
+- neutral-100: #FFF4DD (Warm surface alt, used sparingly)
+- neutral-200: #E8E0CC (Subtle separators)
+- neutral-300: #D5CDBA
+- neutral-400: #7C7A72
+- neutral-500: #5B5A54
+- neutral-600: #3D3C38
+- neutral-700: #262521
+- neutral-800: #161512
+- neutral-900: #0B0A08
+
+### Semantic Colors
+- success: #2EE66B
+- warning: #FFB020
+- error:   #FF3B3B
+- info:    #2F7BFF
+
+### Special Effects
+- gradient-1: none (neo-brutal = flat fills)
+- shadow-sm: none
+- shadow-md: none
+- shadow-lg: none
+- blur-effect: none
+- special-effect-1: outline border 3px solid #0B0A08 on interactive surfaces
+- special-effect-2: offset shadow (brutal): 6px 6px 0 #0B0A08 for hero cards only
+
+## Typography System
+
+### Font Stack
+font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+Mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+### Type Scale
+- text-xs: 0.75rem / 1rem
+- text-sm: 0.875rem / 1.25rem
+- text-base: 1rem / 1.5rem
+- text-lg: 1.125rem / 1.75rem
+- text-xl: 1.25rem / 1.75rem
+- text-2xl: 1.5rem / 2rem
+- text-3xl: 1.875rem / 2.25rem
+- text-4xl: 2.25rem / 2.5rem
+- text-5xl: 3rem / 1.1
+
+### Font Weights
+- Headings: 700
+- Body: 400
+- UI elements: 600
+- Emphasis: 700
+
+## Spacing System
+Base unit: 8px (keep it consistent, brutal doesn’t mean messy)
+
+### Scale
+space-0:0
+space-1:4px
+space-2:8px
+space-3:12px
+space-4:16px
+space-5:20px
+space-6:24px
+space-8:32px
+space-10:40px
+space-12:48px
+space-16:64px
+
+## Component Specifications
+
+### Buttons
+/* Primary Button - chunky, unmistakable */
+padding: 14px 18px;
+min-height: 48px;
+border-radius: 10px;
+font-weight: 700;
+text-transform: none;
+transition: transform 80ms cubic-bezier(0.0,0.0,0.2,1);
+background: #2EE66B;
+color: #0B0A08;
+border: 3px solid #0B0A08;
+
+/* Hover */
+transform: translateY(-1px);
+
+/* Active/Pressed */
+transform: translateY(1px);
+
+/* Secondary */
+background: #FFFDF7;
+color: #0B0A08;
+border: 3px solid #0B0A08;
+
+/* Danger */
+background: #FF3B3B;
+color: #0B0A08;
+border: 3px solid #0B0A08;
+
+### Input Fields
+height: 48px;
+padding: 12px 14px;
+border: 3px solid #0B0A08;
+border-radius: 10px;
+background: #FFFDF7;
+transition: transform 80ms ease-out;
+
+/* Focus */
+outline: none;
+transform: translateY(-1px);
+box-shadow: 0 0 0 4px rgba(46,230,107,0.35);
+
+/* Error */
+border-color: #FF3B3B;
+background-color: #FFE8E8;
+
+### Cards
+padding: 16px;
+border-radius: 14px;
+background: #FFFDF7;
+border: 3px solid #0B0A08;
+/* Use offset shadow only for hero/landing highlights */
+box-shadow: 0 0 0 transparent;
+
+### Layout Principles
+- Container max-width: 1080px (slightly tighter, poster-like)
+- Grid columns: 12
+- Grid gap: 20px
+- Section padding: 56px (desktop), 36px (mobile)
+- Mobile: 480px, Tablet: 768px, Desktop: 1024px
+- Sidebar: 264px; on mobile -> bottom nav with thick top border
+
+## Animation Guidelines
+Durations:
+- instant: 0ms
+- fast: 120ms
+- normal: 220ms
+- slow: 420ms
+Easing:
+- ease-out: cubic-bezier(0.0,0.0,0.2,1)
+
+Standard transitions:
+- Hover: transform 120ms ease-out
+- Focus: box-shadow 120ms ease-out
+- Active: transform 80ms ease-out
+
+## Implementation Rules
+
+### DO:
+- Use thick outlines for interactive elements and drill feedback panels.
+- Make primary CTA the biggest and most obvious element per screen.
+- Keep lesson text short and large; progress bar bold.
+- Use tags as chunky pills with borders.
+
+### DON'T:
+- Don’t add soft shadows everywhere.
+- Don’t use gradients/blur.
+- Don’t overuse colors: only green + semantic states + neutrals.
+
+### Accessibility Requirements
+- Contrast: >= 7:1 for body text (brutal style makes this easy)
+- Focus indicators: thick + bright (ring 4px)
+- Touch targets: 48x48 minimum
+- prefers-reduced-motion: disable transforms (keep outline changes)
+
+## Visual Hierarchy System
+- Level 1: CTA (48px height, 3px border)
+- Level 2: Progress + step title (bold)
+- Level 3: Drill panels ("Почему" / "Как правильно") as big boxed sections
+- Level 4: Secondary meta (mono labels: "Шаг 3/12", timestamps)
+- Level 5: Disabled (opacity 0.5 + dashed border optional)
+
+## Iconography System
+- Weight: 2.5px stroke
+- Corners: slightly rounded
+- Grid: 24px
+- Style: outlined, bold
+Usage sizes as standard.
+
+## Interaction States
+Hover: translateY(-1px)
+Active: translateY(1px)
+Focus: 4px ring rgba(46,230,107,0.35)
+Disabled: opacity 0.5; cursor not-allowed
+Loading: skeleton blocks with 3px border + diagonal hatch animation (optional)
+
+## Responsive Behavior
+- Mobile-first: yes
+- Scaling: stepped; keep big CTA even on mobile
+- Lesson player: bottom action bar stays sticky with thick top border
+
+## Imagery & Media
+- Photography: high-contrast, human, “work in action”
+- Treatment: slight warm tint to match off-white
+
+## Micro-interactions
+- Drill badge: pill "Мини-дрилл 1/2" with border + bounce 120ms (if motion allowed)
+- Success: brief checkmark pop (scale 0.98→1)
+
+## Content & Messaging (RU)
+Tone: уверенно, коротко, без воды.
+Rules:
+- Кнопки: глагол ("Продолжить", "Проверить", "Сохранить")
+- Ошибки: “что не так” + “что делать”
+Examples:
+- "Пользователь уже зарегистрирован — перейдите во вход."
+- "Ответ не найден в базе. Отправить вопрос куратору?"
+
+## Data Visualization
+Chart styling:
+--chart-1: #2EE66B
+--chart-2: #2F7BFF
+--chart-3: #FFB020
+--chart-4: #FF3B3B
+--chart-5: #7C3AED
+Grid: minimal; axes bold; tooltips boxed with 3px border
+
+## Dark Mode Adaptation
+- Background: #0B0A08
+- Surface: #161512
+- Border: #FFFDF7 (invert outlines)
+- Text: #FFFDF7 / #D5CDBA
+- Primary stays #2EE66B (no glow)
+
+## Accessibility Specifications
+- Landmarks: header/nav/main/footer required
+- ARIA live region: toasts + “saved”
+- Keyboard: all controls reachable; role switch visible and focusable
+
+## Performance Guidelines
+- Avoid heavy shadows; outlines are cheap
+- Lazy-load editor + analytics charts
+- Use SVG icons; prefer system fonts fallback
+
+## Code Examples
+- Landing: hero with 2 CTAs, 3 boxed cards with offset shadow (6px 6px 0 #0B0A08)
+- Lesson: big boxed question + sticky bottom CTA bar
+
+Remember: "Bold is not chaos — it’s clarity with a spine."

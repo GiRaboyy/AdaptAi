@@ -1,0 +1,258 @@
+# Design System Specification
+
+You are implementing a "Glassmorphism / Soft-tech" design system characterized by frosted surfaces, controlled blur, soft depth, and green-forward accents. It must remain readable, fast, and B2B-credible. Russian UI only.
+
+## Core Visual Language
+Principles:
+1) Depth through transparency (but never at the cost of text clarity)
+2) Soft surfaces, strong hierarchy
+3) Motion as guidance (subtle)
+4) Duolingo-like learning flow with premium SaaS polish
+Goal: "Learning feels light, modern, and effortless."
+
+## Color Palette
+
+### Primary Colors
+- Primary: #1ED760 (Vivid green) — CTAs, progress, success
+- Primary-hover: #14B854
+- Primary-light: rgba(30, 215, 96, 0.14) — glass highlight, pill bg
+
+### Neutral Scale
+- neutral-50:  #F6F8FF (App background)
+- neutral-100: #EEF2FF (Alt background)
+- neutral-200: rgba(15, 23, 42, 0.10) (Borders on glass)
+- neutral-300: rgba(15, 23, 42, 0.16)
+- neutral-400: rgba(15, 23, 42, 0.42)
+- neutral-500: rgba(15, 23, 42, 0.58)
+- neutral-600: rgba(15, 23, 42, 0.72)
+- neutral-700: rgba(15, 23, 42, 0.84)
+- neutral-800: #0F172A
+- neutral-900: #071024
+
+### Semantic Colors
+- success: #1ED760
+- warning: #FFB020
+- error:   #FF4D4D
+- info:    #2DD4BF (teal info accent)
+
+### Special Effects
+- gradient-1: linear-gradient(135deg, rgba(30,215,96,0.55) 0%, rgba(45,212,191,0.45) 50%, rgba(59,130,246,0.25) 100%)
+- shadow-sm: 0 1px 2px rgba(7,16,36,0.08)
+- shadow-md: 0 10px 24px rgba(7,16,36,0.12)
+- shadow-lg: 0 24px 60px rgba(7,16,36,0.16)
+- blur-effect: backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px)
+- special-effect-1 (glass surface):
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(15,23,42,0.10);
+
+## Typography System
+
+### Font Stack
+font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+
+### Type Scale
+- text-xs: 0.75rem / 1rem
+- text-sm: 0.875rem / 1.25rem
+- text-base: 1rem / 1.6rem
+- text-lg: 1.125rem / 1.8rem
+- text-xl: 1.25rem / 1.9rem
+- text-2xl: 1.5rem / 2.1rem
+- text-3xl: 1.875rem / 2.3rem
+- text-4xl: 2.25rem / 2.6rem
+- text-5xl: 3rem / 1.1
+
+### Font Weights
+- Headings: 700
+- Body: 500 (Manrope reads well here)
+- UI elements: 600
+- Emphasis: 700
+
+## Spacing System
+Base unit: 8px
+
+### Scale
+space-0:0
+space-1:4px
+space-2:8px
+space-3:12px
+space-4:16px
+space-5:20px
+space-6:24px
+space-8:32px
+space-10:40px
+space-12:48px
+space-16:64px
+
+## Component Specifications
+
+### Buttons
+/* Primary Button - glossy but controlled */
+padding: 12px 18px;
+min-height: 46px;
+border-radius: 18px;
+font-weight: 700;
+text-transform: none;
+transition: transform 120ms cubic-bezier(0.0,0.0,0.2,1), box-shadow 200ms cubic-bezier(0.0,0.0,0.2,1), background-color 150ms cubic-bezier(0.0,0.0,0.2,1);
+background: linear-gradient(180deg, #1ED760 0%, #14B854 100%);
+color: #071024;
+box-shadow: 0 10px 24px rgba(7,16,36,0.14);
+
+/* Hover */
+transform: translateY(-1px);
+box-shadow: 0 24px 60px rgba(7,16,36,0.16);
+
+/* Secondary (glass) */
+background: rgba(255,255,255,0.55);
+border: 1px solid rgba(15,23,42,0.10);
+backdrop-filter: blur(14px);
+color: #0F172A;
+
+/* Disabled */
+opacity: 0.55;
+cursor: not-allowed;
+transform: none;
+
+### Input Fields
+height: 46px;
+padding: 10px 14px;
+border-radius: 16px;
+background: rgba(255,255,255,0.55);
+border: 1px solid rgba(15,23,42,0.10);
+backdrop-filter: blur(14px);
+transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+
+/* Focus */
+outline: none;
+border-color: rgba(30,215,96,0.65);
+box-shadow: 0 0 0 4px rgba(30,215,96,0.22);
+
+/* Error */
+border-color: rgba(255,77,77,0.75);
+background: rgba(255,77,77,0.08);
+
+### Cards
+padding: 16px;
+border-radius: 22px;
+background: rgba(255,255,255,0.55);
+border: 1px solid rgba(15,23,42,0.10);
+backdrop-filter: blur(14px);
+box-shadow: 0 10px 24px rgba(7,16,36,0.12);
+
+### Layout Principles
+- Container max-width: 1160px
+- Grid columns: 12
+- Grid gap: 24px
+- Section padding: 72px (desktop), 44px (mobile)
+- Breakpoints: 480 / 768 / 1024 / 1280
+- Glass performance rule: blur reduces to 10px on mobile
+
+## Animation Guidelines
+Easing:
+- ease-out: cubic-bezier(0.0,0.0,0.2,1)
+- spring: cubic-bezier(0.175, 0.885, 0.32, 1.275)
+Durations:
+- fast: 150ms
+- normal: 300ms
+- slow: 500ms
+
+Standard transitions:
+- Hover: transform 150ms ease-out
+- Focus: box-shadow 150ms ease-out
+- Panel enter: opacity 200ms + translateY 200ms
+
+## Implementation Rules
+
+### DO:
+- Use glass surfaces for cards, modals, editor panels.
+- Keep text layers opaque (neutral-800/900) on glass.
+- Use gradients only in hero/progress/primary CTA.
+- Make Drill Mode feel “guided”: overlay panel + clear next step.
+
+### DON'T:
+- Don’t put long paragraphs on glass without solid backing.
+- Don’t stack multiple blurs (performance killer).
+- Don’t use random colors (keep green + teal as only second accent).
+
+### Accessibility Requirements
+- Minimum contrast: 4.5:1 for body text (ensure text is solid, not translucent)
+- Focus indicators: 4px green ring
+- Touch targets: 44x44
+- prefers-reduced-motion: disable panel translate; keep fade only
+
+## Visual Hierarchy System
+- Level 1: CTA gradient + shadow-md
+- Level 2: Progress + step title (bold)
+- Level 3: Glass cards with clear spacing and dividers
+- Level 4: Secondary meta in neutral-500
+- Level 5: Disabled as opacity 0.55
+
+## Iconography System
+- Weight: 1.5px stroke
+- Corner radius: rounded
+- Grid: 24px
+- Style: outlined with occasional duotone on hero (optional)
+
+## Interaction States
+Hover: translateY(-1px)
+Active: scale(0.99)
+Focus: 0 0 0 4px rgba(30,215,96,0.22)
+Loading: skeleton glass blocks with shimmer (opacity-based, not heavy gradients)
+
+## Responsive Behavior
+- Mobile-first: yes
+- Scaling: fluid-ish (clamp for headings), stepped spacing
+- Navigation: sidebar collapses; “Continue” remains primary and visible
+
+## Imagery & Media
+Photography:
+- Tone: bright, slightly cool
+- Overlay: gradient-1 at 10–18% opacity behind hero
+Illustrations:
+- Simple, soft shapes, limited palette
+
+## Micro-interactions
+- Progress bar: smooth width transition 300ms ease-out
+- Drill badge: pill with subtle glow (rgba(30,215,96,0.18))
+- Save confirmation: small toast blur panel (top-right)
+
+## Content & Messaging (RU)
+Tone: современно, спокойно, без обещаний “гарантий”.
+Rules:
+- Короткие фразы, 1 мысль = 1 предложение.
+Examples:
+- "Ответ не найден в базе. Отправить куратору?"
+- "Шаг сохранён. Продолжим."
+
+## Data Visualization
+Series:
+--chart-1: #1ED760
+--chart-2: #2DD4BF
+--chart-3: #3B82F6
+--chart-4: #FFB020
+--chart-5: #FF4D4D
+Grid: rgba(15,23,42,0.10)
+Tooltips: glass card, radius 16px, blur 14px
+
+## Dark Mode Adaptation
+- Background: #071024
+- Surface glass: rgba(15,23,42,0.55)
+- Borders: rgba(226,232,240,0.14)
+- Text: #E5E7EB / #94A3B8
+- Primary: keep #1ED760 but reduce shadow intensity by 30%
+
+## Accessibility Specifications
+- Landmarks: required
+- ARIA: progress announcements for lesson steps optional (user-controlled)
+- Keyboard: lesson player primary actions accessible; no focus traps without escape
+
+## Performance Guidelines
+- Reduce blur on mobile to 10px
+- Avoid large fixed background blurs
+- Lazy-load editor + analytics modules
+- Prefer CSS gradients over images
+
+## Code Examples
+- Glass card component with blur + border + shadow-md
+- Page layout: background with subtle gradient-1, content in opaque text layers
+
+Remember: "Every screen should feel like a calm, modern learning OS."
