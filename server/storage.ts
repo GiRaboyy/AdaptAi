@@ -15,6 +15,7 @@ export interface IStorage {
   // Tracks
   createTrack(track: typeof tracks.$inferInsert): Promise<Track>;
   createSteps(stepsList: typeof steps.$inferInsert[]): Promise<Step[]>;
+  updateStep(id: number, content: any): Promise<Step | undefined>;
   getTracksByCurator(curatorId: number): Promise<Track[]>;
   getTrack(id: number): Promise<Track | undefined>;
   getTrackByCode(code: string): Promise<Track | undefined>;
@@ -80,6 +81,14 @@ export class DatabaseStorage implements IStorage {
   async createSteps(stepsList: typeof steps.$inferInsert[]): Promise<Step[]> {
     if (stepsList.length === 0) return [];
     return await db.insert(steps).values(stepsList).returning();
+  }
+
+  async updateStep(id: number, content: any): Promise<Step | undefined> {
+    const [updated] = await db.update(steps)
+      .set({ content })
+      .where(eq(steps.id, id))
+      .returning();
+    return updated;
   }
 
   async getTracksByCurator(curatorId: number): Promise<Track[]> {

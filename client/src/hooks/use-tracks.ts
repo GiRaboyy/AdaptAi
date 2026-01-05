@@ -106,3 +106,22 @@ export function useRecordDrill() {
     },
   });
 }
+
+export function useUpdateStep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ stepId, content }: { stepId: number; content: any }) => {
+      const res = await fetch(`/api/steps/${stepId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update step");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.tracks.get.path] });
+    }
+  });
+}

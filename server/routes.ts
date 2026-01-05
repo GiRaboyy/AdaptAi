@@ -369,6 +369,23 @@ export async function registerRoutes(
     res.json(analytics);
   });
 
+  // Update step content
+  app.patch("/api/steps/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    if (user.role !== 'curator') return res.sendStatus(403);
+    
+    const stepId = Number(req.params.id);
+    const { content } = req.body;
+    
+    if (!content) return res.status(400).json({ message: "Content is required" });
+    
+    const updated = await storage.updateStep(stepId, content);
+    if (!updated) return res.status(404).json({ message: "Step not found" });
+    
+    res.json(updated);
+  });
+
   // Drills
   app.post(api.drills.record.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

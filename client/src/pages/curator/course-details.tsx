@@ -1,17 +1,33 @@
+import { useState } from "react";
 import { useParams } from "wouter";
-import { useTrack } from "@/hooks/use-tracks";
+import { useTrack, useUpdateStep } from "@/hooks/use-tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Copy, Users, BookOpen, FileText, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Loader2, Copy, Users, BookOpen, FileText, CheckCircle, 
+  Edit2, Save, X, GripVertical, Trash2, Plus 
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export default function CuratorCourseDetails() {
   const { id } = useParams();
-  const { data: trackData, isLoading } = useTrack(Number(id));
+  const { data: trackData, isLoading, refetch } = useTrack(Number(id));
   const { toast } = useToast();
+  const [editingStep, setEditingStep] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState<any>(null);
+  const updateStep = useUpdateStep();
 
   const { data: analytics } = useQuery({
     queryKey: ['/api/analytics/track', id],
@@ -30,10 +46,28 @@ export default function CuratorCourseDetails() {
     }
   };
 
+  const startEditing = (step: any) => {
+    setEditingStep(step.id);
+    setEditContent(step.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingStep(null);
+    setEditContent(null);
+  };
+
+  const saveStep = async (stepId: number) => {
+    await updateStep.mutateAsync({ stepId, content: editContent });
+    toast({ title: "Сохранено" });
+    setEditingStep(null);
+    setEditContent(null);
+    refetch();
+  };
+
   if (isLoading) {
     return (
       <div className="h-full grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-primary" />
+        <Loader2 className="animate-spin w-8 h-8 text-[#A6E85B]" />
       </div>
     );
   }
@@ -41,7 +75,7 @@ export default function CuratorCourseDetails() {
   if (!trackData) {
     return (
       <div className="h-full grid place-items-center">
-        <p className="text-muted-foreground">Курс не найден</p>
+        <p className="text-white/64">Курс не найден</p>
       </div>
     );
   }
@@ -55,19 +89,19 @@ export default function CuratorCourseDetails() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-display font-bold mb-2">{track.title}</h1>
+          <h1 className="text-3xl font-bold mb-2 text-white/92">{track.title}</h1>
           {track.description && (
-            <p className="text-muted-foreground">{track.description}</p>
+            <p className="text-white/64">{track.description}</p>
           )}
         </div>
-        <Button variant="outline" onClick={copyCode} data-testid="button-copy-code">
+        <Button variant="secondary" onClick={copyCode} data-testid="button-copy-code">
           <Copy className="w-4 h-4 mr-2" />
           Код: {track.joinCode}
         </Button>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList>
           <TabsTrigger value="overview" data-testid="tab-overview">Обзор</TabsTrigger>
           <TabsTrigger value="employees" data-testid="tab-employees">Сотрудники</TabsTrigger>
           <TabsTrigger value="materials" data-testid="tab-materials">Материалы</TabsTrigger>
@@ -76,73 +110,61 @@ export default function CuratorCourseDetails() {
         <TabsContent value="overview" className="mt-6">
           <div className="grid gap-4 md:grid-cols-3 mb-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Шагов
-                </CardTitle>
-                <BookOpen className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{steps.length}</div>
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-[14px] bg-[#A6E85B]/14 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-[#A6E85B]" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white/92">{steps.length}</p>
+                  <p className="text-sm text-white/48">Шагов</p>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Сотрудников
-                </CardTitle>
-                <Users className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{employeeCount}</div>
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-[14px] bg-[#60A5FA]/14 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-[#60A5FA]" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white/92">{employeeCount}</p>
+                  <p className="text-sm text-white/48">Сотрудников</p>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Завершили
-                </CardTitle>
-                <CheckCircle className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-primary">{completionRate}%</div>
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-[14px] bg-[#2DD4BF]/14 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-[#2DD4BF]" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-[#A6E85B]">{completionRate}%</p>
+                  <p className="text-sm text-white/48">Завершили</p>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Структура курса</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-white/92">Структура курса</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {steps.map((step, idx) => (
-                  <div 
+                  <StepItem 
                     key={step.id} 
-                    className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50"
-                    data-testid={`step-${step.id}`}
-                  >
-                    <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
-                      {idx + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">
-                        {step.type === 'content' && (step.content as any).text?.slice(0, 50) + '...'}
-                        {step.type === 'quiz' && (step.content as any).question}
-                        {step.type === 'open' && (step.content as any).question}
-                        {step.type === 'roleplay' && (step.content as any).scenario}
-                      </p>
-                    </div>
-                    <Badge variant="outline">
-                      {step.type === 'content' && 'Контент'}
-                      {step.type === 'quiz' && 'Тест'}
-                      {step.type === 'open' && 'Открытый'}
-                      {step.type === 'roleplay' && 'Ролевая'}
-                    </Badge>
-                    {step.tag && <Badge variant="secondary">{step.tag}</Badge>}
-                  </div>
+                    step={step} 
+                    index={idx}
+                    isEditing={editingStep === step.id}
+                    editContent={editContent}
+                    setEditContent={setEditContent}
+                    onStartEdit={() => startEditing(step)}
+                    onCancelEdit={cancelEditing}
+                    onSave={() => saveStep(step.id)}
+                    isSaving={updateStep.isPending}
+                  />
                 ))}
               </div>
             </CardContent>
@@ -155,25 +177,28 @@ export default function CuratorCourseDetails() {
               <CardContent className="pt-6">
                 <div className="space-y-3">
                   {analytics.employees.map((emp: any) => (
-                    <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                    <div 
+                      key={emp.id} 
+                      className="flex items-center justify-between p-4 rounded-[14px] bg-white/[0.04] border border-white/[0.06]"
+                    >
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">
+                        <div className="w-10 h-10 rounded-full bg-[#A6E85B]/14 flex items-center justify-center">
+                          <span className="text-sm font-medium text-[#A6E85B]">
                             {emp.name?.charAt(0).toUpperCase() || 'U'}
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium">{emp.name}</p>
-                          <p className="text-sm text-muted-foreground">{emp.email}</p>
+                          <p className="font-medium text-white/92">{emp.name}</p>
+                          <p className="text-sm text-white/48">{emp.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="font-medium">{emp.progress}%</p>
-                          <p className="text-xs text-muted-foreground">прогресс</p>
+                          <p className="font-medium text-white/92">{emp.progress}%</p>
+                          <p className="text-xs text-white/48">прогресс</p>
                         </div>
                         {emp.isCompleted && (
-                          <Badge className="bg-primary/10 text-primary">Завершил</Badge>
+                          <Badge variant="success">Завершил</Badge>
                         )}
                       </div>
                     </div>
@@ -182,12 +207,12 @@ export default function CuratorCourseDetails() {
               </CardContent>
             ) : (
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-muted-foreground" />
+                <div className="w-16 h-16 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-white/48" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">Нет сотрудников</h3>
-                <p className="text-muted-foreground max-w-sm">
-                  Поделитесь кодом {track.joinCode} с сотрудниками для присоединения
+                <h3 className="text-lg font-bold mb-2 text-white/92">Нет сотрудников</h3>
+                <p className="text-white/64 max-w-sm">
+                  Поделитесь кодом <span className="font-mono text-[#A6E85B]">{track.joinCode}</span> с сотрудниками
                 </p>
               </CardContent>
             )}
@@ -197,14 +222,14 @@ export default function CuratorCourseDetails() {
         <TabsContent value="materials" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-white/92">
+                <FileText className="w-5 h-5 text-[#A6E85B]" />
                 База знаний
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="p-4 rounded-lg bg-secondary/50 max-h-96 overflow-auto">
-                <pre className="whitespace-pre-wrap text-sm">
+              <div className="p-4 rounded-[14px] bg-white/[0.04] border border-white/[0.06] max-h-96 overflow-auto">
+                <pre className="whitespace-pre-wrap text-sm text-white/80 font-mono">
                   {track.rawKnowledgeBase}
                 </pre>
               </div>
@@ -212,6 +237,230 @@ export default function CuratorCourseDetails() {
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function StepItem({ 
+  step, 
+  index, 
+  isEditing, 
+  editContent,
+  setEditContent,
+  onStartEdit, 
+  onCancelEdit, 
+  onSave,
+  isSaving
+}: { 
+  step: any; 
+  index: number; 
+  isEditing: boolean;
+  editContent: any;
+  setEditContent: (c: any) => void;
+  onStartEdit: () => void; 
+  onCancelEdit: () => void;
+  onSave: () => void;
+  isSaving: boolean;
+}) {
+  const getStepTypeLabel = (type: string) => {
+    switch (type) {
+      case 'content': return 'Контент';
+      case 'quiz': return 'Тест';
+      case 'open': return 'Открытый';
+      case 'roleplay': return 'Ролевая';
+      default: return type;
+    }
+  };
+
+  const getStepPreview = (step: any) => {
+    const content = step.content;
+    switch (step.type) {
+      case 'content': return content?.text?.slice(0, 80) + (content?.text?.length > 80 ? '...' : '');
+      case 'quiz': return content?.question;
+      case 'open': return content?.question;
+      case 'roleplay': return content?.scenario;
+      default: return '';
+    }
+  };
+
+  const getBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'content': return 'default';
+      case 'quiz': return 'info';
+      case 'open': return 'warning';
+      case 'roleplay': return 'success';
+      default: return 'default';
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div 
+        className="p-4 rounded-[14px] bg-[#A6E85B]/[0.08] border border-[#A6E85B]/20"
+        data-testid={`step-edit-${step.id}`}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-[#A6E85B]/20 flex items-center justify-center text-sm font-medium text-[#A6E85B]">
+              {index + 1}
+            </span>
+            <Badge variant={getBadgeVariant(step.type) as any}>
+              {getStepTypeLabel(step.type)}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onCancelEdit}
+              data-testid={`button-cancel-${step.id}`}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={onSave}
+              disabled={isSaving}
+              data-testid={`button-save-${step.id}`}
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Сохранить
+            </Button>
+          </div>
+        </div>
+
+        {step.type === 'content' && (
+          <Textarea
+            value={editContent?.text || ''}
+            onChange={(e) => setEditContent({ ...editContent, text: e.target.value })}
+            rows={6}
+            className="font-mono text-sm"
+            data-testid={`textarea-content-${step.id}`}
+          />
+        )}
+
+        {step.type === 'quiz' && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Вопрос</label>
+              <Input
+                value={editContent?.question || ''}
+                onChange={(e) => setEditContent({ ...editContent, question: e.target.value })}
+                data-testid={`input-question-${step.id}`}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Варианты ответов</label>
+              {editContent?.options?.map((opt: string, i: number) => (
+                <div key={i} className="flex items-center gap-2 mb-2">
+                  <Input
+                    value={opt}
+                    onChange={(e) => {
+                      const newOpts = [...editContent.options];
+                      newOpts[i] = e.target.value;
+                      setEditContent({ ...editContent, options: newOpts });
+                    }}
+                    className={cn(
+                      editContent.correctIdx === i && "border-[#A6E85B]"
+                    )}
+                    data-testid={`input-option-${step.id}-${i}`}
+                  />
+                  <Button
+                    variant={editContent.correctIdx === i ? "default" : "secondary"}
+                    size="sm"
+                    onClick={() => setEditContent({ ...editContent, correctIdx: i })}
+                    data-testid={`button-correct-${step.id}-${i}`}
+                  >
+                    {editContent.correctIdx === i ? "Верный" : "Выбрать"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step.type === 'open' && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Вопрос</label>
+              <Input
+                value={editContent?.question || ''}
+                onChange={(e) => setEditContent({ ...editContent, question: e.target.value })}
+                data-testid={`input-open-question-${step.id}`}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Эталонный ответ</label>
+              <Textarea
+                value={editContent?.idealAnswer || ''}
+                onChange={(e) => setEditContent({ ...editContent, idealAnswer: e.target.value })}
+                rows={3}
+                data-testid={`textarea-ideal-${step.id}`}
+              />
+            </div>
+          </div>
+        )}
+
+        {step.type === 'roleplay' && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Сценарий</label>
+              <Textarea
+                value={editContent?.scenario || ''}
+                onChange={(e) => setEditContent({ ...editContent, scenario: e.target.value })}
+                rows={3}
+                data-testid={`textarea-scenario-${step.id}`}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Роль AI</label>
+              <Input
+                value={editContent?.aiRole || ''}
+                onChange={(e) => setEditContent({ ...editContent, aiRole: e.target.value })}
+                data-testid={`input-airole-${step.id}`}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-white/64 mb-1 block">Роль пользователя</label>
+              <Input
+                value={editContent?.userRole || ''}
+                onChange={(e) => setEditContent({ ...editContent, userRole: e.target.value })}
+                data-testid={`input-userrole-${step.id}`}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="group flex items-center gap-3 p-4 rounded-[14px] bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.10] transition-colors cursor-pointer"
+      onClick={onStartEdit}
+      data-testid={`step-${step.id}`}
+    >
+      <span className="w-7 h-7 rounded-full bg-[#A6E85B]/14 flex items-center justify-center text-sm font-medium text-[#A6E85B]">
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate text-white/92">
+          {getStepPreview(step)}
+        </p>
+      </div>
+      <Badge variant={getBadgeVariant(step.type) as any}>
+        {getStepTypeLabel(step.type)}
+      </Badge>
+      {step.tag && <Badge variant="secondary">{step.tag}</Badge>}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
+        data-testid={`button-edit-${step.id}`}
+      >
+        <Edit2 className="w-4 h-4" />
+      </Button>
     </div>
   );
 }
