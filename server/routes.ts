@@ -163,8 +163,16 @@ export async function registerRoutes(
   // Drills
   app.post(api.drills.record.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const input = api.drills.record.input.parse(req.body);
-    const attempt = await storage.createDrillAttempt(input);
+    const userId = (req.user as any).id;
+    const { stepId, isCorrect, transcript, score } = req.body;
+    
+    const attempt = await storage.createDrillAttempt({
+      userId,
+      stepId: Number(stepId),
+      isCorrect: isCorrect === true,
+      transcript: transcript || null,
+      score: Number(score) || 0,
+    });
     res.status(201).json(attempt);
   });
 
