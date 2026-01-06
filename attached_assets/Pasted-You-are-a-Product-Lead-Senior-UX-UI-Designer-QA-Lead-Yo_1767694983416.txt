@@ -1,0 +1,408 @@
+You are a Product Lead + Senior UX/UI Designer + QA Lead. Your task is to audit and fix the existing ADAPT web app so it matches the product promise and core Jobs. Deliver an end-to-end working MVP for mid-market SMB employees and curators.
+
+0) Product context (do not change)
+
+ADAPT is an AI onboarding + training platform that creates individualized training tracks based on a curator’s knowledge base (files/text). Employees complete short lessons (quizzes + open answers + roleplay). The system automatically reinforces weak areas with Drill Mode, and curators see real analytics from actual employee actions.
+
+1) AS-IS (current problems you must fix)
+
+Audit the running app and fix these issues (no placeholders):
+
+Course generation is wrong: uploading a large knowledge base creates a tiny course (e.g., 3 questions). It must produce multi-module training that covers all major topics from the knowledge base.
+
+No Drill Mode at all (missing pillar).
+
+No real Analytics at all (missing pillar). Current metrics are absent or fake.
+
+Navigation/UX issues:
+
+Missing “Back / Home / Resume” behavior.
+
+Users can get stuck, dead clicks, silent failures.
+
+No ability to skip voice question and return later / or at least safely continue and revisit weak topics via Drill (see TO-BE).
+
+Role separation is unclear:
+
+Need clear split of Curator vs Employee areas.
+
+Role switching must be predictable (ideally via profile/settings, but not breaking flows).
+
+Auth bugs:
+
+If user already exists and tries to register, system must show: “Пользователь уже зарегистрирован. Войдите.” (not “you are authorized”).
+
+Login should never cause 404/redirection glitches.
+
+KB upload breaks (PDF upload errors). Must support multi-file (PDF/DOC/DOCX/images) with clear fallbacks.
+
+UI style inconsistent: too many borders/frames, inconsistent colors; must be clean and modern with a consistent pleasant green accent like the landing.
+
+Russian UX requirement not fully met: entire UI must be Russian, including buttons, errors, empty states.
+
+Voice is unreliable or missing:
+
+Need Russian TTS “Speak” button on each step.
+
+Voice input must not overwrite typed input.
+
+2) TO-BE (non-negotiable outcomes)
+
+Deliver a working product where:
+
+Employee can:
+
+Join courses via join code.
+
+See “Мои курсы” library with progress and Continue that always works.
+
+Complete lessons with:
+
+Quiz (single/multi choice)
+
+Open answer
+
+Roleplay (sales practice)
+
+Get immediate feedback on mistakes and be routed into Drill Mode automatically.
+
+Use voice:
+
+🔊 Озвучить (Russian TTS) on each step.
+
+Optional 🎤 Голосовой ввод for open/roleplay (push-to-talk).
+
+Navigate safely:
+
+Назад and Продолжить always work.
+
+No dead ends; no silent failures.
+
+Curator can:
+
+Create training quickly based on knowledge base.
+
+Have a Library-first UX: “Мои курсы/треки” is the main place.
+
+Generate a multi-module course from KB and then edit it.
+
+See real analytics based on employee actions (not placeholders).
+
+Identify gaps early: “Нужно повторить” topics per employee and track.
+
+3) IA / Navigation structure (must implement)
+Employee side menu:
+
+Обзор
+
+Мои курсы (main hub)
+
+Профиль
+
+Настройки
+
+Curator side menu:
+
+Мои курсы/треки (Library — MAIN)
+
+Аналитика
+
+Профиль
+
+Настройки
+
+Side menu must be:
+
+visible on all internal pages
+
+collapsible
+
+consistent styling
+
+4) Curator Library-first UX (create + editor inside library)
+
+Curator “Мои курсы/треки” must include:
+
+Header with CTA: “+ Создать трек”
+
+Course cards showing:
+
+Название
+
+Короткое описание
+
+Join code (copy)
+
+Кол-во сотрудников (enrollments)
+
+Средний прогресс
+
+Последняя активность
+
+Create Track flow (from library)
+
+A minimal modal/wizard:
+
+Название + (опц.) описание
+
+Загрузка базы знаний:
+
+multi-file: PDF, DOC/DOCX, images (JPG/PNG)
+
+paste-text fallback
+
+Toggle: “Строго по базе знаний (не выдумывать)”
+
+Button: “Сгенерировать трек”
+After generation:
+
+New course appears in library
+
+Auto-open Course Details
+
+Course Details (click card → open)
+
+Tabs:
+
+Обзор
+
+Редактор (mandatory)
+
+Сотрудники
+
+Материалы (База знаний)
+
+Редактор (must work)
+
+Curator can:
+
+Edit module titles
+
+Edit lessons/steps:
+
+MCQ: question, options, correct, explanation, tag(topic)
+
+Open: question, rubric, ideal answer, tag(topic)
+
+Roleplay: scenario, rubric, ideal phrases, tag(topic)
+
+Reorder steps
+
+Delete steps
+
+Add new step manually
+
+Save
+
+Preview as employee (“Посмотреть как сотрудник”)
+
+5) Multi-module course generation (critical fix)
+
+When KB is large, do NOT create 3 questions.
+You MUST generate:
+
+Course → Modules (themes) → Lessons → Steps/questions
+Rules:
+
+Cover all major topics from the KB
+
+Each module must have multiple steps
+
+Keep steps short and easy (2–4 lines max per prompt)
+
+Use tags/topics to connect mistakes to Drill Mode
+
+If “Strict KB” is enabled:
+
+The AI must not invent facts outside KB
+
+If KB lacks info: respond “нет данных в базе знаний” and escalate to curator (see Q&A)
+
+6) Lesson player UX (full width, short, clear)
+
+Lesson screen must be:
+
+full-width content area (with responsive layout)
+
+short text (2–4 lines per step)
+Header:
+
+progress bar
+
+“Шаг X/Y”
+
+toggle: “Озвучка: Вкл/Выкл”
+
+button: “🔊 Озвучить”
+Bottom:
+
+Назад
+
+Primary action changes: “Проверить / Далее / Отправить”
+No dead clicks.
+
+7) Drill Mode (P0, must implement end-to-end)
+
+Definition:
+
+Each step has a tag/topic (e.g., “Возражения”, “Активное слушание”).
+Trigger:
+
+If employee answers incorrectly:
+
+show compact feedback:
+
+Почему это ошибка
+
+Как правильно
+
+Насколько ошибся (distance score)
+
+immediately launch a Drill attempt: a similar question of same tag
+
+allow max 2 drill retries
+
+if still incorrect: mark tag as “Нужно повторить” and continue
+
+Distance scoring (MVP acceptable):
+
+MCQ: show “Выбрано: X, Верно: Y” and score 0/50/100 or 0–10
+
+Open/Roleplay:
+
+score 0–10
+
+missing key points (2–4 bullets)
+
+1–2 example phrases to improve
+
+Employee visibility:
+
+“Мини-дрилл (1/2)” indicator
+
+After drill: “Закрепили ✅” or “Отмечено: нужно повторить”
+
+8) Real Analytics (P0, must be real, no placeholders)
+
+Analytics must be computed from actual recorded actions:
+
+joins via join code
+
+step completion
+
+incorrect attempts
+
+drill triggers
+
+scores and tags
+
+Curator analytics must show:
+
+Track-level:
+
+joined employees count
+
+completion %
+
+last activity distribution
+
+average quiz accuracy
+
+average open/roleplay score (0–10)
+
+top “Нужно повторить” tags/topics
+
+drop-off points (where users stop)
+
+Employee-level (per course):
+
+timeline: steps done + incorrect + drill triggered
+
+accuracy trend
+
+needs repeat tags list
+
+final summary:
+
+readiness level
+
+key gaps
+
+recommended drills/next steps
+
+Empty states:
+
+If no data: show clean empty states, no fake numbers.
+
+9) Q&A escalation to curator (must exist)
+
+Employees can ask questions in-app (assistant).
+Rules:
+
+If answer exists in KB (strict mode): answer with KB-based response.
+
+If KB does not contain the answer:
+
+Say: “В базе знаний нет ответа. Я отправил вопрос куратору.”
+
+Create a curator-visible item (in “Вопросы/обращения” or inside course “Сотрудники/Обзор” section).
+Curator can reply; employee sees answer in the course context.
+
+10) Voice (Russian) — must be stable
+
+Every step has “🔊 Озвучить” button using Russian voice.
+
+Open answer + roleplay: push-to-talk voice input.
+
+Voice input must never overwrite typed text: append or fill only when input is empty.
+
+Settings:
+
+“Озвучка по умолчанию: Вкл/Выкл”
+
+11) KB upload (minimum acceptable)
+
+Supports multi-file: PDF + DOC/DOCX + JPG/PNG.
+
+If parsing fails: show clear message and allow “Вставить текст вручную”.
+
+Generation flow must not break.
+
+12) UI/Visual (must match the landing vibe)
+
+Goal: simple, clean, modern — not heavy borders.
+Requirements:
+
+Consistent pleasant green accent across auth, dashboards, lessons.
+
+Reduce outlines/borders; use spacing, subtle shadows, soft corners.
+
+Add loading states, toasts, error states in Russian.
+
+No silent failures — always show what happened.
+
+13) Auth fixes (must pass QA)
+
+Register with existing email → show “Пользователь уже зарегистрирован. Войдите.”
+
+Login should never show 404 glitch.
+
+Proper error messages for wrong password, invalid email, etc.
+
+After login: direct routing to correct home depending on role.
+
+14) Acceptance checklist (must pass before done)
+
+✅ Curator Library has “Создать трек” and clicking a course opens details with tabs.
+✅ Editor exists, saving works, preview works.
+✅ Employee “Мои курсы” is a working hub: progress + Continue always works.
+✅ Drill Mode triggers on wrong answers and shows reason + correct + “how wrong”.
+✅ Analytics shows real joined employees and real progress/drill data.
+✅ Russian TTS works via button; voice input works where needed.
+✅ KB upload supports multi-file; failures have clear fallback.
+✅ UI is fully Russian and visually consistent (green accent, minimal borders).
+✅ No dead clicks; no silent failures; safe Back/Resume everywhere.
+
+Priority rule
+
+P0 first: Multi-module course generation + Drill Mode + Real Analytics + Library-first Curator UX + stable navigation + auth correctness. Everything else is secondary.

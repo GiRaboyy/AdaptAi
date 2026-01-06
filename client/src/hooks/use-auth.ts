@@ -28,10 +28,15 @@ export function useLogin() {
       });
       
       if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error("Invalid email or password");
+        try {
+          const error = await res.json();
+          throw new Error(error.message || "Ошибка входа");
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            throw new Error("Ошибка входа");
+          }
+          throw e;
         }
-        throw new Error("Login failed");
       }
       
       return api.auth.login.responses[200].parse(await res.json());

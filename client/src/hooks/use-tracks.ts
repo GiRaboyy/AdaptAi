@@ -144,3 +144,22 @@ export function useCreateStep() {
     }
   });
 }
+
+export function useAddNeedsRepeatTag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ trackId, tag }: { trackId: number; tag: string }) => {
+      const res = await fetch("/api/enrollments/needs-repeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackId, tag }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to add needs repeat tag");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.enrollments.list.path] });
+    }
+  });
+}

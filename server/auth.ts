@@ -70,7 +70,7 @@ export function setupAuth(app: Express) {
     try {
       const existingUser = await storage.getUserByEmail(req.body.email);
       if (existingUser) {
-        return res.status(400).send("Email already in use");
+        return res.status(400).json({ message: "Пользователь уже зарегистрирован. Войдите." });
       }
 
       const hashedPassword = await hashPassword(req.body.password);
@@ -91,7 +91,7 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) return next(err);
-      if (!user) return res.status(401).send("Invalid email or password");
+      if (!user) return res.status(401).json({ message: "Неверный email или пароль" });
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(200).json(user);

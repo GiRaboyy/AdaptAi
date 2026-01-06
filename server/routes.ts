@@ -36,65 +36,83 @@ const openai = new OpenAI({
 });
 
 async function generateTrackContent(title: string, knowledgeBase: string, strictMode: boolean = true) {
-  const systemPrompt = `Ты - эксперт по созданию обучающих курсов на РУССКОМ языке. 
-Твоя задача: создать учебный курс на основе предоставленной базы знаний.
+  const kbLength = knowledgeBase.length;
+  const minSteps = kbLength > 5000 ? 15 : kbLength > 2000 ? 10 : 6;
+  const maxSteps = kbLength > 5000 ? 25 : kbLength > 2000 ? 15 : 10;
+  
+  const systemPrompt = `Ты - эксперт по созданию КОМПЛЕКСНЫХ обучающих курсов на РУССКОМ языке.
+Твоя задача: создать ПОЛНОЦЕННЫЙ мульти-модульный учебный курс на основе предоставленной базы знаний.
 
-ВАЖНЫЕ ПРАВИЛА:
-1. ВСЕ тексты должны быть ТОЛЬКО НА РУССКОМ ЯЗЫКЕ
-2. ${strictMode ? 'Используй ТОЛЬКО информацию из базы знаний. Не добавляй ничего от себя.' : 'Можешь дополнять информацию, но основывайся на базе знаний.'}
-3. Вопросы и ответы должны быть напрямую связаны с текстом базы знаний
-4. ОБЯЗАТЕЛЬНО включи ролевой сценарий в конце
+КРИТИЧЕСКИ ВАЖНЫЕ ПРАВИЛА:
+1. ВСЕ тексты ТОЛЬКО НА РУССКОМ ЯЗЫКЕ
+2. ${strictMode ? 'Используй СТРОГО ТОЛЬКО информацию из базы знаний. Не выдумывай факты.' : 'Можешь дополнять, но основывайся на базе знаний.'}
+3. Создай от ${minSteps} до ${maxSteps} шагов, покрывающих ВСЕ основные темы из базы знаний
+4. Каждая тема должна иметь: content (объяснение) + quiz или open вопрос
+5. ОБЯЗАТЕЛЬНО 2-3 roleplay сценария в разных частях курса
+6. Каждый шаг должен иметь уникальный "tag" (тему), например: "введение", "основы_продаж", "работа_с_возражениями"
+7. Текст content должен быть коротким (2-4 строки), понятным
+8. Вопросы должны проверять понимание конкретных фактов из базы знаний
 
-Формат ответа - ТОЛЬКО JSON массив шагов:
-[
-  {
-    "type": "content",
-    "tag": "введение",
-    "content": { "text": "Текст урока на русском..." }
-  },
-  {
-    "type": "quiz", 
-    "tag": "тема1",
-    "content": { 
-      "question": "Вопрос на русском?", 
-      "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], 
-      "correctIndex": 0,
-      "explanation": "Объяснение правильного ответа"
-    }
-  },
-  {
-    "type": "content",
-    "tag": "основы",
-    "content": { "text": "Ещё текст урока..." }
-  },
-  {
-    "type": "quiz",
-    "tag": "основы", 
-    "content": { 
-      "question": "Ещё вопрос?", 
-      "options": ["А", "Б", "В", "Г"], 
-      "correctIndex": 1,
-      "explanation": "Почему Б правильный ответ"
-    }
-  },
-  {
-    "type": "roleplay",
-    "tag": "практика",
-    "content": { 
-      "scenario": "Описание ситуации для ролевой игры на русском...",
-      "context": "Контекст ситуации",
-      "ideal_answer": "Примерный идеальный ответ сотрудника"
-    }
+СТРУКТУРА КУРСА (пример для большой базы знаний):
+- 1-2 вводных content
+- Модуль 1: 2-3 content + 2 quiz/open по теме 1
+- Модуль 2: 2-3 content + 2 quiz/open по теме 2
+- Roleplay по темам 1-2
+- Модуль 3: 2-3 content + 2 quiz/open по теме 3
+- Финальный roleplay
+
+ТИПЫ ШАГОВ:
+{
+  "type": "content",
+  "tag": "название_темы",
+  "content": { "text": "Короткий урок 2-4 строки..." }
+}
+
+{
+  "type": "quiz",
+  "tag": "название_темы", 
+  "content": { 
+    "question": "Вопрос строго по базе знаний?", 
+    "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], 
+    "correctIndex": 0,
+    "explanation": "Почему это правильный ответ (со ссылкой на материал)"
   }
-]
+}
 
-Создай минимум 5 шагов: 2 content, 2 quiz и 1 roleplay.`;
+{
+  "type": "open",
+  "tag": "название_темы",
+  "content": {
+    "question": "Вопрос требующий развёрнутого ответа",
+    "ideal_answer": "Образец идеального ответа",
+    "key_points": ["ключевой момент 1", "ключевой момент 2"]
+  }
+}
 
-  const userPrompt = `Создай учебный курс "${title}" на основе этой базы знаний:
+{
+  "type": "roleplay",
+  "tag": "практика_название",
+  "content": { 
+    "scenario": "Конкретная рабочая ситуация...",
+    "context": "Что нужно сделать",
+    "ideal_answer": "Пример хорошего ответа"
+  }
+}
 
-${knowledgeBase}
+Ответ: ТОЛЬКО JSON объект с массивом "steps".`;
 
-Помни: всё на русском языке, вопросы строго по тексту, обязательно включи roleplay сценарий.`;
+  const userPrompt = `Создай ПОЛНОЦЕННЫЙ учебный курс "${title}" из ${minSteps}-${maxSteps} шагов.
+
+БАЗА ЗНАНИЙ:
+${knowledgeBase.substring(0, 12000)}
+
+ТРЕБОВАНИЯ:
+- Покрой ВСЕ ключевые темы из базы знаний
+- Минимум ${minSteps} шагов
+- Разные типы: content, quiz, open, roleplay
+- Каждый шаг = свой tag (тема)
+- 2-3 roleplay сценария
+- Всё на русском языке`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -104,7 +122,7 @@ ${knowledgeBase}
         { role: "user", content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 8000,
       response_format: { type: "json_object" }
     });
 
@@ -347,6 +365,27 @@ export async function registerRoutes(
     }
   });
 
+  // Add needs repeat tag for drill mode
+  app.post("/api/enrollments/needs-repeat", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const { trackId, tag } = req.body;
+    if (!trackId || !tag) {
+      return res.status(400).json({ message: "trackId and tag are required" });
+    }
+    
+    const userId = (req.user as any).id;
+    const enrollment = await storage.getEnrollment(userId, trackId);
+    if (!enrollment) return res.status(404).json({ message: "Enrollment not found" });
+    
+    try {
+      const updated = await storage.addNeedsRepeatTag(enrollment.id, tag);
+      res.json(updated);
+    } catch (err) {
+      return res.status(500).json({ message: "Failed to update" });
+    }
+  });
+
   // Analytics for curator
   app.get("/api/analytics", async (req, res) => {
     if (!req.isAuthenticated() || (req.user as any).role !== 'curator') return res.sendStatus(401);
@@ -407,7 +446,7 @@ export async function registerRoutes(
       return res.status(403).json({ message: "Access denied" });
     }
     
-    const newStep = await storage.createStep({ trackId, type, content, order: order || 0 });
+    const newStep = await storage.createStep({ trackId, type, content, orderIndex: order || 0 });
     res.status(201).json(newStep);
   });
 

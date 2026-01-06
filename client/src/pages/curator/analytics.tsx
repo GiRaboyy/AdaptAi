@@ -23,12 +23,20 @@ type TrackStats = {
   employees: EmployeeStats[];
 };
 
+type ProblemTopic = {
+  tag: string;
+  accuracy: number;
+  attempts: number;
+  errors: number;
+};
+
 type AnalyticsData = {
   totalTracks: number;
   totalEmployees: number;
   avgCompletion: number;
   avgAccuracy: number;
   trackStats: TrackStats[];
+  problemTopics?: ProblemTopic[];
 };
 
 export default function CuratorAnalytics() {
@@ -268,13 +276,30 @@ export default function CuratorAnalytics() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {avgAccuracy === 0 ? (
+              {!analytics?.problemTopics || analytics.problemTopics.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>Проблемные темы будут отображаться после прохождения тестов</p>
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Детальный анализ проблемных тем доступен в разделе "По курсам"</p>
+                <div className="space-y-3">
+                  {analytics.problemTopics.map((topic) => (
+                    <div key={topic.tag} className="flex items-center justify-between gap-4 p-4 rounded-lg bg-secondary/30 border" data-testid={`problem-topic-${topic.tag}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                          <AlertTriangle className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{topic.tag}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {topic.errors} ошибок из {topic.attempts} попыток
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={topic.accuracy < 50 ? "destructive" : "secondary"} className="text-sm">
+                        {topic.accuracy}% точность
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

@@ -15,6 +15,7 @@ export interface IStorage {
   // Tracks
   createTrack(track: typeof tracks.$inferInsert): Promise<Track>;
   createSteps(stepsList: typeof steps.$inferInsert[]): Promise<Step[]>;
+  createStep(step: typeof steps.$inferInsert): Promise<Step>;
   updateStep(id: number, content: any): Promise<Step | undefined>;
   getTracksByCurator(curatorId: number): Promise<Track[]>;
   getTrack(id: number): Promise<Track | undefined>;
@@ -28,6 +29,7 @@ export interface IStorage {
   getUserEnrollments(userId: number): Promise<{ enrollment: Enrollment; track: Track }[]>;
   updateEnrollmentProgress(id: number, stepIndex: number, isCompleted?: boolean): Promise<Enrollment>;
   getEnrollmentsByTrackId(trackId: number): Promise<{ enrollment: Enrollment; user: User }[]>;
+  addNeedsRepeatTag(enrollmentId: number, tag: string): Promise<Enrollment>;
 
   // Analytics
   getCuratorAnalytics(curatorId: number): Promise<any>;
@@ -81,6 +83,11 @@ export class DatabaseStorage implements IStorage {
   async createSteps(stepsList: typeof steps.$inferInsert[]): Promise<Step[]> {
     if (stepsList.length === 0) return [];
     return await db.insert(steps).values(stepsList).returning();
+  }
+
+  async createStep(step: typeof steps.$inferInsert): Promise<Step> {
+    const [newStep] = await db.insert(steps).values(step).returning();
+    return newStep;
   }
 
   async updateStep(id: number, content: any): Promise<Step | undefined> {
@@ -182,6 +189,23 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async addNeedsRepeatTag(enrollmentId: number, tag: string): Promise<Enrollment> {
+    const enrollment = await this.getEnrollmentById(enrollmentId);
+    if (!enrollment) throw new Error("Enrollment not found");
+    
+    const currentTags = enrollment.needsRepeatTags || [];
+    if (!currentTags.includes(tag)) {
+      currentTags.push(tag);
+    }
+    
+    const [updated] = await db
+      .update(enrollments)
+      .set({ needsRepeatTags: currentTags, updatedAt: new Date() })
+      .where(eq(enrollments.id, enrollmentId))
+      .returning();
+    return updated;
+  }
+
   // Analytics
   async getCuratorAnalytics(curatorId: number): Promise<any> {
     const curatorTracks = await this.getTracksByCurator(curatorId);
@@ -239,12 +263,35 @@ export class DatabaseStorage implements IStorage {
       });
     }
 
+    // Calculate global problem topics from all attempts
+    const allProblemTags: Record<string, { correct: number; total: number }> = {};
+    for (const track of curatorTracks) {
+      const trackAttempts = await this.getDrillAttemptsByTrack(track.id);
+      trackAttempts.forEach(attempt => {
+        const tag = attempt.tag || 'без_тега';
+        if (!allProblemTags[tag]) allProblemTags[tag] = { correct: 0, total: 0 };
+        allProblemTags[tag].total++;
+        if (attempt.isCorrect) allProblemTags[tag].correct++;
+      });
+    }
+
+    const problemTopics = Object.entries(allProblemTags)
+      .map(([tag, stats]) => ({
+        tag,
+        accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+        attempts: stats.total,
+        errors: stats.total - stats.correct
+      }))
+      .filter(t => t.accuracy < 80)
+      .sort((a, b) => a.accuracy - b.accuracy);
+
     return {
       totalTracks: curatorTracks.length,
       totalEmployees,
       avgCompletion: enrollmentCount > 0 ? Math.round(totalProgress / enrollmentCount) : 0,
       avgAccuracy: totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0,
-      trackStats
+      trackStats,
+      problemTopics
     };
   }
 

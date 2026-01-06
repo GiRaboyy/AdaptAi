@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { useTrack, useEnrollments, useUpdateProgress, useRecordDrill } from "@/hooks/use-tracks";
+import { useTrack, useEnrollments, useUpdateProgress, useRecordDrill, useAddNeedsRepeatTag } from "@/hooks/use-tracks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -164,6 +164,7 @@ export default function Player() {
   const { data: enrollments, isLoading: isEnrollmentsLoading } = useEnrollments();
   const { mutate: updateProgress } = useUpdateProgress();
   const { mutate: recordDrill } = useRecordDrill();
+  const { mutate: addNeedsRepeatTag } = useAddNeedsRepeatTag();
   const { toast } = useToast();
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -176,6 +177,7 @@ export default function Player() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluation, setEvaluation] = useState<{ score: number; feedback: string; isCorrect: boolean; improvements: string | null } | null>(null);
+  const [markedNeedsRepeat, setMarkedNeedsRepeat] = useState(false);
 
   const enrollment = enrollments?.find(e => e.enrollment.trackId === Number(trackId))?.enrollment;
   const steps = trackData?.steps || [];
@@ -214,6 +216,7 @@ export default function Player() {
     setShowFeedback(false);
     setDrillAttempt(0);
     setEvaluation(null);
+    setMarkedNeedsRepeat(false);
     
     if (currentStepIndex < totalSteps - 1) {
       const nextIndex = currentStepIndex + 1;
@@ -298,8 +301,17 @@ export default function Player() {
       score: isCorrect ? 10 : 0,
     });
 
-    if (!isCorrect && drillAttempt < 2) {
-      setDrillAttempt(drillAttempt + 1);
+    if (!isCorrect) {
+      if (drillAttempt < 2) {
+        setDrillAttempt(drillAttempt + 1);
+      } else if (currentStep.tag) {
+        addNeedsRepeatTag({ trackId: Number(trackId), tag: currentStep.tag });
+        setMarkedNeedsRepeat(true);
+        toast({ 
+          title: "Отмечено: нужно повторить",
+          description: `Тема "${currentStep.tag}" добавлена для повторения`,
+        });
+      }
     }
   };
 
