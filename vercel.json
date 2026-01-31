@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "dist/index.cjs",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/healthz",
+      "dest": "dist/index.cjs"
+    },
+    {
+      "src": "/readyz",
+      "dest": "dist/index.cjs"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "dist/index.cjs"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "dist/index.cjs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type InsertUser } from "@shared/routes";
 import { useLocation } from "wouter";
 import { getSupabaseClient, fetchWithAuth } from "@/lib/supabase";
+import { getAppUrl } from "@/lib/env-validation";
 
 export function useUser() {
   return useQuery({
@@ -115,7 +116,7 @@ export function useRegister() {
       }
 
       // Use Supabase Auth for registration
-      const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) || window.location.origin;
+      const appUrl = getAppUrl();
       const redirectUrl = `${appUrl}/auth/callback`;
       
       const signUpOptions: any = {

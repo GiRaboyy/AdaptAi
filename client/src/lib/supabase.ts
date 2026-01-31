@@ -1,19 +1,31 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getEnv, logEnvValidation, validateClientEnv } from './env-validation';
 
 // Frontend Supabase client configuration
 // Uses VITE_ prefixed environment variables (exposed to client)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = getEnv('VITE_SUPABASE_URL');
+const SUPABASE_ANON_KEY = getEnv('VITE_SUPABASE_ANON_KEY');
 
 let supabaseClient: SupabaseClient | null = null;
+let hasLoggedValidation = false;
 
 /**
  * Get Supabase client for frontend auth operations
  * Used for handling email verification callbacks
  */
 export function getSupabaseClient(): SupabaseClient | null {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn('[Supabase] Missing configuration');
+  // Log validation errors once on first call
+  if (!hasLoggedValidation) {
+    logEnvValidation();
+    hasLoggedValidation = true;
+  }
+
+  const validation = validateClientEnv();
+  if (!validation.isValid) {
+    console.error(
+      '[Supabase] Cannot initialize: missing environment variables:',
+      validation.missing.join(', ')
+    );
     return null;
   }
 
@@ -25,6 +37,8 @@ export function getSupabaseClient(): SupabaseClient | null {
         detectSessionInUrl: false, // We handle this manually in callback page
       },
     });
+    
+    console.log('[Supabase] ✓ Client initialized successfully');
   }
 
   return supabaseClient;
