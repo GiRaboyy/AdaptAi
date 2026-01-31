@@ -28,23 +28,23 @@ export function CuratorSidebar() {
   const { mutate: logout } = useLogout();
 
   return (
-    <Sidebar className="bg-white border-r border-[#0a1f12]/20">
-      <SidebarHeader className="p-4">
+    <Sidebar className="bg-navy border-r border-navy-light">
+      <SidebarHeader className="p-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#A6E85B] border border-[#0a1f12]/30 flex items-center justify-center">
-            <span className="text-[#0B1220] text-lg font-black">A</span>
+          <div className="w-10 h-10 rounded-xl bg-lime flex items-center justify-center">
+            <span className="text-foreground text-lg font-bold">A</span>
           </div>
           <div>
-            <h1 className="font-bold text-lg text-[#0a1f12]">ADAPT</h1>
-            <p className="text-xs text-[#0a1f12]/60">Куратор</p>
+            <h1 className="font-bold text-lg text-white">ADAPT</h1>
+            <p className="text-xs text-white/50">Куратор</p>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="px-3">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => {
                 const isActive = location === item.url || 
                   (item.url !== "/curator" && location.startsWith(item.url));
@@ -53,14 +53,15 @@ export function CuratorSidebar() {
                     <SidebarMenuButton 
                       asChild 
                       isActive={isActive}
-                      className={isActive 
-                        ? "bg-[#A6E85B]/20 text-[#0a1f12] border border-[#A6E85B]" 
-                        : "text-[#0a1f12]/70 hover:bg-[#A6E85B]/15 hover:text-[#0a1f12] border border-transparent transition-all"
-                      }
+                      className={`rounded-xl h-11 transition-all ${
+                        isActive 
+                          ? "bg-lime/20 text-white border border-lime/30" 
+                          : "text-white/60 hover:bg-white/5 hover:text-white border border-transparent"
+                      }`}
                     >
                       <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}>
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.title}</span>
+                        <item.icon className={`w-5 h-5 ${isActive ? "text-lime" : ""}`} />
+                        <span className={isActive ? "font-semibold" : "font-medium"}>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -71,27 +72,27 @@ export function CuratorSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-4 border-t border-[#0a1f12]/20 mt-auto">
-        <div className="flex items-center justify-between gap-2 rounded-xl p-3 border border-[#0a1f12]/20 bg-[#FAFAFA]">
+      <SidebarFooter className="p-4 border-t border-white/10 mt-auto">
+        <div className="flex items-center justify-between gap-2 rounded-xl p-3 bg-white/5">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="w-10 h-10 border border-[#A6E85B]">
-              <AvatarFallback className="bg-[#A6E85B]/20 text-[#0a1f12] text-sm font-bold">
+            <Avatar className="w-10 h-10 border-2 border-lime/30">
+              <AvatarFallback className="bg-lime/20 text-white text-sm font-bold">
                 {user?.name?.charAt(0).toUpperCase() || "C"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-sm font-bold truncate text-[#0a1f12]">{user?.name}</p>
-              <p className="text-xs text-[#0a1f12]/60 truncate">{user?.email}</p>
+              <p className="text-sm font-semibold truncate text-white">{user?.name}</p>
+              <p className="text-xs text-white/50 truncate">{user?.email}</p>
             </div>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => logout()}
-            className="border border-[#0a1f12]/20 hover:border-[#0a1f12] hover:bg-red-50"
+            className="shrink-0 text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
             data-testid="button-logout"
           >
-            <LogOut className="w-5 h-5 text-[#0a1f12]" />
+            <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </SidebarFooter>

@@ -8,18 +8,32 @@ export default {
       borderRadius: {
         full: "999px",
         "2xl": "20px",
-        xl: "20px",
-        lg: "16px",
-        md: "12px",
-        sm: "8px",
+        xl: "16px",
+        lg: "12px",
+        md: "8px",
+        sm: "6px",
       },
       colors: {
+        /* ADAPT Brand Colors */
+        lime: {
+          DEFAULT: "#C8F65D",
+          hover: "#B8E64D",
+          soft: "hsl(78 91% 66% / 0.15)",
+        },
+        navy: {
+          DEFAULT: "#1A1A2E",
+          light: "#252540",
+        },
+        
+        /* Base Colors */
         background: "hsl(var(--bg))",
         "background-2": "hsl(var(--bg-2))",
         foreground: "hsl(var(--foreground))",
         border: "hsl(var(--border))",
         "border-strong": "hsl(var(--border-strong))",
         input: "hsl(var(--input))",
+        
+        /* Card */
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -28,14 +42,17 @@ export default {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
+        
+        /* Primary - Lime */
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
           soft: "hsl(var(--primary-soft))",
-          pressed: "hsl(var(--primary-pressed))",
           ink: "hsl(var(--primary-ink))",
         },
+        
+        /* Secondary */
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -48,6 +65,8 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        
+        /* Semantic Colors */
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -64,8 +83,15 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        
+        /* Step Type Colors */
+        blue: "hsl(var(--blue))",
+        purple: "hsl(var(--purple))",
+        orange: "hsl(var(--orange))",
         teal: "hsl(var(--teal))",
         ring: "hsl(var(--ring))",
+        
+        /* Charts */
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -73,11 +99,14 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        
+        /* Sidebar - Dark Navy */
         sidebar: {
           ring: "hsl(var(--sidebar-ring))",
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
           border: "hsl(var(--sidebar-border))",
+          muted: "hsl(var(--sidebar-muted))",
         },
         "sidebar-primary": {
           DEFAULT: "hsl(var(--sidebar-primary))",

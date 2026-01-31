@@ -117,7 +117,7 @@ export default function EmployeeCourses() {
   if (isLoading) {
     return (
       <div className="h-full grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-primary" />
+        <Loader2 className="animate-spin w-8 h-8 text-lime" />
       </div>
     );
   }
@@ -125,35 +125,35 @@ export default function EmployeeCourses() {
   const hasCourses = enrollments && enrollments.length > 0;
 
   return (
-    <div className="max-w-container mx-auto space-y-6 p-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {latestInProgress && (
-        <Card className="bg-primary-soft border-primary overflow-hidden shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <Card className="bg-lime-soft border-lime overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-lg bg-primary/20 border border-primary flex items-center justify-center shrink-0">
-                  <Play className="w-7 h-7 text-primary" />
+                <div className="w-12 h-12 rounded-xl bg-lime/30 border border-lime flex items-center justify-center shrink-0">
+                  <Play className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium mb-1">Продолжить обучение</p>
-                  <h2 className="text-xl font-semibold mb-2">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Продолжить обучение</p>
+                  <h2 className="text-lg font-semibold mb-2 text-foreground">
                     {latestInProgress.track.title}
                   </h2>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Progress value={latestInProgress.enrollment.progressPct || 0} className="w-24" />
-                      <span className="text-muted-foreground font-medium">
+                      <Progress value={latestInProgress.enrollment.progressPct || 0} className="w-24 h-2" />
+                      <span className="text-muted-foreground text-xs font-medium">
                         {latestInProgress.enrollment.progressPct || 0}%
                       </span>
                     </div>
-                    <span className="text-muted-foreground font-medium">
+                    <span className="text-muted-foreground text-xs font-medium">
                       Шаг {(latestInProgress.enrollment.lastStepIndex || 0) + 1}
                     </span>
                   </div>
                 </div>
               </div>
               <Link href={`/app/player/${latestInProgress.track.id}`}>
-                <Button size="lg" className="shrink-0" data-testid="button-continue-hero">
+                <Button size="lg" className="shrink-0 bg-lime hover:bg-lime-hover text-foreground font-semibold" data-testid="button-continue-hero">
                   Продолжить <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
@@ -163,50 +163,50 @@ export default function EmployeeCourses() {
       )}
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="shadow-sm" data-testid="stat-total">
-          <CardContent className="p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary-soft flex items-center justify-center">
+        <Card className="bg-white border-border" data-testid="stat-total">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-lime-soft flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{enrollments?.length || 0}</p>
-              <p className="text-xs text-muted-foreground font-medium">Всего курсов</p>
+              <p className="text-xl font-bold text-foreground">{enrollments?.length || 0}</p>
+              <p className="text-xs text-muted-foreground">Всего курсов</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm" data-testid="stat-in-progress">
-          <CardContent className="p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-surface-soft flex items-center justify-center">
-              <Clock className="w-5 h-5 text-foreground" />
+        <Card className="bg-white border-border" data-testid="stat-in-progress">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{inProgressCount}</p>
-              <p className="text-xs text-muted-foreground font-medium">В процессе</p>
+              <p className="text-xl font-bold text-foreground">{inProgressCount}</p>
+              <p className="text-xs text-muted-foreground">В процессе</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm" data-testid="stat-completed">
-          <CardContent className="p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary-soft flex items-center justify-center">
+        <Card className="bg-white border-border" data-testid="stat-completed">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-lime-soft flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{completedCount}</p>
-              <p className="text-xs text-muted-foreground font-medium">Завершено</p>
+              <p className="text-xl font-bold text-lime-hover">{completedCount}</p>
+              <p className="text-xs text-muted-foreground">Завершено</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm" data-testid="stat-avg">
-          <CardContent className="p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-surface-soft flex items-center justify-center">
+        <Card className="bg-white border-border" data-testid="stat-avg">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center">
               <Target className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{avgProgress}%</p>
-              <p className="text-xs text-muted-foreground font-medium">Средний прогресс</p>
+              <p className="text-xl font-bold text-foreground">{avgProgress}%</p>
+              <p className="text-xs text-muted-foreground">Средний прогресс</p>
             </div>
           </CardContent>
         </Card>
@@ -219,10 +219,10 @@ export default function EmployeeCourses() {
               key={filter.key}
               onClick={() => setActiveFilter(filter.key)}
               className={cn(
-                "px-4 py-2 rounded-md text-sm font-medium transition-all shrink-0",
+                "px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0",
                 activeFilter === filter.key
-                  ? "bg-primary-soft text-foreground"
-                  : "bg-surface border border-border text-muted-foreground hover:border-border-strong"
+                  ? "bg-lime-soft text-foreground border border-lime/30"
+                  : "bg-white border border-border text-muted-foreground hover:border-lime/50"
               )}
               data-testid={`filter-${filter.key}`}
             >
@@ -237,14 +237,15 @@ export default function EmployeeCourses() {
               placeholder="Поиск курсов..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-10 rounded-lg border-border focus:border-lime focus:ring-lime/25"
               data-testid="input-search"
             />
           </div>
           {hasCourses && (
             <Button 
-              variant="secondary" 
+              variant="outline" 
               onClick={() => setJoinDialogOpen(true)}
+              className="border-border hover:border-lime hover:bg-lime-soft"
               data-testid="button-join-new"
             >
               <Plus className="w-4 h-4 mr-2" /> Присоединиться

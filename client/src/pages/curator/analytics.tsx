@@ -47,7 +47,7 @@ export default function CuratorAnalytics() {
   if (isLoading) {
     return (
       <div className="h-full grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-primary" />
+        <Loader2 className="animate-spin w-8 h-8 text-lime" />
       </div>
     );
   }
@@ -55,10 +55,10 @@ export default function CuratorAnalytics() {
   const { totalTracks = 0, totalEmployees = 0, avgCompletion = 0, avgAccuracy = 0, trackStats = [] } = analytics || {};
 
   return (
-    <div className="max-w-container mx-auto space-y-8 p-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-display font-bold mb-2">Аналитика</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold mb-1 text-foreground">Аналитика</h1>
+        <p className="text-muted-foreground text-sm">
           Отслеживайте прогресс сотрудников
         </p>
       </div>
@@ -72,11 +72,11 @@ export default function CuratorAnalytics() {
             <BookOpen className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-bold">{totalTracks}</div>
+            <div className="text-2xl font-bold text-foreground">{totalTracks}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm" data-testid="stat-employees">
+        <Card className="bg-white border-border" data-testid="stat-employees">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Сотрудников
@@ -84,11 +84,11 @@ export default function CuratorAnalytics() {
             <Users className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-bold">{totalEmployees}</div>
+            <div className="text-2xl font-bold text-foreground">{totalEmployees}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm" data-testid="stat-completion">
+        <Card className="bg-white border-border" data-testid="stat-completion">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Средний прогресс
@@ -96,11 +96,11 @@ export default function CuratorAnalytics() {
             <Target className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-primary">{avgCompletion}%</div>
+            <div className="text-2xl font-bold text-lime-hover">{avgCompletion}%</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm" data-testid="stat-accuracy">
+        <Card className="bg-white border-border" data-testid="stat-accuracy">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Точность ответов
@@ -108,7 +108,7 @@ export default function CuratorAnalytics() {
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-bold">{avgAccuracy > 0 ? `${avgAccuracy}%` : '-'}</div>
+            <div className="text-2xl font-bold text-foreground">{avgAccuracy > 0 ? `${avgAccuracy}%` : '-'}</div>
           </CardContent>
         </Card>
       </div>

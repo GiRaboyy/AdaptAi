@@ -31,10 +31,10 @@ function EmployeeLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-[#F8FAFC]">
+      <div className="flex h-screen w-full bg-background-2">
         <EmployeeSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 overflow-auto p-6 bg-background">
+          <main className="flex-1 overflow-auto p-6 bg-background-2">
             <Switch>
               <Route path="/app" component={EmployeeCourses} />
               <Route path="/app/courses" component={EmployeeCourses} />
@@ -57,10 +57,10 @@ function CuratorLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-[#F8FAFC]">
+      <div className="flex h-screen w-full bg-background-2">
         <CuratorSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 overflow-auto p-6 bg-background">
+          <main className="flex-1 overflow-auto p-6 bg-background-2">
             <Switch>
               <Route path="/curator" component={CuratorLibrary} />
               <Route path="/curator/course/:id" component={CuratorCourseDetails} />
@@ -82,7 +82,7 @@ function AuthenticatedRouter() {
   if (isLoading) {
     return (
       <div className="h-screen grid place-items-center bg-background">
-        <Loader2 className="animate-spin w-8 h-8 text-[#A6E85B]" />
+        <Loader2 className="animate-spin w-8 h-8 text-lime" />
       </div>
     );
   }

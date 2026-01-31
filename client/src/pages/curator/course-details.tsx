@@ -452,7 +452,7 @@ export default function CuratorCourseDetails() {
   if (isLoading) {
     return (
       <div className="h-full grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-[#A6E85B]" />
+        <Loader2 className="animate-spin w-8 h-8 text-lime" />
       </div>
     );
   }
@@ -496,37 +496,37 @@ export default function CuratorCourseDetails() {
 
         <TabsContent value="overview" className="mt-6">
           <div className="grid gap-4 md:grid-cols-3 mb-6">
-            <Card>
+            <Card className="bg-white border-border">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#A6E85B]/15 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-[#3D7A1E]" />
+                <div className="w-11 h-11 rounded-xl bg-lime-soft flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-foreground">{visibleSteps.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{visibleSteps.length}</p>
                   <p className="text-sm text-muted-foreground">Шагов</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white border-border">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-foreground">{employeeCount}</p>
+                  <p className="text-2xl font-bold text-foreground">{employeeCount}</p>
                   <p className="text-sm text-muted-foreground">Сотрудников</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white border-border">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-teal-600" />
+                <div className="w-11 h-11 rounded-xl bg-lime-soft flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-[#3D7A1E]">{completionRate}%</p>
+                  <p className="text-2xl font-bold text-lime-hover">{completionRate}%</p>
                   <p className="text-sm text-muted-foreground">Завершили</p>
                 </div>
               </CardContent>

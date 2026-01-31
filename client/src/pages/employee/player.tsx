@@ -89,7 +89,7 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
       </h3>
       
       {hasSpeechSupport && !showTextInput ? (
-        <div className="bg-secondary rounded-2xl border border-black p-6 text-center">
+        <div className="bg-surface-2 rounded-2xl border border-border p-6 text-center">
           <div className="mb-4">
             <p className="text-sm text-muted-foreground font-medium mb-2">
               Ответьте голосом на этот вопрос
@@ -105,20 +105,20 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
               "w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all",
               isRecording 
                 ? "bg-red-500 animate-pulse border-2 border-red-600" 
-                : "bg-[#A6E85B] border-2 border-black hover-elevate"
+                : "bg-lime hover:bg-lime-hover border-2 border-foreground/20"
             )}
             data-testid="button-voice-record"
           >
-            <Mic className={cn("w-8 h-8", isRecording ? "text-white" : "text-black")} />
+            <Mic className={cn("w-8 h-8", isRecording ? "text-white" : "text-foreground")} />
           </button>
           
-          <p className="mt-4 text-sm font-medium">
+          <p className="mt-4 text-sm font-medium text-foreground">
             {isRecording ? "Слушаю..." : "Нажмите для записи"}
           </p>
           
           <button 
             onClick={() => setShowTextInput(true)}
-            className="mt-3 text-xs text-muted-foreground underline"
+            className="mt-3 text-xs text-muted-foreground underline hover:text-foreground transition-colors"
             data-testid="button-switch-text"
           >
             Ввести текстом
@@ -130,13 +130,13 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
             value={currentAnswer}
             onChange={(e) => onAnswer(e.target.value)}
             placeholder="Введите ваш ответ..."
-            className="w-full p-4 rounded-xl border border-black bg-secondary min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-[#A6E85B] focus:border-[#A6E85B]"
+            className="w-full p-4 rounded-xl border border-border bg-surface-2 min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-lime/25 focus:border-lime text-foreground"
             data-testid="input-open-answer"
           />
           {hasSpeechSupport && (
             <button 
               onClick={() => setShowTextInput(false)}
-              className="text-xs text-muted-foreground underline flex items-center gap-1"
+              className="text-xs text-muted-foreground underline flex items-center gap-1 hover:text-foreground transition-colors"
               data-testid="button-switch-voice"
             >
               <Mic className="w-3 h-3" /> Голосовой ввод
@@ -146,7 +146,7 @@ function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: {
       )}
 
       {currentAnswer && hasSpeechSupport && !showTextInput && (
-        <div className="rounded-xl border border-[#A6E85B] bg-[#A6E85B]/10 p-4">
+        <div className="rounded-xl border-2 border-lime bg-lime-soft p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             <p className="text-sm font-bold">Ваш ответ:</p>
             <Button 
@@ -440,7 +440,7 @@ export default function Player() {
 
   const content = currentStep.content as any;
 
-  // Если модальное окно результатов открыто - скрываем контент курса
+  // Если модальн��е окно результатов открыто - скрываем контент курса
   if (showCompletionModal) {
     return (
       <div className="max-w-3xl mx-auto">
@@ -555,24 +555,24 @@ export default function Player() {
       {/* Progress bar - Duolingo style */}
       <div className="mb-6 space-y-3">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-display font-bold truncate">{trackData?.track.title}</h1>
+          <h1 className="text-lg font-bold truncate text-foreground">{trackData?.track.title}</h1>
           <div className="flex items-center gap-2">
             {drillAttempt > 0 && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-xs">
                 Drill {drillAttempt}/2
               </Badge>
             )}
-            <Badge variant="secondary" data-testid="badge-step">
-              {Math.min(currentStepIndex + 1, totalSteps)}/{totalSteps}
+            <Badge variant="secondary" className="bg-surface-2 text-foreground border-border text-xs" data-testid="badge-step">
+              Шаг {Math.min(currentStepIndex + 1, totalSteps)} из {totalSteps}
             </Badge>
           </div>
         </div>
         <div className="relative">
-          <Progress value={progressPct} className={cn("h-3 rounded-full", drillAttempt > 0 && "[&>div]:bg-amber-500")} />
+          <Progress value={progressPct} className={cn("h-2 rounded-full [&>div]:bg-lime", drillAttempt > 0 && "[&>div]:bg-amber-500")} />
         </div>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 bg-white border-border">
         <CardContent className="pt-6">
           {/* MCQ Step - Content steps are forbidden, quiz mapped to mcq on backend */}
           {currentStep.type === 'mcq' && (() => {
@@ -582,7 +582,7 @@ export default function Player() {
             
             return (
               <div className="space-y-4">
-                <h3 className="text-lg font-medium" data-testid="quiz-question">
+                <h3 className="text-lg font-semibold text-foreground" data-testid="quiz-question">
                   {content.question}
                 </h3>
                 <div className="space-y-2">
@@ -597,15 +597,15 @@ export default function Player() {
                         onClick={() => !showFeedback && setSelectedAnswer(idx)}
                         disabled={showFeedback}
                         className={cn(
-                          "w-full p-4 rounded-lg border text-left transition-all flex items-center gap-3",
-                          isSelectedOption && !showFeedback && "border-primary bg-primary/5",
+                          "w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3",
+                          isSelectedOption && !showFeedback && "border-lime bg-lime-soft",
                           showFeedback && isCorrectOption && "border-green-500 bg-green-50",
                           isWrongSelection && "border-red-500 bg-red-50",
-                          !showFeedback && "hover:bg-secondary"
+                          !isSelectedOption && !showFeedback && "border-border hover:border-lime/50 hover:bg-lime-soft/50"
                         )}
                         data-testid={`option-${idx}`}
                       >
-                        <span className="flex-1">{option}</span>
+                        <span className="flex-1 text-foreground">{option}</span>
                         {showFeedback && isCorrectOption && (
                           <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
                         )}
@@ -776,8 +776,8 @@ export default function Player() {
         <div className="flex items-center gap-2">
           {/* Drill retry button - only for MCQ and only if drill attempts remaining */}
           {showFeedback && feedbackState === 'incorrect' && drillAttempt < 2 && currentStep.type === 'mcq' && (
-            <Button variant="outline" onClick={handleRetry} data-testid="button-retry">
-              <RotateCcw className="w-4 h-4 mr-2" /> Drill: Попробовать снова
+            <Button variant="outline" onClick={handleRetry} className="border-border hover:border-lime hover:bg-lime-soft" data-testid="button-retry">
+              <RotateCcw className="w-4 h-4 mr-2" /> Попробовать снова
             </Button>
           )}
           
@@ -786,6 +786,7 @@ export default function Player() {
             <Button 
               onClick={handleQuizSubmit} 
               disabled={selectedAnswer === null}
+              className="bg-lime hover:bg-lime-hover text-foreground font-semibold"
               data-testid="button-check"
             >
               Проверить
@@ -793,7 +794,7 @@ export default function Player() {
           )}
 
           {currentStep.type === 'mcq' && showFeedback && (
-            <Button onClick={handleNext} data-testid="button-next">
+            <Button onClick={handleNext} className="bg-lime hover:bg-lime-hover text-foreground font-semibold" data-testid="button-next">
               {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -803,6 +804,7 @@ export default function Player() {
             <Button 
               onClick={handleOpenSubmit} 
               disabled={!openAnswer.trim() || isEvaluating}
+              className="bg-lime hover:bg-lime-hover text-foreground font-semibold"
               data-testid="button-submit"
             >
               {isEvaluating ? (
@@ -816,14 +818,14 @@ export default function Player() {
           )}
 
           {(currentStep.type === 'open') && showFeedback && (
-            <Button onClick={handleNext} data-testid="button-next">
+            <Button onClick={handleNext} className="bg-lime hover:bg-lime-hover text-foreground font-semibold" data-testid="button-next">
               {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
 
           {currentStep.type === 'roleplay' && showFeedback && (
-            <Button onClick={handleNext} data-testid="button-next">
+            <Button onClick={handleNext} className="bg-lime hover:bg-lime-hover text-foreground font-semibold" data-testid="button-next">
               {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

@@ -8,9 +8,10 @@ import { Link, useLocation } from "wouter";
 import { useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, BookOpen, Copy, Users, Loader2, Sparkles, ArrowRight, Upload, FileText, X } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { getAuthHeaders } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 // Map English error codes to Russian messages
 const ERROR_MESSAGES: Record<string, string> = {
@@ -32,17 +33,17 @@ export default function CuratorLibrary() {
   if (isLoading) {
     return (
       <div className="h-full grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-primary" />
+        <Loader2 className="animate-spin w-8 h-8 text-lime" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-container mx-auto space-y-8 p-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-display font-bold mb-2">Мои курсы</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold mb-1 text-foreground">Мои курсы</h1>
+          <p className="text-muted-foreground text-sm">
             Управляйте учебными материалами
           </p>
         </div>
@@ -56,16 +57,21 @@ export default function CuratorLibrary() {
           ))}
         </div>
       ) : (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-2 bg-white">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
-              <Sparkles className="w-10 h-10 text-primary" />
+            <div className="w-16 h-16 rounded-2xl bg-lime-soft flex items-center justify-center mb-5">
+              <Sparkles className="w-8 h-8 text-foreground" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Нет курсов</h3>
-            <p className="text-muted-foreground mb-6 max-w-sm">
+            <h3 className="text-lg font-bold mb-2 text-foreground">Нет курсов</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm text-sm">
               Создайте первый курс на основе ваших учебных материалов
             </p>
-            <Button size="lg" onClick={() => setIsDialogOpen(true)} data-testid="button-create-first">
+            <Button 
+              size="lg" 
+              onClick={() => setIsDialogOpen(true)} 
+              className="bg-lime hover:bg-lime-hover text-foreground"
+              data-testid="button-create-first"
+            >
               <Plus className="w-5 h-5 mr-2" /> Создать тренинг
             </Button>
           </CardContent>
@@ -88,6 +94,19 @@ const COURSE_SIZE_OPTIONS: { value: CourseSize; label: string; description: stri
   { value: 'M', label: 'Средний', description: '24 вопроса' },
   { value: 'L', label: 'Большой', description: '36 вопросов' },
 ];
+
+function CreateTrackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button 
+      size="lg" 
+      onClick={onClick} 
+      className="bg-lime hover:bg-lime-hover text-foreground font-semibold"
+      data-testid="button-create-track"
+    >
+      <Plus className="w-5 h-5 mr-2" /> Создать тренинг
+    </Button>
+  );
+}
 
 function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const [title, setTitle] = useState("");
@@ -238,58 +257,55 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
 
   return (
     <>
-      <Button size="lg" onClick={() => onOpenChange(true)} data-testid="button-create-track">
-        <Plus className="w-5 h-5 mr-2" /> Создать тренинг
-      </Button>
+      <CreateTrackButton onClick={() => onOpenChange(true)} />
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Создать тренинг</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold text-foreground">Создать тренинг</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Загрузите базу знаний и AI создаст уроки
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <form onSubmit={handleSubmit} className="space-y-5 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-base font-medium">Название тренинга</Label>
+              <Label htmlFor="title" className="text-sm font-medium text-foreground">Название тренинга</Label>
               <Input 
                 id="title"
                 placeholder="Онбординг менеджера по продажам" 
                 value={title} 
                 onChange={e => setTitle(e.target.value)}
-                className="h-11"
+                className="h-12 rounded-xl border-border focus:border-lime focus:ring-lime/25"
                 data-testid="input-title"
               />
             </div>
 
             <div className="space-y-3">
-              <Label className="text-base font-medium">Размер курса</Label>
+              <Label className="text-sm font-medium text-foreground">Размер курса</Label>
               <div className="grid grid-cols-3 gap-2">
                 {COURSE_SIZE_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setCourseSize(option.value)}
-                    className={`
-                      flex flex-col items-center p-3 rounded-lg border-2 transition-all
-                      ${courseSize === option.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
-                      }
-                    `}
+                    className={cn(
+                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all",
+                      courseSize === option.value
+                        ? "border-lime bg-lime-soft"
+                        : "border-border hover:border-lime/50"
+                    )}
                     data-testid={`size-${option.value}`}
                   >
-                    <span className="text-2xl font-bold text-foreground">{option.value}</span>
+                    <span className="text-xl font-bold text-foreground">{option.value}</span>
                     <span className="text-sm font-medium text-foreground">{option.label}</span>
-                    <span className="text-xs text-muted-foreground text-center mt-1">{option.description}</span>
+                    <span className="text-xs text-muted-foreground text-center mt-0.5">{option.description}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-medium">База знаний</Label>
-              <p className="text-sm text-muted-foreground">Загрузите документы с материалами</p>
+              <Label className="text-sm font-medium text-foreground">База знаний</Label>
+              <p className="text-xs text-muted-foreground">Загрузите документы с материалами</p>
               
               <input
                 ref={fileInputRef}
@@ -306,34 +322,32 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                className={`
-                  relative cursor-pointer rounded-xl border-2 border-dashed p-8
-                  flex flex-col items-center justify-center text-center
-                  transition-all duration-200
-                  ${isDragOver 
-                    ? 'border-primary bg-primary/10' 
-                    : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
-                  }
-                `}
+                className={cn(
+                  "relative cursor-pointer rounded-xl border-2 border-dashed p-6",
+                  "flex flex-col items-center justify-center text-center transition-all duration-200",
+                  isDragOver 
+                    ? "border-lime bg-lime-soft" 
+                    : "border-border bg-surface-2 hover:border-lime/50 hover:bg-lime-soft/50"
+                )}
                 data-testid="dropzone"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-                  <Upload className="w-6 h-6 text-primary" />
+                <div className="w-11 h-11 rounded-xl bg-lime-soft flex items-center justify-center mb-3">
+                  <Upload className="w-5 h-5 text-foreground" />
                 </div>
-                <p className="font-medium text-foreground mb-1">Нажмите для загрузки</p>
-                <p className="text-sm text-muted-foreground">TXT, MD, DOCX, PDF (до 50 МБ)</p>
+                <p className="font-medium text-foreground text-sm mb-0.5">Нажмите для загрузки</p>
+                <p className="text-xs text-muted-foreground">TXT, MD, DOCX, PDF (до 50 МБ)</p>
               </div>
 
               {files.length > 0 && (
-                <div className="space-y-2 mt-4">
+                <div className="space-y-2 mt-3">
                   {files.map((file, index) => (
                     <div 
                       key={`${file.name}-${index}`}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-surface-2 border border-border"
                     >
-                      <FileText className="w-5 h-5 text-primary shrink-0" />
+                      <FileText className="w-5 h-5 text-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" title={file.name}>
+                        <p className="text-sm font-medium truncate text-foreground" title={file.name}>
                           {truncateName(file.name)}
                         </p>
                         <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
@@ -343,7 +357,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
                         variant="ghost"
                         size="icon"
                         onClick={() => removeFile(index)}
-                        className="shrink-0"
+                        className="shrink-0 h-8 w-8 text-muted-foreground hover:text-foreground"
                         data-testid={`button-remove-file-${index}`}
                       >
                         <X className="w-4 h-4" />
@@ -356,16 +370,16 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
 
             <Button 
               type="submit" 
-              className="w-full h-12 text-base" 
+              className="w-full h-12 text-base bg-lime hover:bg-lime-hover text-foreground font-semibold rounded-xl" 
               disabled={generateMutation.isPending || !hasContent} 
               data-testid="button-generate"
             >
               {generateMutation.isPending ? (
-                <><Loader2 className="animate-spin mr-2" /> Извлечение текста и генерация...</>
+                <><Loader2 className="animate-spin mr-2" /> Генерация...</>
               ) : generateMutation.isError ? (
                 <>Попробовать ещё раз</>
               ) : (
-                <><Sparkles className="w-5 h-5 mr-2" /> Сгенерировать тренинг с AI</>
+                <><Sparkles className="w-5 h-5 mr-2" /> Сгенерировать с AI</>
               )}
             </Button>
           </form>
@@ -389,23 +403,29 @@ function TrackCard({ track }: { track: any }) {
 
   return (
     <Link href={`/curator/course/${track.id}`}>
-      <Card className="hover-elevate cursor-pointer h-full shadow-sm hover:shadow-md transition-all" data-testid={`card-track-${track.id}`}>
+      <Card 
+        className={cn(
+          "cursor-pointer h-full bg-white border-border",
+          "hover:border-lime hover:shadow-md transition-all duration-200"
+        )}
+        data-testid={`card-track-${track.id}`}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <div className="w-10 h-10 rounded-lg bg-primary-soft flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-lime-soft flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 text-foreground" />
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={copyCode}
-              className="shrink-0 font-mono text-xs"
+              className="shrink-0 font-mono text-xs h-8 px-2.5 border-border hover:border-lime hover:bg-lime-soft"
               data-testid={`button-copy-${track.id}`}
             >
-              {track.joinCode} <Copy className="w-3 h-3 ml-1" />
+              {track.joinCode} <Copy className="w-3 h-3 ml-1.5" />
             </Button>
           </div>
-          <CardTitle className="text-lg line-clamp-2 mt-3">{track.title}</CardTitle>
+          <CardTitle className="text-base line-clamp-2 mt-3 text-foreground">{track.title}</CardTitle>
           {track.description && (
             <p className="text-sm text-muted-foreground line-clamp-2">
               {track.description}
@@ -413,8 +433,8 @@ function TrackCard({ track }: { track: any }) {
           )}
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground font-medium">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
               <Users className="w-4 h-4" />
               <span>{employeeCount} {employeeCount === 1 ? 'сотрудник' : employeeCount > 1 && employeeCount < 5 ? 'сотрудника' : 'сотрудников'}</span>
             </div>

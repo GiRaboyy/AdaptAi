@@ -8,41 +8,55 @@
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* === Light Theme === */
+  /* === ADAPT Design System === */
+  
+  /* Primary Accent - Lime */
+  --lime: 78 91% 66%;
+  --lime-hover: 78 85% 58%;
+  --lime-soft: 78 91% 66% / 0.15;
+  
+  /* Dark Navy - Sidebar, Footer */
+  --navy: 240 27% 14%;
+  --navy-light: 240 20% 20%;
+  
+  /* Backgrounds */
   --bg: 0 0% 100%;
-  --bg-2: 0 0% 98%;
+  --bg-2: 240 20% 99%;
   --background: var(--bg);
-  --foreground: 220 20% 10%;
+  --foreground: 220 60% 5%;
 
   /* Surfaces */
   --surface: 0 0% 100%;
-  --surface-2: 0 0% 96%;
+  --surface-2: 220 14% 98%;
 
-  /* Borders - BLACK */
-  --border: 0 0% 0%;
-  --border-strong: 0 0% 0%;
+  /* Borders */
+  --border: 220 13% 91%;
+  --border-strong: 220 13% 85%;
 
   /* Text */
-  --text: 220 20% 10%;
-  --muted-foreground: 220 10% 45%;
-  --muted-2: 220 10% 55%;
+  --text: 220 60% 5%;
+  --text-secondary: 220 9% 46%;
+  --muted-foreground: 220 9% 46%;
+  --muted-2: 220 9% 55%;
 
   /* Primary - lime accent */
-  --primary: 83 74% 60%;
-  --primary-hover: 83 70% 54%;
-  --primary-soft: 83 74% 60% / 0.15;
-  --primary-ink: 220 20% 10%;
+  --primary: var(--lime);
+  --primary-hover: var(--lime-hover);
+  --primary-soft: var(--lime-soft);
+  --primary-ink: 220 60% 5%;
   --primary-foreground: var(--primary-ink);
 
   /* Secondary accents */
   --teal: 168 76% 42%;
   --blue: 217 91% 60%;
+  --purple: 262 83% 58%;
+  --orange: 25 95% 53%;
 
   /* Semantic */
   --success: 142 76% 36%;
   --success-foreground: 0 0% 100%;
   --warning: 38 92% 50%;
-  --warning-foreground: 220 20% 10%;
+  --warning-foreground: 220 60% 5%;
   --error: 0 84% 60%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -63,30 +77,31 @@
   --input: var(--border);
   --ring: var(--primary);
 
-  /* Radii - NOT pill */
-  --r-sm: 10px;
+  /* Radii - per spec */
+  --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
   --radius: var(--r-md);
 
   /* Shadows - light mode */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
-  --shadow-md: 0 10px 24px rgba(0,0,0,0.1);
-  --shadow-lg: 0 20px 48px rgba(0,0,0,0.15);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
 
-  /* Sidebar */
-  --sidebar-background: var(--surface);
-  --sidebar-foreground: var(--text);
-  --sidebar-primary: var(--primary);
+  /* Sidebar - Dark Navy Theme */
+  --sidebar-background: var(--navy);
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: var(--lime);
   --sidebar-primary-foreground: var(--primary-ink);
-  --sidebar-accent: var(--primary-soft);
-  --sidebar-accent-foreground: var(--text);
-  --sidebar-border: 0 0% 0%;
-  --sidebar-ring: var(--primary);
+  --sidebar-accent: var(--lime-soft);
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: var(--navy-light);
+  --sidebar-ring: var(--lime);
+  --sidebar-muted: 240 15% 25%;
 
   /* Charts */
-  --chart-1: var(--primary);
+  --chart-1: var(--lime);
   --chart-2: var(--teal);
   --chart-3: var(--blue);
   --chart-4: var(--warning);
@@ -109,10 +124,37 @@
     line-height: 1.55;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1 {
     font-family: var(--font-sans);
     font-weight: 700;
-    letter-spacing: -0.025em;
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: hsl(var(--text));
+  }
+
+  h2 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 36px;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: hsl(var(--text));
+  }
+
+  h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: hsl(var(--text));
+  }
+
+  h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: hsl(var(--text));
   }
 }
@@ -135,6 +177,10 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
   }
 
   /* Surface utilities */
@@ -160,23 +206,32 @@
     box-shadow: var(--shadow-lg);
   }
 
-  /* Primary gradient */
-  .gradient-primary {
-    background: linear-gradient(180deg, #A6E85B 0%, #93D94B 100%);
+  /* Primary gradient - lime */
+  .gradient-lime {
+    background: linear-gradient(180deg, #C8F65D 0%, #A6E85B 100%);
   }
 
   /* Hover/active utilities */
   .hover-elevate {
-    transition: all 150ms ease;
+    transition: all 200ms ease;
   }
   .hover-elevate:hover {
-    border-color: hsl(var(--border-strong));
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
   }
 
-  .active-elevate-2 {
+  .hover-lift {
+    transition: all 200ms ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .active-scale {
     transition: transform 100ms ease;
   }
-  .active-elevate-2:active {
+  .active-scale:active {
     transform: scale(0.98);
   }
 
@@ -186,15 +241,7 @@
   }
   .toggle-elevated {
     background: hsl(var(--primary-soft));
-    border-color: hsl(83 74% 60% / 0.35);
-  }
-
-  .no-default-hover-elevate:hover {
-    transform: none;
-    box-shadow: none;
-  }
-  .no-default-active-elevate:active {
-    transform: none;
+    border-color: hsl(78 91% 66% / 0.4);
   }
 
   /* Focus ring - lime accent */
@@ -202,7 +249,7 @@
     @apply focus-visible:outline-none;
   }
   .focus-ring:focus-visible {
-    box-shadow: 0 0 0 3px rgba(166,232,91,0.25);
+    box-shadow: 0 0 0 3px hsl(78 91% 66% / 0.25);
   }
 
   /* Dividers */
@@ -214,5 +261,24 @@
   .divider-h {
     height: 1px;
     background: hsl(var(--border));
+  }
+
+  /* Badge variants for step types */
+  .badge-mcq {
+    background: hsl(217 91% 95%);
+    color: hsl(217 91% 40%);
+    border-color: hsl(217 91% 85%);
+  }
+
+  .badge-open {
+    background: hsl(262 83% 95%);
+    color: hsl(262 83% 45%);
+    border-color: hsl(262 83% 85%);
+  }
+
+  .badge-roleplay {
+    background: hsl(25 95% 95%);
+    color: hsl(25 95% 40%);
+    border-color: hsl(25 95% 85%);
   }
 }
