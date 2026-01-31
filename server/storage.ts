@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, pool, isDatabaseAvailable } from "./db";
 import {
   users, tracks, steps, enrollments, drillAttempts, knowledgeSources, kbIndex, promoCodes, courseMembers,
   type User, type InsertUser, type Track, type Step, type Enrollment, type DrillAttempt,
@@ -67,45 +67,68 @@ export interface IStorage {
 
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import MemoryStore from "memorystore";
 
 const PostgresSessionStore = connectPg(session);
+const MemoryStoreSession = MemoryStore(session);
 
 export class DatabaseStorage implements IStorage {
   sessionStore: any;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true,
-    });
+    // Use PostgreSQL session store if database is available, otherwise use memory store
+    if (isDatabaseAvailable() && pool) {
+      this.sessionStore = new PostgresSessionStore({
+        pool,
+        createTableIfMissing: true,
+      });
+      console.log('[Storage] Using PostgreSQL session store');
+    } else {
+      this.sessionStore = new MemoryStoreSession({
+        checkPeriod: 86400000, // prune expired entries every 24h
+      });
+      console.log('[Storage] Using memory session store (database not available)');
+    }
+  }
+
+  // Helper to ensure database is available
+  private ensureDb() {
+    if (!isDatabaseAvailable() || !db) {
+      throw new Error('Database is not available. Please configure Supabase integration.');
+    }
+    return db;
   }
 
   // User
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const database = this.ensureDb();
+    const [user] = await database.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
+    const database = this.ensureDb();
     // Case-insensitive email lookup - critical for Supabase sync
     // Supabase normalizes emails to lowercase, but users might register with mixed case
-    const [user] = await db.select().from(users).where(sql`LOWER(${users.email}) = LOWER(${email})`);
+    const [user] = await database.select().from(users).where(sql`LOWER(${users.email}) = LOWER(${email})`);
     return user;
   }
 
   async createUser(insertUser: InsertUserType): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const database = this.ensureDb();
+    const [user] = await database.insert(users).values(insertUser).returning();
     return user;
   }
 
   async getUserByVerificationToken(token: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token));
+    const database = this.ensureDb();
+    const [user] = await database.select().from(users).where(eq(users.emailVerificationToken, token));
     return user;
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
-    const [updated] = await db
+    const database = this.ensureDb();
+    const [updated] = await database
       .update(users)
       .set(updates)
       .where(eq(users.id, id))
@@ -114,7 +137,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async incrementCreatedCoursesCount(userId: number): Promise<void> {
-    await db
+    const database = this.ensureDb();
+    await database
       .update(users)
       .set({ createdCoursesCount: sql`${users.createdCoursesCount} + 1` })
       .where(eq(users.id, userId));
@@ -122,22 +146,26 @@ export class DatabaseStorage implements IStorage {
 
   // Tracks
   async createTrack(track: typeof tracks.$inferInsert): Promise<Track> {
-    const [newTrack] = await db.insert(tracks).values(track).returning();
+    const database = this.ensureDb();
+    const [newTrack] = await database.insert(tracks).values(track).returning();
     return newTrack;
   }
 
   async createSteps(stepsList: typeof steps.$inferInsert[]): Promise<Step[]> {
     if (stepsList.length === 0) return [];
-    return await db.insert(steps).values(stepsList).returning();
+    const database = this.ensureDb();
+    return await database.insert(steps).values(stepsList).returning();
   }
 
   async createStep(step: typeof steps.$inferInsert): Promise<Step> {
-    const [newStep] = await db.insert(steps).values(step).returning();
+    const database = this.ensureDb();
+    const [newStep] = await database.insert(steps).values(step).returning();
     return newStep;
   }
 
   async updateStep(id: number, content: any): Promise<Step | undefined> {
-    const [updated] = await db.update(steps)
+    const database = this.ensureDb();
+    const [updated] = await database.update(steps)
       .set({ content })
       .where(eq(steps.id, id))
       .returning();
@@ -145,12 +173,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTracksByCurator(curatorId: number): Promise<Track[]> {
-    return await db.select().from(tracks).where(eq(tracks.curatorId, curatorId));
+    const database = this.ensureDb();
+    return await database.select().from(tracks).where(eq(tracks.curatorId, curatorId));
   }
 
   async getTracksWithEmployeeCount(curatorId: number): Promise<Array<Omit<Track, 'rawKnowledgeBase'> & { employeeCount: number }>> {
+    const database = this.ensureDb();
     // Optimized query - excludes rawKnowledgeBase for faster loading
-    const result = await db
+    const result = await database
       .select({
         id: tracks.id,
         curatorId: tracks.curatorId,
@@ -171,17 +201,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTrack(id: number): Promise<Track | undefined> {
-    const [track] = await db.select().from(tracks).where(eq(tracks.id, id));
+    const database = this.ensureDb();
+    const [track] = await database.select().from(tracks).where(eq(tracks.id, id));
     return track;
   }
 
   async getTrackByCode(code: string): Promise<Track | undefined> {
-    const [track] = await db.select().from(tracks).where(eq(tracks.joinCode, code));
+    const database = this.ensureDb();
+    const [track] = await database.select().from(tracks).where(eq(tracks.joinCode, code));
     return track;
   }
 
   async getStepsByTrackId(trackId: number): Promise<Step[]> {
-    return await db
+    const database = this.ensureDb();
+    return await database
       .select()
       .from(steps)
       .where(eq(steps.trackId, trackId))
@@ -190,7 +223,8 @@ export class DatabaseStorage implements IStorage {
 
   // Enrollments
   async createEnrollment(userId: number, trackId: number): Promise<Enrollment> {
-    const [enrollment] = await db
+    const database = this.ensureDb();
+    const [enrollment] = await database
       .insert(enrollments)
       .values({ userId, trackId, progressPct: 0 })
       .returning();
@@ -198,7 +232,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEnrollment(userId: number, trackId: number): Promise<Enrollment | undefined> {
-    const [enrollment] = await db
+    const database = this.ensureDb();
+    const [enrollment] = await database
       .select()
       .from(enrollments)
       .where(and(eq(enrollments.userId, userId), eq(enrollments.trackId, trackId)));
@@ -206,7 +241,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEnrollmentById(id: number): Promise<Enrollment | undefined> {
-    const [enrollment] = await db
+    const database = this.ensureDb();
+    const [enrollment] = await database
       .select()
       .from(enrollments)
       .where(eq(enrollments.id, id));
@@ -214,7 +250,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserEnrollments(userId: number): Promise<{ enrollment: Enrollment; track: Track }[]> {
-    const result = await db
+    const database = this.ensureDb();
+    const result = await database
       .select({ enrollment: enrollments, track: tracks })
       .from(enrollments)
       .innerJoin(tracks, eq(enrollments.trackId, tracks.id))
@@ -240,7 +277,8 @@ export class DatabaseStorage implements IStorage {
       if (isCompleted) values.progressPct = 100;
     }
     
-    const [updated] = await db
+    const database = this.ensureDb();
+    const [updated] = await database
       .update(enrollments)
       .set(values)
       .where(eq(enrollments.id, id))
@@ -249,7 +287,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEnrollmentsByTrackId(trackId: number): Promise<{ enrollment: Enrollment; user: User }[]> {
-    const result = await db
+    const database = this.ensureDb();
+    const result = await database
       .select({ enrollment: enrollments, user: users })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.userId, users.id))
@@ -266,7 +305,8 @@ export class DatabaseStorage implements IStorage {
       currentTags.push(tag);
     }
     
-    const [updated] = await db
+    const database = this.ensureDb();
+    const [updated] = await database
       .update(enrollments)
       .set({ needsRepeatTags: currentTags, updatedAt: new Date() })
       .where(eq(enrollments.id, enrollmentId))
@@ -417,12 +457,14 @@ export class DatabaseStorage implements IStorage {
 
   // Drills
   async createDrillAttempt(attempt: typeof drillAttempts.$inferInsert): Promise<DrillAttempt> {
-    const [newAttempt] = await db.insert(drillAttempts).values(attempt).returning();
+    const database = this.ensureDb();
+    const [newAttempt] = await database.insert(drillAttempts).values(attempt).returning();
     return newAttempt;
   }
 
   async getDrillAttemptsByTrack(trackId: number): Promise<DrillAttempt[]> {
-    return await db
+    const database = this.ensureDb();
+    return await database
       .select()
       .from(drillAttempts)
       .where(eq(drillAttempts.trackId, trackId));
@@ -430,12 +472,14 @@ export class DatabaseStorage implements IStorage {
 
   // Knowledge Sources
   async createKnowledgeSource(source: typeof knowledgeSources.$inferInsert): Promise<KnowledgeSource> {
-    const [newSource] = await db.insert(knowledgeSources).values(source).returning();
+    const database = this.ensureDb();
+    const [newSource] = await database.insert(knowledgeSources).values(source).returning();
     return newSource;
   }
 
   async getKnowledgeSourcesByCourseId(courseId: number): Promise<KnowledgeSource[]> {
-    return await db
+    const database = this.ensureDb();
+    return await database
       .select()
       .from(knowledgeSources)
       .where(eq(knowledgeSources.courseId, courseId))
@@ -447,7 +491,8 @@ export class DatabaseStorage implements IStorage {
     status: string,
     errorMessage?: string
   ): Promise<KnowledgeSource | undefined> {
-    const [updated] = await db
+    const database = this.ensureDb();
+    const [updated] = await database
       .update(knowledgeSources)
       .set({ status: status as any, errorMessage })
       .where(eq(knowledgeSources.id, id))
@@ -457,12 +502,14 @@ export class DatabaseStorage implements IStorage {
 
   // KB Index
   async createKBIndex(index: typeof kbIndex.$inferInsert): Promise<KBIndex> {
-    const [newIndex] = await db.insert(kbIndex).values(index).returning();
+    const database = this.ensureDb();
+    const [newIndex] = await database.insert(kbIndex).values(index).returning();
     return newIndex;
   }
 
   async getKBIndexByCourseId(courseId: number): Promise<KBIndex | undefined> {
-    const [index] = await db
+    const database = this.ensureDb();
+    const [index] = await database
       .select()
       .from(kbIndex)
       .where(eq(kbIndex.courseId, courseId))
@@ -473,7 +520,8 @@ export class DatabaseStorage implements IStorage {
 
   // Promo Codes
   async getPromoCode(code: string): Promise<PromoCode | undefined> {
-    const [promo] = await db
+    const database = this.ensureDb();
+    const [promo] = await database
       .select()
       .from(promoCodes)
       .where(eq(promoCodes.code, code));
@@ -481,7 +529,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async redeemPromoCode(promoId: string, userId: number): Promise<PromoCode | undefined> {
-    const [redeemed] = await db
+    const database = this.ensureDb();
+    const [redeemed] = await database
       .update(promoCodes)
       .set({
         isUsed: true,
@@ -495,7 +544,8 @@ export class DatabaseStorage implements IStorage {
 
   // Course Members
   async createCourseMember(member: typeof courseMembers.$inferInsert): Promise<CourseMember> {
-    const [newMember] = await db
+    const database = this.ensureDb();
+    const [newMember] = await database
       .insert(courseMembers)
       .values(member)
       .returning();
@@ -503,7 +553,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCourseMemberCount(courseId: number, role?: string): Promise<number> {
-    let query = db
+    const database = this.ensureDb();
+    let query = database
       .select({ count: count() })
       .from(courseMembers)
       .where(eq(courseMembers.courseId, courseId));
@@ -517,7 +568,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async isCourseMember(courseId: number, userId: number): Promise<boolean> {
-    const [member] = await db
+    const database = this.ensureDb();
+    const [member] = await database
       .select()
       .from(courseMembers)
       .where(

@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db, isDatabaseAvailable } from "../db";
 import { kbChunks, aiLogs } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";

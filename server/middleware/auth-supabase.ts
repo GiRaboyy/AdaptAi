@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { db } from '../db';
+import { db, isDatabaseAvailable } from '../db';
 import { users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 
@@ -54,6 +54,12 @@ function getSupabaseClient(): SupabaseClient | null {
 export function authFromSupabase() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Check if database is available
+      if (!isDatabaseAvailable()) {
+        // No database - skip auth entirely, allow public access
+        return next();
+      }
+
       // Extract Bearer token from Authorization header
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;

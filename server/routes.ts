@@ -13,7 +13,7 @@ import mammoth from "mammoth";
 import { logAIInteraction } from "./ai/kb-service";
 import { parseJSONFromLLM } from "./ai/prompts";
 import { randomUUID } from "crypto";
-import { db } from "./db";
+import { db, isDatabaseAvailable } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { generateCourseV2, createCourseGenV2Settings } from "./ai/course-gen-v2";
 import type { CourseSizePreset, CourseGenV2Settings } from "@shared/types";
@@ -293,6 +293,12 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Log database availability
+  if (!isDatabaseAvailable()) {
+    console.warn("[Routes] Database is not available. API routes requiring database will fail.");
+    console.warn("[Routes] Please configure Supabase integration to enable full functionality.");
+  }
+  
   setupAuth(app);
 
   // Promo Code Redemption

@@ -15,7 +15,7 @@ import {
 } from "./prompts";
 import { StepSchema, ALLOWED_STEP_TYPES, type AllowedStepType } from "@shared/types";
 import { getRecommendedModuleCount, getRecommendedStepCount } from "./parsers";
-import { db } from "../db";
+import { db, isDatabaseAvailable } from "../db";
 import { drillAttempts, enrollments } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { retrieveRelevantChunks, logAIInteraction } from "./kb-service";

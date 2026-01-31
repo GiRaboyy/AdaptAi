@@ -21,7 +21,7 @@ import {
   type RoleplayNextTurnParams,
   type RoleplayEvaluationParams
 } from './prompts';
-import { db } from '../db';
+import { db, isDatabaseAvailable } from '../db';
 import { kbChunks, tracks } from '@shared/schema';
 import { eq, inArray } from 'drizzle-orm';
 

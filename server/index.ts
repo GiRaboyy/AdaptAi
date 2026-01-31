@@ -1,3 +1,16 @@
+// Load environment variables from .env file if it exists
+import { config } from "dotenv";
+import { existsSync } from "fs";
+import { resolve } from "path";
+
+const envPath = resolve(process.cwd(), ".env");
+if (existsSync(envPath)) {
+  config({ path: envPath });
+  console.log("[Server] Loaded environment from .env file");
+} else {
+  console.log("[Server] No .env file found, using system environment variables");
+}
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -5,6 +18,7 @@ import { createServer } from "http";
 import { logger } from "./logger";
 import { requestIdMiddleware, type RequestWithId } from "./request-id-middleware";
 import { authFromSupabase } from "./middleware/auth-supabase";
+import { isDatabaseAvailable } from "./db";
 
 const app = express();
 const httpServer = createServer(app);
@@ -185,6 +199,38 @@ app.get("/readyz", (_req, res) => {
 
   res.status(200).json({
     ready: true,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Status endpoint for debugging integrations
+app.get("/api/status", (_req, res) => {
+  const hasSupabaseUrl = !!process.env.DATABASE_FILE_STORAGE_URL;
+  const hasSupabaseKey = !!process.env.SUPABASE_ANON_KEY;
+  const hasDatabaseUrl = !!process.env.DATABASE_URL;
+  const hasClientSupabaseUrl = !!process.env.VITE_SUPABASE_URL;
+  const hasClientSupabaseKey = !!process.env.VITE_SUPABASE_ANON_KEY;
+  
+  res.status(200).json({
+    server: {
+      status: "running",
+      nodeEnv: process.env.NODE_ENV || "development",
+      uptime: Math.round(process.uptime()),
+    },
+    database: {
+      available: isDatabaseAvailable(),
+      configured: hasDatabaseUrl,
+    },
+    supabase: {
+      server: {
+        url: hasSupabaseUrl,
+        key: hasSupabaseKey,
+      },
+      client: {
+        url: hasClientSupabaseUrl,
+        key: hasClientSupabaseKey,
+      },
+    },
     timestamp: new Date().toISOString(),
   });
 });
