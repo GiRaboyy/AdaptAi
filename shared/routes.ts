@@ -22,7 +22,17 @@ export const api = {
       path: '/api/register',
       input: insertUserSchema,
       responses: {
-        201: z.custom<typeof users.$inferSelect>(),
+        201: z.object({
+          user: z.object({
+            id: z.number(),
+            email: z.string(),
+            name: z.string(),
+            role: z.string(),
+            emailVerified: z.boolean(),
+          }),
+          message: z.string(),
+          needsVerification: z.boolean().default(true),
+        }),
         400: errorSchemas.validation,
       },
     },

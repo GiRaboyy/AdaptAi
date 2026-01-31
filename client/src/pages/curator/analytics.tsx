@@ -55,7 +55,7 @@ export default function CuratorAnalytics() {
   const { totalTracks = 0, totalEmployees = 0, avgCompletion = 0, avgAccuracy = 0, trackStats = [] } = analytics || {};
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-container mx-auto space-y-8 p-6">
       <div>
         <h1 className="text-3xl font-display font-bold mb-2">Аналитика</h1>
         <p className="text-muted-foreground">
@@ -64,50 +64,50 @@ export default function CuratorAnalytics() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card data-testid="stat-tracks">
+        <Card className="shadow-sm" data-testid="stat-tracks">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Курсов
             </CardTitle>
             <BookOpen className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">{totalTracks}</div>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-employees">
+        <Card className="shadow-sm" data-testid="stat-employees">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Сотрудников
             </CardTitle>
             <Users className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">{totalEmployees}</div>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-completion">
+        <Card className="shadow-sm" data-testid="stat-completion">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Средний прогресс
             </CardTitle>
             <Target className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold text-primary">{avgCompletion}%</div>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-accuracy">
+        <Card className="shadow-sm" data-testid="stat-accuracy">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Точность ответов
             </CardTitle>
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">{avgAccuracy > 0 ? `${avgAccuracy}%` : '-'}</div>
           </CardContent>
         </Card>
@@ -135,7 +135,7 @@ export default function CuratorAnalytics() {
               </CardContent>
             </Card>
           ) : (
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>Активность по курсам</CardTitle>
               </CardHeader>
@@ -170,7 +170,7 @@ export default function CuratorAnalytics() {
             </Card>
           ) : (
             trackStats.map(track => (
-              <Card key={track.trackId}>
+              <Card key={track.trackId} className="shadow-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between gap-4">
                     <CardTitle>{track.title}</CardTitle>

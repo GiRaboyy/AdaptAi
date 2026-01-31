@@ -10,6 +10,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, BookOpen, Copy, Users, Loader2, Sparkles, ArrowRight, Upload, FileText, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import { getAuthHeaders } from "@/lib/supabase";
+
+// Map English error codes to Russian messages
+const ERROR_MESSAGES: Record<string, string> = {
+  'Unauthorized': 'Необходима авторизация. Пожалуйста, войдите в систему.',
+  'UNAUTHORIZED': 'Необходима авторизация. Пожалуйста, войдите в систему.',
+  'COURSE_LIMIT_REACHED': 'Достигнут лимит курсов. Введите промокод или свяжитесь с владельцем.',
+  'EMAIL_NOT_CONFIRMED': 'Подтвердите email перед созданием курса.',
+  'FORBIDDEN': 'Доступ запрещён.',
+};
+
+function translateError(message: string): string {
+  return ERROR_MESSAGES[message] || message;
+}
 
 export default function CuratorLibrary() {
   const { data: tracks, isLoading } = useTracks();
@@ -24,7 +38,7 @@ export default function CuratorLibrary() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-container mx-auto space-y-8 p-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-display font-bold mb-2">Мои курсы</h1>
@@ -67,9 +81,18 @@ interface UploadedFile {
   size: number;
 }
 
+type CourseSize = 'S' | 'M' | 'L';
+
+const COURSE_SIZE_OPTIONS: { value: CourseSize; label: string; description: string }[] = [
+  { value: 'S', label: 'Короткий', description: '12 вопросов' },
+  { value: 'M', label: 'Средний', description: '24 вопроса' },
+  { value: 'L', label: 'Большой', description: '36 вопросов' },
+];
+
 function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const [title, setTitle] = useState("");
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [courseSize, setCourseSize] = useState<CourseSize>('M');
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -77,20 +100,34 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
 
   const generateMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      // Get JWT auth headers (important for Supabase Auth)
+      const authHeaders = await getAuthHeaders();
+      
       const response = await fetch('/api/tracks/generate', {
         method: 'POST',
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          ...authHeaders,
+          // Note: Do NOT set Content-Type for FormData - browser sets it automatically with boundary
+        },
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Ошибка генерации');
+        const errorMessage = error.message || error.code || 'Ошибка генерации';
+        throw new Error(translateError(errorMessage));
       }
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tracks'] });
-      toast({ title: "Успешно!", description: "Тренинг создан" });
+      
+      // Show success message with extraction stats
+      const fileCount = files.length;
+      const totalChars = data.track?.rawKnowledgeBase?.length || 0;
+      const description = `✓ Извлечено: ${fileCount} ${fileCount === 1 ? 'файл' : 'файла/файлов'} • ${(totalChars / 1000).toFixed(1)}K символов`;
+      
+      toast({ title: "Успешно!", description });
       onOpenChange(false);
       resetForm();
       if (data.track?.id) {
@@ -98,13 +135,19 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
       }
     },
     onError: (err: Error) => {
-      toast({ variant: "destructive", title: "Ошибка", description: err.message || "Не удалось создать тренинг" });
+      // Показываем ошибку, но нЕ закрываем диалог
+      toast({ 
+        variant: "destructive", 
+        title: "Ошибка", 
+        description: err.message || "Не удалось создать тренинг"
+      });
     }
   });
 
   const resetForm = () => {
     setTitle("");
     setFiles([]);
+    setCourseSize('M');
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -116,9 +159,9 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
     }
 
     const ext = file.name.toLowerCase().split('.').pop();
-    const allowedExts = ['txt', 'md', 'docx'];
+    const allowedExts = ['txt', 'md', 'docx', 'pdf'];
     if (!ext || !allowedExts.includes(ext)) {
-      toast({ variant: "destructive", title: "Ошибка", description: `Формат файла "${file.name}" не поддерживается. Используйте TXT, MD или DOCX.` });
+      toast({ variant: "destructive", title: "Ошибка", description: `Формат файла "${file.name}" не поддерживается. Используйте TXT, MD, DOCX или PDF.` });
       return false;
     }
 
@@ -185,6 +228,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
 
     const formData = new FormData();
     formData.append('title', title);
+    formData.append('courseSize', courseSize);
     files.forEach(f => {
       formData.append('files', f.file);
     });
@@ -218,6 +262,31 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               />
             </div>
 
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Размер курса</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {COURSE_SIZE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setCourseSize(option.value)}
+                    className={`
+                      flex flex-col items-center p-3 rounded-lg border-2 transition-all
+                      ${courseSize === option.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                      }
+                    `}
+                    data-testid={`size-${option.value}`}
+                  >
+                    <span className="text-2xl font-bold text-foreground">{option.value}</span>
+                    <span className="text-sm font-medium text-foreground">{option.label}</span>
+                    <span className="text-xs text-muted-foreground text-center mt-1">{option.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label className="text-base font-medium">База знаний</Label>
               <p className="text-sm text-muted-foreground">Загрузите документы с материалами</p>
@@ -225,7 +294,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.md,.docx"
+                accept=".txt,.md,.docx,.pdf"
                 multiple
                 onChange={handleFileUpload}
                 className="hidden"
@@ -252,7 +321,7 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
                   <Upload className="w-6 h-6 text-primary" />
                 </div>
                 <p className="font-medium text-foreground mb-1">Нажмите для загрузки</p>
-                <p className="text-sm text-muted-foreground">TXT, MD, DOCX (до 50 МБ)</p>
+                <p className="text-sm text-muted-foreground">TXT, MD, DOCX, PDF (до 50 МБ)</p>
               </div>
 
               {files.length > 0 && (
@@ -292,7 +361,9 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
               data-testid="button-generate"
             >
               {generateMutation.isPending ? (
-                <><Loader2 className="animate-spin mr-2" /> Генерация...</>
+                <><Loader2 className="animate-spin mr-2" /> Извлечение текста и генерация...</>
+              ) : generateMutation.isError ? (
+                <>Попробовать ещё раз</>
               ) : (
                 <><Sparkles className="w-5 h-5 mr-2" /> Сгенерировать тренинг с AI</>
               )}
@@ -318,11 +389,11 @@ function TrackCard({ track }: { track: any }) {
 
   return (
     <Link href={`/curator/course/${track.id}`}>
-      <Card className="hover-elevate cursor-pointer h-full border border-black" data-testid={`card-track-${track.id}`}>
+      <Card className="hover-elevate cursor-pointer h-full shadow-sm hover:shadow-md transition-all" data-testid={`card-track-${track.id}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[#A6E85B]/20 border border-[#A6E85B] flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5 text-[#A6E85B]" />
+            <div className="w-10 h-10 rounded-lg bg-primary-soft flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 text-primary" />
             </div>
             <Button
               variant="outline"

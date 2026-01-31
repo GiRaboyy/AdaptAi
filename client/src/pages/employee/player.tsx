@@ -1,15 +1,26 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useTrack, useEnrollments, useUpdateProgress, useRecordDrill, useAddNeedsRepeatTag } from "@/hooks/use-tracks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Mic, Volume2, ArrowRight, ArrowLeft, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { Loader2, Mic, Volume2, ArrowRight, CheckCircle, XCircle, RotateCcw, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RoleplayVoiceStep } from "@/components/RoleplayVoiceStep";
 
-type StepType = 'content' | 'quiz' | 'open' | 'roleplay';
+// TYPES - Backend enforces only mcq/open/roleplay. Legacy quiz mapped to mcq.
+// Using string for backwards compatibility with existing data
+type StepType = string;
 
 function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: { 
   question: string; 
@@ -178,9 +189,24 @@ export default function Player() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluation, setEvaluation] = useState<{ score: number; feedback: string; isCorrect: boolean; improvements: string | null } | null>(null);
   const [markedNeedsRepeat, setMarkedNeedsRepeat] = useState(false);
+  const [completionResults, setCompletionResults] = useState<{
+    successRate: number;
+    correctAnswers: number;
+    totalAnswers: number;
+    scorePoints: number;
+    weakTopics: string[];
+    strongTopics: string[];
+  } | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   const enrollment = enrollments?.find(e => e.enrollment.trackId === Number(trackId))?.enrollment;
-  const steps = trackData?.steps || [];
+  
+  // Filter out legacy content-type steps (forbidden now)
+  const steps = useMemo(() => {
+    if (!trackData?.steps) return [];
+    return trackData.steps.filter((step: any) => step.type !== 'content');
+  }, [trackData?.steps]);
+  
   const currentStep = steps[currentStepIndex];
   const totalSteps = steps.length;
   const progressPct = totalSteps > 0 ? Math.round(((currentStepIndex + 1) / totalSteps) * 100) : 0;
@@ -209,7 +235,7 @@ export default function Player() {
     utterance.onend = () => setIsSpeaking(false);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setFeedbackState('neutral');
     setSelectedAnswer(null);
     setOpenAnswer("");
@@ -223,9 +249,61 @@ export default function Player() {
       setCurrentStepIndex(nextIndex);
       updateProgress({ trackId: Number(trackId), stepIndex: nextIndex });
     } else {
-      updateProgress({ trackId: Number(trackId), stepIndex: totalSteps, completed: true });
-      toast({ title: "Поздравляем!", description: "Вы завершили курс!" });
-      setLocation("/app/courses");
+      // Курс завершён - рассчитываем успешность
+      try {
+        const response = await fetch(`/api/enrollments/${trackId}/calculate-success`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        
+        const result = await response.json();
+        
+        // calculate-success УЖЕ установил isCompleted=true, НЕ вызываем updateProgress!
+        
+        // Показываем результаты НА ЭТОЙ СТРАНИЦЕ
+        setCompletionResults(result);
+        setShowCompletionModal(true);
+      } catch (error) {
+        console.error('Failed to calculate success:', error);
+        updateProgress({ trackId: Number(trackId), stepIndex: totalSteps, completed: true });
+        toast({ title: "Поздравляем!", description: "Вы завершили курс!" });
+        setLocation("/app/courses");
+      }
+    }
+  };
+
+  const handleCloseCompletion = () => {
+    setShowCompletionModal(false);
+    // Перезагружаем страницу курсов, чтобы обновился статус
+    window.location.href = "/app/courses";
+  };
+
+  const handleRetakeCourse = async () => {
+    try {
+      // Сбрасываем прогресс курса
+      const response = await fetch(`/api/enrollments/${trackId}/reset`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        setShowCompletionModal(false);
+        // Перезагружаем страницу, чтобы начать с нуля
+        window.location.href = `/app/player/${trackId}`;
+      } else {
+        toast({ 
+          title: "Ошибка", 
+          description: "Не удалось сбросить прогресс",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Failed to reset course:', error);
+      toast({ 
+        title: "Ошибка", 
+        description: "Не удалось сбросить прогресс",
+        variant: "destructive"
+      });
     }
   };
 
@@ -249,43 +327,66 @@ export default function Player() {
       });
       
       const result = await response.json();
-      setEvaluation(result);
-      setFeedbackState(result.isCorrect ? 'correct' : 'incorrect');
-      setShowFeedback(true);
       
-      recordDrill({
-        stepId: currentStep.id,
-        trackId: Number(trackId),
-        isCorrect: result.isCorrect,
-        userAnswer: openAnswer,
-        correctAnswer: content.ideal_answer || content.ideal || '',
-        tag: currentStep.tag || undefined,
-        attemptType: 'initial',
-        score: result.score
-      });
+      // Проверяем статус ответа
+      if (!response.ok) {
+        // Если ошибка - показываем негативное сообщение
+        setEvaluation(result);
+        setFeedbackState('incorrect');
+        setShowFeedback(true);
+        
+        recordDrill({
+          stepId: currentStep.id,
+          trackId: Number(trackId),
+          isCorrect: false,
+          userAnswer: openAnswer,
+          correctAnswer: content.ideal_answer || content.ideal || '',
+          tag: currentStep.tag || undefined,
+          attemptType: 'initial',
+          score: 0
+        });
+      } else {
+        // Нормальная оценка
+        setEvaluation(result);
+        setFeedbackState(result.isCorrect ? 'correct' : 'incorrect');
+        setShowFeedback(true);
+        
+        recordDrill({
+          stepId: currentStep.id,
+          trackId: Number(trackId),
+          isCorrect: result.isCorrect,
+          userAnswer: openAnswer,
+          correctAnswer: content.ideal_answer || content.ideal || '',
+          tag: currentStep.tag || undefined,
+          attemptType: 'initial',
+          score: result.score
+        });
+      }
     } catch (error) {
-      setEvaluation({ score: 5, feedback: "Ответ принят", isCorrect: true, improvements: null });
+      // При неожиданной ошибке сети
+      console.error('Evaluation network error:', error);
+      setEvaluation({ 
+        score: 0, 
+        feedback: "Ошибка связи. Попробуйте снова.", 
+        isCorrect: false, 
+        improvements: "Проверьте подключение к интернету" 
+      });
       setShowFeedback(true);
-      setFeedbackState('correct');
+      setFeedbackState('incorrect');
     } finally {
       setIsEvaluating(false);
     }
   };
 
-  const handleBack = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1);
-      setFeedbackState('neutral');
-      setSelectedAnswer(null);
-      setOpenAnswer("");
-      setShowFeedback(false);
-    }
-  };
+  // Back navigation removed - forward-only flow like Duolingo
 
   const handleQuizSubmit = () => {
     if (selectedAnswer === null) return;
     const content = currentStep?.content as any;
-    const isCorrect = selectedAnswer === content.correctIndex;
+    
+    // Support both correctIndex and correct_index (snake_case from LLM)
+    const correctIdx = content.correct_index ?? content.correctIndex ?? 0;
+    const isCorrect = selectedAnswer === correctIdx;
     
     setFeedbackState(isCorrect ? 'correct' : 'incorrect');
     setShowFeedback(true);
@@ -294,8 +395,8 @@ export default function Player() {
       stepId: currentStep.id,
       trackId: Number(trackId),
       isCorrect,
-      userAnswer: content.options[selectedAnswer],
-      correctAnswer: content.options[content.correctIndex],
+      userAnswer: content.options?.[selectedAnswer] || '',
+      correctAnswer: content.options?.[correctIdx] || '',
       tag: currentStep.tag || undefined,
       attemptType: drillAttempt === 0 ? 'initial' : drillAttempt === 1 ? 'drill_1' : 'drill_2',
       score: isCorrect ? 10 : 0,
@@ -303,7 +404,7 @@ export default function Player() {
 
     if (!isCorrect) {
       if (drillAttempt < 2) {
-        setDrillAttempt(drillAttempt + 1);
+        setDrillAttempt(prev => prev + 1);
       } else if (currentStep.tag) {
         addNeedsRepeatTag({ trackId: Number(trackId), tag: currentStep.tag });
         setMarkedNeedsRepeat(true);
@@ -339,190 +440,349 @@ export default function Player() {
 
   const content = currentStep.content as any;
 
+  // Если модальное окно результатов открыто - скрываем контент курса
+  if (showCompletionModal) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        {/* Модальное окно результатов */}
+        <Dialog open={showCompletionModal} onOpenChange={setShowCompletionModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">
+                {completionResults && completionResults.successRate >= 80 ? (
+                  <span className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="w-6 h-6" />
+                    Поздравляем!
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 text-orange-700">
+                    <XCircle className="w-6 h-6" />
+                    Курс завершён
+                  </span>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                {completionResults && completionResults.successRate >= 80
+                  ? "Вы успешно завершили курс!"
+                  : "Для успешного завершения необходимо набрать минимум 80%"}
+              </DialogDescription>
+            </DialogHeader>
+
+            {completionResults && (
+              <div className="space-y-6 py-4">
+                {/* Общий результат */}
+                <div className="bg-gray-100 rounded-xl p-6 border border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg font-semibold">Общий результат</span>
+                    <span className={cn(
+                      "text-4xl font-bold",
+                      completionResults.successRate >= 80 ? "text-green-700" : "text-orange-700"
+                    )}>
+                      {completionResults.successRate}%
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <p className="text-2xl font-bold text-foreground">{completionResults.scorePoints}</p>
+                      <p className="text-xs text-muted-foreground">Баллов</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <p className="text-2xl font-bold text-green-700">{completionResults.correctAnswers}</p>
+                      <p className="text-xs text-muted-foreground">Правильных</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <p className="text-2xl font-bold text-red-700">{completionResults.totalAnswers - completionResults.correctAnswers}</p>
+                      <p className="text-xs text-muted-foreground">Неправильных</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Сильные стороны */}
+                {completionResults.strongTopics && completionResults.strongTopics.length > 0 && (
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <TrendingUp className="w-5 h-5 text-green-700" />
+                      <span className="font-semibold text-green-900">Сильные стороны</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {completionResults.strongTopics.map((topic, i) => (
+                        <Badge key={i} className="bg-green-100 text-green-700 border-green-300">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Слабые стороны */}
+                {completionResults.weakTopics && completionResults.weakTopics.length > 0 && (
+                  <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <TrendingDown className="w-5 h-5 text-orange-700" />
+                      <span className="font-semibold text-orange-900">Нужно повторить</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {completionResults.weakTopics.map((topic, i) => (
+                        <Badge key={i} className="bg-orange-100 text-orange-700 border-orange-300">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              {completionResults && completionResults.successRate < 80 && (
+                <Button onClick={handleRetakeCourse} variant="default">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Пройти повторно
+                </Button>
+              )}
+              <Button onClick={handleCloseCompletion} variant="secondary">
+                Закрыть
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Progress bar - Duolingo style */}
       <div className="mb-6 space-y-3">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-xl font-display font-bold truncate">{trackData?.track.title}</h1>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={cn(voiceEnabled && "text-primary")}
-              data-testid="button-voice-toggle"
-            >
-              <Volume2 className="w-5 h-5" />
-            </Button>
+            {drillAttempt > 0 && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+                Drill {drillAttempt}/2
+              </Badge>
+            )}
             <Badge variant="secondary" data-testid="badge-step">
-              Шаг {currentStepIndex + 1}/{totalSteps}
+              {Math.min(currentStepIndex + 1, totalSteps)}/{totalSteps}
             </Badge>
           </div>
         </div>
-        <Progress value={progressPct} className="h-2" />
+        <div className="relative">
+          <Progress value={progressPct} className={cn("h-3 rounded-full", drillAttempt > 0 && "[&>div]:bg-amber-500")} />
+        </div>
       </div>
-
-      {drillAttempt > 0 && (
-        <Badge className="mb-4" variant="outline">
-          Мини-дрилл ({drillAttempt}/2)
-        </Badge>
-      )}
 
       <Card className="mb-6">
         <CardContent className="pt-6">
-          {currentStep.type === 'content' && (
-            <div className="prose dark:prose-invert max-w-none">
-              <p className="text-lg leading-relaxed" data-testid="content-text">
-                {content.text}
-              </p>
-              {voiceEnabled && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => speak(content.text)}
-                  disabled={isSpeaking}
-                  data-testid="button-speak"
-                >
-                  <Volume2 className="w-4 h-4 mr-2" />
-                  {isSpeaking ? "Озвучивается..." : "Озвучить"}
-                </Button>
-              )}
-            </div>
-          )}
+          {/* MCQ Step - Content steps are forbidden, quiz mapped to mcq on backend */}
+          {currentStep.type === 'mcq' && (() => {
+            // Get correct index - support both formats
+            const correctIdx = content.correct_index ?? content.correctIndex ?? 0;
+            const options = content.options || [];
+            
+            return (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium" data-testid="quiz-question">
+                  {content.question}
+                </h3>
+                <div className="space-y-2">
+                  {options.map((option: string, idx: number) => {
+                    const isCorrectOption = idx === correctIdx;
+                    const isSelectedOption = selectedAnswer === idx;
+                    const isWrongSelection = showFeedback && isSelectedOption && !isCorrectOption;
+                    
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => !showFeedback && setSelectedAnswer(idx)}
+                        disabled={showFeedback}
+                        className={cn(
+                          "w-full p-4 rounded-lg border text-left transition-all flex items-center gap-3",
+                          isSelectedOption && !showFeedback && "border-primary bg-primary/5",
+                          showFeedback && isCorrectOption && "border-green-500 bg-green-50",
+                          isWrongSelection && "border-red-500 bg-red-50",
+                          !showFeedback && "hover:bg-secondary"
+                        )}
+                        data-testid={`option-${idx}`}
+                      >
+                        <span className="flex-1">{option}</span>
+                        {showFeedback && isCorrectOption && (
+                          <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                        )}
+                        {isWrongSelection && (
+                          <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
 
-          {currentStep.type === 'quiz' && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium" data-testid="quiz-question">
-                {content.question}
-              </h3>
-              <div className="space-y-2">
-                {content.options.map((option: string, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => !showFeedback && setSelectedAnswer(idx)}
-                    disabled={showFeedback}
-                    className={cn(
-                      "w-full p-4 rounded-lg border text-left transition-all",
-                      selectedAnswer === idx && !showFeedback && "border-primary bg-primary/5",
-                      showFeedback && idx === content.correctIndex && "border-green-500 bg-green-500/10",
-                      showFeedback && selectedAnswer === idx && idx !== content.correctIndex && "border-red-500 bg-red-500/10",
-                      !showFeedback && "hover:bg-secondary"
-                    )}
-                    data-testid={`option-${idx}`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-
-              {showFeedback && (
-                <div className={cn(
-                  "p-4 rounded-lg mt-4",
-                  feedbackState === 'correct' ? "bg-green-500/10 border border-green-500/30" : "bg-red-500/10 border border-red-500/30"
-                )}>
-                  <div className="flex items-start gap-3">
-                    {feedbackState === 'correct' ? (
-                      <CheckCircle className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <p className="font-medium">
+                {/* MCQ Feedback Panel */}
+                {showFeedback && (
+                  <div className={cn(
+                    "p-4 rounded-lg mt-4 space-y-3",
+                    feedbackState === 'correct' ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      {feedbackState === 'correct' ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-600" />
+                      )}
+                      <span className="font-bold text-lg">
                         {feedbackState === 'correct' ? "Правильно!" : "Неправильно"}
-                      </p>
+                      </span>
+                    </div>
+                    
+                    {/* Always show Your Answer and Correct Answer */}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <span className="font-semibold text-muted-foreground w-32">Ваш ответ:</span>
+                        <span className={feedbackState === 'correct' ? "text-green-700" : "text-red-700"}>
+                          {options[selectedAnswer!] || 'Не выбран'}
+                        </span>
+                      </div>
                       {feedbackState === 'incorrect' && (
-                        <>
-                          <p className="text-sm mt-1">
-                            <strong>Правильный ответ:</strong> {content.options[content.correctIndex]}
-                          </p>
-                          <p className="text-sm mt-1">
-                            <strong>Ваш ответ:</strong> {content.options[selectedAnswer!]}
-                          </p>
-                          {content.explanation && (
-                            <p className="text-sm mt-2 text-muted-foreground">{content.explanation}</p>
-                          )}
-                        </>
+                        <div className="flex items-start gap-2">
+                          <span className="font-semibold text-muted-foreground w-32">Правильный:</span>
+                          <span className="text-green-700 font-medium">
+                            {options[correctIdx] || 'Не найден'}
+                          </span>
+                        </div>
                       )}
                     </div>
+                    
+                    {/* Explanation (Почему) */}
+                    {content.explanation && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-sm font-semibold text-muted-foreground mb-1">Почему:</p>
+                        <p className="text-sm text-gray-700">{content.explanation}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
 
-          {(currentStep.type === 'open' || currentStep.type === 'roleplay') && (
+          {(currentStep.type === 'open') && (
             <div className="space-y-4">
               <VoiceOnlyQuestion 
-                question={content.scenario || content.question}
+                question={content.question}
                 onAnswer={(answer) => setOpenAnswer(answer)}
                 currentAnswer={openAnswer}
               />
               
+              {/* Open Question Feedback - Enhanced */}
               {evaluation && showFeedback && (
                 <div className={cn(
-                  "p-4 rounded-lg border",
+                  "rounded-lg border overflow-hidden",
                   evaluation.isCorrect 
-                    ? "bg-green-500/10 border-green-500/30" 
-                    : "bg-red-500/10 border-red-500/30"
+                    ? "bg-green-50 border-green-200" 
+                    : "bg-amber-50 border-amber-200"
                 )}>
-                  <div className="flex items-start gap-3">
-                    {evaluation.isCorrect ? (
-                      <CheckCircle className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <p className="font-bold">
-                          {evaluation.isCorrect ? "Хорошо!" : "Можно лучше"}
-                        </p>
-                        <Badge 
-                          variant={evaluation.score >= 6 ? "default" : "destructive"}
-                          className="text-sm font-bold"
-                        >
-                          {evaluation.score}/10
-                        </Badge>
-                      </div>
-                      <p className="text-sm">{evaluation.feedback}</p>
-                      {evaluation.improvements && (
-                        <p className="text-sm mt-2 text-muted-foreground">
-                          <strong>Рекомендация:</strong> {evaluation.improvements}
-                        </p>
+                  {/* Header with score */}
+                  <div className={cn(
+                    "p-4 flex items-center justify-between",
+                    evaluation.isCorrect ? "bg-green-100" : "bg-amber-100"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      {evaluation.isCorrect ? (
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      ) : (
+                        <AlertCircle className="w-6 h-6 text-amber-600" />
                       )}
+                      <span className="font-bold text-lg">
+                        {evaluation.score >= 8 ? "Отлично!" : evaluation.score >= 6 ? "Хорошо" : "Можно лучше"}
+                      </span>
                     </div>
+                    <Badge 
+                      variant={evaluation.score >= 6 ? "default" : "secondary"}
+                      className={cn(
+                        "text-lg font-bold px-3 py-1",
+                        evaluation.score >= 8 ? "bg-green-600" : evaluation.score >= 6 ? "bg-blue-600" : "bg-amber-600"
+                      )}
+                    >
+                      {evaluation.score}/10
+                    </Badge>
+                  </div>
+                  
+                  <div className="p-4 space-y-4">
+                    {/* Main feedback */}
+                    {evaluation.feedback && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-1">Оценка ответа:</p>
+                        <p className="text-sm text-gray-600">{evaluation.feedback}</p>
+                      </div>
+                    )}
+                    
+                    {/* Improvements / Missing points */}
+                    {evaluation.improvements && (
+                      <div className="bg-white rounded-lg p-3 border border-amber-200">
+                        <p className="text-sm font-semibold text-amber-700 mb-1 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          Что можно улучшить:
+                        </p>
+                        <p className="text-sm text-gray-600">{evaluation.improvements}</p>
+                      </div>
+                    )}
+                    
+                    {/* KB_GAP indicator */}
+                    {(evaluation as any).kb_gap && (
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <p className="text-sm text-blue-700">
+                          ℹ️ Ответ требует уточнения у куратора (информация не найдена в базе знаний)
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           )}
+
+          {currentStep.type === 'roleplay' && (
+            <RoleplayVoiceStep
+              scenario={content.scenario || content}
+              trackId={Number(trackId)}
+              stepId={currentStep.id}
+              kbChunkIds={content.kb_refs || []}
+              onComplete={(result) => {
+                setShowFeedback(true);
+                setFeedbackState(result.score_0_10 >= 6 ? 'correct' : 'incorrect');
+                
+                recordDrill({
+                  stepId: currentStep.id,
+                  trackId: Number(trackId),
+                  isCorrect: result.score_0_10 >= 6,
+                  userAnswer: 'Roleplay conversation',
+                  correctAnswer: result.better_example || '',
+                  tag: currentStep.tag || undefined,
+                  attemptType: 'initial',
+                  score: result.score_0_10
+                });
+              }}
+              onRetry={() => {
+                setShowFeedback(false);
+                setFeedbackState('neutral');
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between gap-4">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={currentStepIndex === 0}
-          data-testid="button-back"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Назад
-        </Button>
-
+      {/* Navigation - Forward only (no back button) */}
+      <div className="flex items-center justify-end gap-4">
         <div className="flex items-center gap-2">
-          {showFeedback && feedbackState === 'incorrect' && drillAttempt < 2 && (
+          {/* Drill retry button - only for MCQ and only if drill attempts remaining */}
+          {showFeedback && feedbackState === 'incorrect' && drillAttempt < 2 && currentStep.type === 'mcq' && (
             <Button variant="outline" onClick={handleRetry} data-testid="button-retry">
-              <RotateCcw className="w-4 h-4 mr-2" /> Попробовать снова
+              <RotateCcw className="w-4 h-4 mr-2" /> Drill: Попробовать снова
             </Button>
           )}
           
-          {currentStep.type === 'content' && (
-            <Button onClick={handleNext} data-testid="button-next">
-              Далее <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          )}
-
-          {currentStep.type === 'quiz' && !showFeedback && (
+          {/* MCQ check button */}
+          {currentStep.type === 'mcq' && !showFeedback && (
             <Button 
               onClick={handleQuizSubmit} 
               disabled={selectedAnswer === null}
@@ -532,14 +792,14 @@ export default function Player() {
             </Button>
           )}
 
-          {currentStep.type === 'quiz' && showFeedback && (
+          {currentStep.type === 'mcq' && showFeedback && (
             <Button onClick={handleNext} data-testid="button-next">
               {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
 
-          {(currentStep.type === 'open' || currentStep.type === 'roleplay') && !showFeedback && (
+          {(currentStep.type === 'open') && !showFeedback && (
             <Button 
               onClick={handleOpenSubmit} 
               disabled={!openAnswer.trim() || isEvaluating}
@@ -555,7 +815,14 @@ export default function Player() {
             </Button>
           )}
 
-          {(currentStep.type === 'open' || currentStep.type === 'roleplay') && showFeedback && (
+          {(currentStep.type === 'open') && showFeedback && (
+            <Button onClick={handleNext} data-testid="button-next">
+              {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
+
+          {currentStep.type === 'roleplay' && showFeedback && (
             <Button onClick={handleNext} data-testid="button-next">
               {currentStepIndex === totalSteps - 1 ? "Завершить" : "Далее"}
               <ArrowRight className="w-4 h-4 ml-2" />

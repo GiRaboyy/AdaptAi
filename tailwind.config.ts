@@ -6,10 +6,11 @@ export default {
   theme: {
     extend: {
       borderRadius: {
+        full: "999px",
         "2xl": "20px",
-        xl: "16px",
-        lg: "12px",
-        md: "10px",
+        xl: "20px",
+        lg: "16px",
+        md: "12px",
         sm: "8px",
       },
       colors: {
@@ -32,6 +33,7 @@ export default {
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
           soft: "hsl(var(--primary-soft))",
+          pressed: "hsl(var(--primary-pressed))",
           ink: "hsl(var(--primary-ink))",
         },
         secondary: {
@@ -91,10 +93,11 @@ export default {
         mono: ["var(--font-mono)"],
       },
       boxShadow: {
-        sm: "0 1px 2px rgba(15,23,42,0.06)",
-        DEFAULT: "0 10px 24px rgba(15,23,42,0.10)",
-        md: "0 10px 24px rgba(15,23,42,0.10)",
-        lg: "0 20px 48px rgba(15,23,42,0.14)",
+        xs: "0 1px 2px rgba(11,15,20,0.04)",
+        sm: "0 4px 12px rgba(11,15,20,0.06)",
+        DEFAULT: "0 10px 24px rgba(11,15,20,0.10)",
+        md: "0 8px 24px rgba(11,15,20,0.08)",
+        lg: "0 16px 40px rgba(11,15,20,0.10)",
       },
       spacing: {
         "18": "4.5rem",

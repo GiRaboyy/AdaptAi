@@ -1,7 +1,8 @@
 import { db } from "./db";
 import {
-  users, tracks, steps, enrollments, drillAttempts,
+  users, tracks, steps, enrollments, drillAttempts, knowledgeSources, kbIndex, promoCodes, courseMembers,
   type User, type InsertUser, type Track, type Step, type Enrollment, type DrillAttempt,
+  type KnowledgeSource, type KBIndex, type PromoCode, type CourseMember,
   type InsertUser as InsertUserType
 } from "@shared/schema";
 import { eq, and, count, avg, sql } from "drizzle-orm";
@@ -10,7 +11,10 @@ export interface IStorage {
   // User
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUserType): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
+  incrementCreatedCoursesCount(userId: number): Promise<void>;
 
   // Tracks
   createTrack(track: typeof tracks.$inferInsert): Promise<Track>;
@@ -18,6 +22,7 @@ export interface IStorage {
   createStep(step: typeof steps.$inferInsert): Promise<Step>;
   updateStep(id: number, content: any): Promise<Step | undefined>;
   getTracksByCurator(curatorId: number): Promise<Track[]>;
+  getTracksWithEmployeeCount(curatorId: number): Promise<Array<Omit<Track, 'rawKnowledgeBase'> & { employeeCount: number }>>;
   getTrack(id: number): Promise<Track | undefined>;
   getTrackByCode(code: string): Promise<Track | undefined>;
   getStepsByTrackId(trackId: number): Promise<Step[]>;
@@ -38,6 +43,24 @@ export interface IStorage {
   // Drills
   createDrillAttempt(attempt: typeof drillAttempts.$inferInsert): Promise<DrillAttempt>;
   getDrillAttemptsByTrack(trackId: number): Promise<DrillAttempt[]>;
+  
+  // Knowledge Sources
+  createKnowledgeSource(source: typeof knowledgeSources.$inferInsert): Promise<KnowledgeSource>;
+  getKnowledgeSourcesByCourseId(courseId: number): Promise<KnowledgeSource[]>;
+  updateKnowledgeSourceStatus(id: number, status: string, errorMessage?: string): Promise<KnowledgeSource | undefined>;
+  
+  // KB Index
+  createKBIndex(index: typeof kbIndex.$inferInsert): Promise<KBIndex>;
+  getKBIndexByCourseId(courseId: number): Promise<KBIndex | undefined>;
+  
+  // Promo Codes
+  getPromoCode(code: string): Promise<PromoCode | undefined>;
+  redeemPromoCode(promoId: string, userId: number): Promise<PromoCode | undefined>;
+  
+  // Course Members
+  createCourseMember(member: typeof courseMembers.$inferInsert): Promise<CourseMember>;
+  getCourseMemberCount(courseId: number, role?: string): Promise<number>;
+  isCourseMember(courseId: number, userId: number): Promise<boolean>;
   
   sessionStore: any;
 }
@@ -65,13 +88,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    // Case-insensitive email lookup - critical for Supabase sync
+    // Supabase normalizes emails to lowercase, but users might register with mixed case
+    const [user] = await db.select().from(users).where(sql`LOWER(${users.email}) = LOWER(${email})`);
     return user;
   }
 
   async createUser(insertUser: InsertUserType): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token));
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async incrementCreatedCoursesCount(userId: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ createdCoursesCount: sql`${users.createdCoursesCount} + 1` })
+      .where(eq(users.id, userId));
   }
 
   // Tracks
@@ -100,6 +146,28 @@ export class DatabaseStorage implements IStorage {
 
   async getTracksByCurator(curatorId: number): Promise<Track[]> {
     return await db.select().from(tracks).where(eq(tracks.curatorId, curatorId));
+  }
+
+  async getTracksWithEmployeeCount(curatorId: number): Promise<Array<Omit<Track, 'rawKnowledgeBase'> & { employeeCount: number }>> {
+    // Optimized query - excludes rawKnowledgeBase for faster loading
+    const result = await db
+      .select({
+        id: tracks.id,
+        curatorId: tracks.curatorId,
+        title: tracks.title,
+        description: tracks.description,
+        strictMode: tracks.strictMode,
+        joinCode: tracks.joinCode,
+        createdAt: tracks.createdAt,
+        employeeCount: sql<number>`COALESCE(COUNT(DISTINCT ${enrollments.userId}), 0)::int`,
+      })
+      .from(tracks)
+      .leftJoin(enrollments, eq(tracks.id, enrollments.trackId))
+      .where(eq(tracks.curatorId, curatorId))
+      .groupBy(tracks.id)
+      .orderBy(sql`${tracks.createdAt} DESC`);
+    
+    return result as Array<Omit<Track, 'rawKnowledgeBase'> & { employeeCount: number }>;
   }
 
   async getTrack(id: number): Promise<Track | undefined> {
@@ -358,6 +426,107 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(drillAttempts)
       .where(eq(drillAttempts.trackId, trackId));
+  }
+
+  // Knowledge Sources
+  async createKnowledgeSource(source: typeof knowledgeSources.$inferInsert): Promise<KnowledgeSource> {
+    const [newSource] = await db.insert(knowledgeSources).values(source).returning();
+    return newSource;
+  }
+
+  async getKnowledgeSourcesByCourseId(courseId: number): Promise<KnowledgeSource[]> {
+    return await db
+      .select()
+      .from(knowledgeSources)
+      .where(eq(knowledgeSources.courseId, courseId))
+      .orderBy(knowledgeSources.createdAt);
+  }
+
+  async updateKnowledgeSourceStatus(
+    id: number,
+    status: string,
+    errorMessage?: string
+  ): Promise<KnowledgeSource | undefined> {
+    const [updated] = await db
+      .update(knowledgeSources)
+      .set({ status: status as any, errorMessage })
+      .where(eq(knowledgeSources.id, id))
+      .returning();
+    return updated;
+  }
+
+  // KB Index
+  async createKBIndex(index: typeof kbIndex.$inferInsert): Promise<KBIndex> {
+    const [newIndex] = await db.insert(kbIndex).values(index).returning();
+    return newIndex;
+  }
+
+  async getKBIndexByCourseId(courseId: number): Promise<KBIndex | undefined> {
+    const [index] = await db
+      .select()
+      .from(kbIndex)
+      .where(eq(kbIndex.courseId, courseId))
+      .orderBy(sql`${kbIndex.createdAt} DESC`)
+      .limit(1);
+    return index;
+  }
+
+  // Promo Codes
+  async getPromoCode(code: string): Promise<PromoCode | undefined> {
+    const [promo] = await db
+      .select()
+      .from(promoCodes)
+      .where(eq(promoCodes.code, code));
+    return promo;
+  }
+
+  async redeemPromoCode(promoId: string, userId: number): Promise<PromoCode | undefined> {
+    const [redeemed] = await db
+      .update(promoCodes)
+      .set({
+        isUsed: true,
+        usedBy: userId,
+        usedAt: new Date(),
+      })
+      .where(eq(promoCodes.id, promoId))
+      .returning();
+    return redeemed;
+  }
+
+  // Course Members
+  async createCourseMember(member: typeof courseMembers.$inferInsert): Promise<CourseMember> {
+    const [newMember] = await db
+      .insert(courseMembers)
+      .values(member)
+      .returning();
+    return newMember;
+  }
+
+  async getCourseMemberCount(courseId: number, role?: string): Promise<number> {
+    let query = db
+      .select({ count: count() })
+      .from(courseMembers)
+      .where(eq(courseMembers.courseId, courseId));
+
+    if (role) {
+      query = query.where(eq(courseMembers.memberRole, role)) as any;
+    }
+
+    const result = await query;
+    return result[0]?.count || 0;
+  }
+
+  async isCourseMember(courseId: number, userId: number): Promise<boolean> {
+    const [member] = await db
+      .select()
+      .from(courseMembers)
+      .where(
+        and(
+          eq(courseMembers.courseId, courseId),
+          eq(courseMembers.userId, userId)
+        )
+      );
+    return !!member;
   }
 }
 

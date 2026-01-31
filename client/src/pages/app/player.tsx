@@ -4,13 +4,13 @@ import { useTrack, useEnrollments, useUpdateProgress, useRecordDrill } from "@/h
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { CardStack } from "@/components/ui/card-stack";
-import { Loader2, Mic, Volume2, ArrowRight, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { Loader2, Mic, ArrowRight, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { clsx } from "clsx";
 
-// TYPES
-type StepType = 'content' | 'quiz' | 'roleplay';
+// TYPES - Backend enforces only mcq/open/roleplay. Content is FORBIDDEN.
+type StepType = 'mcq' | 'open' | 'roleplay';
 
 export default function Player() {
   const { trackId } = useParams();
@@ -82,9 +82,9 @@ export default function Player() {
     if (currentStepIndex >= steps.length - 1) {
       // Complete
       updateProgress({ 
-        id: enrollment!.id, 
+        trackId: Number(trackId),
         stepIndex: currentStepIndex, 
-        isCompleted: true 
+        completed: true 
       });
       setLocation("/app/join"); // Or a success screen
       toast({ title: "Track Completed!", description: "Great job on finishing the training." });
@@ -92,7 +92,7 @@ export default function Player() {
       const nextIndex = currentStepIndex + 1;
       setCurrentStepIndex(nextIndex);
       updateProgress({ 
-        id: enrollment!.id, 
+        trackId: Number(trackId),
         stepIndex: nextIndex 
       });
     }
@@ -100,7 +100,9 @@ export default function Player() {
 
   const handleQuizSubmission = (selectedIndex: number) => {
     const content = currentStep.content as any;
-    const isCorrect = selectedIndex === content.correctIndex;
+    // Support both correctIndex and correct_index for backwards compatibility
+    const correctIdx = content.correct_index ?? content.correctIndex;
+    const isCorrect = selectedIndex === correctIdx;
 
     setFeedbackState(isCorrect ? 'correct' : 'incorrect');
     
@@ -109,8 +111,8 @@ export default function Player() {
     }
     
     recordDrill({
-      userId: enrollment!.userId,
       stepId: currentStep.id,
+      trackId: Number(trackId),
       isCorrect,
       score: isCorrect ? 10 : 0
     });
@@ -128,10 +130,10 @@ export default function Player() {
     }
 
     recordDrill({
-      userId: enrollment!.userId,
       stepId: currentStep.id,
+      trackId: Number(trackId),
       isCorrect: passed,
-      transcript: spokenText,
+      userAnswer: spokenText,
       score: passed ? 10 : 0
     });
   };
@@ -159,15 +161,15 @@ export default function Player() {
               className="h-full"
             >
               <CardStack className="h-full flex flex-col">
-                {/* Step Content Switcher */}
-                {currentStep.type === 'content' && (
-                  <ContentStep 
+                {/* Step Content Switcher - no content steps allowed */}
+                {currentStep.type === 'mcq' && (
+                  <QuizStep 
                     content={currentStep.content as any} 
-                    onSpeak={() => speak((currentStep.content as any).text)}
-                    isSpeaking={isSpeaking}
+                    onAnswer={handleQuizSubmission}
+                    feedback={feedbackState}
                   />
                 )}
-                {currentStep.type === 'quiz' && (
+                {currentStep.type === 'open' && (
                   <QuizStep 
                     content={currentStep.content as any} 
                     onAnswer={handleQuizSubmission}
@@ -190,11 +192,7 @@ export default function Player() {
 
         {/* Bottom: Actions */}
         <div className="h-20 flex items-center justify-center mt-8">
-          {currentStep.type === 'content' && (
-             <Button size="lg" className="w-full max-w-xs text-lg rounded-full h-14" onClick={handleNext}>
-               Continue <ArrowRight className="ml-2 w-5 h-5" />
-             </Button>
-          )}
+          {/* No content step handling - all steps are interactive */}
           
           {/* Feedback Overlays for Quiz/Roleplay */}
           {feedbackState === 'incorrect' && (
@@ -238,33 +236,18 @@ export default function Player() {
 }
 
 // --- SUBCOMPONENTS ---
+// NOTE: ContentStep removed - content type is FORBIDDEN
 
-function ContentStep({ content, onSpeak, isSpeaking }: { content: { text: string }, onSpeak: () => void, isSpeaking: boolean }) {
-  return (
-    <div className="flex flex-col h-full text-left">
-      <div className="flex justify-between items-start mb-6">
-        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Learn</h2>
-        <Button variant="ghost" size="icon" onClick={onSpeak} className={clsx("rounded-full", isSpeaking && "text-primary bg-primary/10")}>
-          <Volume2 className="w-6 h-6" />
-        </Button>
-      </div>
-      <div className="flex-1 overflow-y-auto pr-2">
-        <p className="text-2xl font-display leading-relaxed whitespace-pre-wrap">
-          {content.text}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function QuizStep({ content, onAnswer, feedback }: { content: { question: string, options: string[], correctIndex: number }, onAnswer: (idx: number) => void, feedback: string }) {
+function QuizStep({ content, onAnswer, feedback }: { content: { question: string, options: string[], correctIndex: number, correct_index?: number }, onAnswer: (idx: number) => void, feedback: string }) {
+  // Support both correctIndex and correct_index for backwards compatibility
+  const correctIdx = content.correct_index ?? content.correctIndex;
   return (
     <div className="flex flex-col h-full w-full">
       <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider text-left mb-6">Quiz</h2>
       <h3 className="text-2xl font-display font-bold text-left mb-8">{content.question}</h3>
       
       <div className="space-y-3 w-full">
-        {content.options.map((opt, i) => (
+        {content.options?.map((opt, i) => (
           <button
             key={i}
             onClick={() => feedback === 'neutral' && onAnswer(i)}
@@ -272,7 +255,7 @@ function QuizStep({ content, onAnswer, feedback }: { content: { question: string
             className={clsx(
               "w-full p-4 rounded-xl border-2 text-left text-lg font-medium transition-all duration-200",
               feedback === 'neutral' && "border-border hover:bg-secondary/50 hover:border-primary/50",
-              feedback === 'correct' && i === content.correctIndex && "bg-green-100 border-green-500 text-green-800",
+              feedback === 'correct' && i === correctIdx && "bg-green-100 border-green-500 text-green-800",
               feedback === 'incorrect' && "opacity-50"
             )}
           >

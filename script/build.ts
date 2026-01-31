@@ -1,6 +1,8 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, copyFile, mkdir } from "fs/promises";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -20,7 +22,6 @@ const allowlist = [
   "multer",
   "nanoid",
   "nodemailer",
-  "openai",
   "passport",
   "passport-local",
   "pg",
@@ -59,6 +60,13 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
+
+  // Copy connect-pg-simple table.sql to dist (required for session store)
+  console.log("copying connect-pg-simple table.sql...");
+  await copyFile(
+    "node_modules/connect-pg-simple/table.sql",
+    "dist/table.sql"
+  );
 }
 
 buildAll().catch((err) => {
