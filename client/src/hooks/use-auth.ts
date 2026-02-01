@@ -118,6 +118,11 @@ export function useRegister() {
       const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) || window.location.origin;
       const redirectUrl = `${appUrl}/auth/callback`;
       
+      // Ensure password is provided for Supabase signup
+      if (!data.password) {
+        throw new Error('Пароль обязателен');
+      }
+      
       const signUpOptions: any = {
         data: {
           name: data.name,

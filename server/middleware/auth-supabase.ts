@@ -4,21 +4,28 @@ import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 
-// Extended Express Request to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: number; // Internal INT ID for FK compatibility
-        authUid: string; // Supabase Auth UUID
-        email: string;
-        role: 'curator' | 'employee';
-        name: string;
-        emailConfirmed: boolean;
-      };
-      isAuthenticated?: () => boolean; // Backward compatibility with Passport.js
-    }
+// User profile shape for authenticated requests via Supabase JWT
+export interface AuthUser {
+  id: number; // Internal INT ID for FK compatibility
+  authUid: string; // Supabase Auth UUID
+  email: string;
+  role: 'curator' | 'employee';
+  name: string;
+  emailConfirmed: boolean;
+}
+
+// Type guard to check if request has AuthUser
+export function hasAuthUser(req: Request): req is Request & { user: AuthUser } {
+  const user = req.user as any;
+  return user && typeof user.authUid === 'string' && typeof user.emailConfirmed === 'boolean';
+}
+
+// Helper to get AuthUser from request (with type safety)
+export function getAuthUser(req: Request): AuthUser | null {
+  if (hasAuthUser(req)) {
+    return req.user;
   }
+  return null;
 }
 
 // Supabase client for server-side auth validation
@@ -147,18 +154,16 @@ export function authFromSupabase() {
         console.log(`[Auth Middleware] Created profile ${profile.id} for auth_uid ${authUid}`);
       }
 
-      // Set normalized user object
-      req.user = {
+      // Set normalized user object on request
+      // Using type assertion since we're adding AuthUser properties
+      (req as any).user = {
         id: profile.id,
         authUid: authUid,
         email: email,
-        role: profile.role,
+        role: profile.role as 'curator' | 'employee',
         name: profile.name,
         emailConfirmed: emailConfirmed,
       };
-
-      // Backward compatibility with Passport.js
-      req.isAuthenticated = () => true;
 
       next();
     } catch (err) {
@@ -192,8 +197,12 @@ export function requireAuth(options: RequireAuthOptions = {}) {
       });
     }
 
-    // Check email confirmation
-    if (requireConfirmedEmail && !req.user.emailConfirmed) {
+    // Cast to any to check both AuthUser and Passport User types
+    const user = req.user as any;
+
+    // Check email confirmation (works for both AuthUser.emailConfirmed and User.emailVerified)
+    const isEmailConfirmed = user.emailConfirmed ?? user.emailVerified ?? false;
+    if (requireConfirmedEmail && !isEmailConfirmed) {
       return res.status(403).json({
         code: 'EMAIL_NOT_CONFIRMED',
         message: 'Подтвердите email',
@@ -201,7 +210,7 @@ export function requireAuth(options: RequireAuthOptions = {}) {
     }
 
     // Check role
-    if (role && req.user.role !== role) {
+    if (role && user.role !== role) {
       return res.status(403).json({
         code: 'FORBIDDEN',
         message: 'Доступ запрещён',

@@ -59,7 +59,7 @@ export interface IStorage {
   
   // Course Members
   createCourseMember(member: typeof courseMembers.$inferInsert): Promise<CourseMember>;
-  getCourseMemberCount(courseId: number, role?: string): Promise<number>;
+  getCourseMemberCount(courseId: number, role?: 'curator' | 'employee'): Promise<number>;
   isCourseMember(courseId: number, userId: number): Promise<boolean>;
   
   sessionStore: any;
@@ -502,17 +502,22 @@ export class DatabaseStorage implements IStorage {
     return newMember;
   }
 
-  async getCourseMemberCount(courseId: number, role?: string): Promise<number> {
-    let query = db
+  async getCourseMemberCount(courseId: number, role?: 'curator' | 'employee'): Promise<number> {
+    if (role) {
+      const result = await db
+        .select({ count: count() })
+        .from(courseMembers)
+        .where(and(
+          eq(courseMembers.courseId, courseId), 
+          eq(courseMembers.memberRole, role as 'curator' | 'employee')
+        ));
+      return result[0]?.count || 0;
+    }
+
+    const result = await db
       .select({ count: count() })
       .from(courseMembers)
       .where(eq(courseMembers.courseId, courseId));
-
-    if (role) {
-      query = query.where(eq(courseMembers.memberRole, role)) as any;
-    }
-
-    const result = await query;
     return result[0]?.count || 0;
   }
 

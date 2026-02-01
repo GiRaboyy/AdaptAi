@@ -360,11 +360,12 @@ export async function registerRoutes(
 
   // Tracks - File upload endpoint (optimized)
   app.post(api.tracks.generate.path, upload.array('files', 20), async (req, res) => {
-    if (!req.user || req.user.role !== 'curator') {
+    const user = req.user as any;
+    if (!user || user.role !== 'curator') {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Необходима авторизация" });
     }
     
-    const userId = (req.user as any).id;
+    const userId = user.id;
     const correlationId = randomUUID();
     
     try {
