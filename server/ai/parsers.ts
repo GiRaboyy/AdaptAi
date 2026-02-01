@@ -190,15 +190,38 @@ export async function extractTextFromPDF(buffer: Buffer, filename?: string): Pro
       console.error(`${logPrefix} Stack trace:`, error.stack);
     }
     
+    // Transform errors into user-friendly messages
     if (error instanceof Error) {
+      // Check for filesystem errors (ENOENT, EACCES, etc.)
+      if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
+        console.error(`${logPrefix} CRITICAL: Filesystem error in pdf-parse - should not happen with Buffer input`);
+        throw new Error('Ошибка обработки PDF. Попробуйте другой файл или формат (DOCX, TXT).');
+      }
+      
+      // Check for permission errors
+      if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+        console.error(`${logPrefix} CRITICAL: Permission error in pdf-parse`);
+        throw new Error('Ошибка доступа к файлу. Попробуйте другой формат (DOCX, TXT).');
+      }
+      
+      // Password/encryption errors
       if (error.message.includes('password') || error.message.includes('encrypted') || error.message.includes('Password')) {
         throw new Error('PDF защищён паролем. Загрузите незащищённую версию.');
       }
+      
+      // Text extraction errors (already handled above)
       if (error.message.includes('Не удалось извлечь') || error.message.includes('не содержит текстового слоя')) {
         throw error;
       }
+      
+      // Native dependency errors
+      if (error.message.includes('canvas') || error.message.includes('DOMMatrix') || error.message.includes('native')) {
+        console.error(`${logPrefix} CRITICAL: Native dependency error in pdf-parse`);
+        throw new Error('Ошибка обработки PDF. Попробуйте экспортировать файл в другой формат (DOCX, TXT).');
+      }
     }
     
+    // Generic fallback error
     throw new Error('Не удалось прочитать PDF файл. Проверьте, что файл не повреждён.');
   }
 }

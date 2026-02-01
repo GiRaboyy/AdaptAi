@@ -106,26 +106,80 @@ export async function createApp() {
   });
 
   // Health check for Vercel - includes environment validation
-  app.get("/api/health", (_req, res) => {
+  app.get("/api/health", async (_req, res) => {
     const nodeEnv = process.env.NODE_ENV || 'development';
     const hasDatabase = Boolean(process.env.DATABASE_URL);
     const hasSessionSecret = Boolean(process.env.SESSION_SECRET);
+    const hasSupabaseUrl = Boolean(process.env.SUPABASE_URL);
+    const hasSupabaseKey = Boolean(process.env.SUPABASE_ANON_KEY);
+
+    // Check runtime dependencies
+    const dependencies: Record<string, boolean> = {};
+    const errors: string[] = [];
+
+    // Test pdf-parse
+    try {
+      // @ts-expect-error - pdf-parse has no type declarations
+      const pdfParse = await import('pdf-parse');
+      dependencies.pdfParse = Boolean(pdfParse);
+    } catch (err) {
+      dependencies.pdfParse = false;
+      errors.push(`pdf-parse: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    // Test mammoth
+    try {
+      const mammoth = await import('mammoth');
+      dependencies.mammoth = Boolean(mammoth);
+    } catch (err) {
+      dependencies.mammoth = false;
+      errors.push(`mammoth: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    // Test multer
+    try {
+      const multer = await import('multer');
+      dependencies.multer = Boolean(multer);
+    } catch (err) {
+      dependencies.multer = false;
+      errors.push(`multer: ${err instanceof Error ? err.message : String(err)}`);
+    }
 
     // Log warnings for missing configuration in production
     if (nodeEnv === 'production') {
       if (!hasDatabase) {
         console.warn('[Health] Missing DATABASE_URL in production');
+        errors.push('Missing DATABASE_URL');
       }
       if (!hasSessionSecret) {
         console.warn('[Health] Missing SESSION_SECRET in production');
+        errors.push('Missing SESSION_SECRET');
+      }
+      if (!hasSupabaseUrl) {
+        console.warn('[Health] Missing SUPABASE_URL in production');
+        errors.push('Missing SUPABASE_URL');
+      }
+      if (!hasSupabaseKey) {
+        console.warn('[Health] Missing SUPABASE_ANON_KEY in production');
+        errors.push('Missing SUPABASE_ANON_KEY');
       }
     }
 
-    res.status(200).json({
-      ok: true,
+    const allDependenciesOk = Object.values(dependencies).every(v => v === true);
+    const allConfigOk = nodeEnv !== 'production' || (hasDatabase && hasSessionSecret && hasSupabaseUrl && hasSupabaseKey);
+    const ok = allDependenciesOk && allConfigOk;
+
+    const statusCode = ok ? 200 : 500;
+
+    res.status(statusCode).json({
+      ok,
       nodeEnv,
       hasDatabase,
       hasSessionSecret,
+      hasSupabaseUrl,
+      hasSupabaseKey,
+      dependencies,
+      errors: errors.length > 0 ? errors : undefined,
       timestamp: new Date().toISOString(),
     });
   });
