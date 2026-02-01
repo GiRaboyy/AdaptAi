@@ -84,6 +84,13 @@ async function buildAll() {
     "node_modules/connect-pg-simple/table.sql",
     "dist/table.sql"
   );
+
+  // Copy server-app type declarations for Vercel API routes
+  console.log("copying server-app type declarations...");
+  await copyFile(
+    "server/server-app.d.ts",
+    "dist/server-app.d.ts"
+  );
 }
 
 buildAll().catch((err) => {

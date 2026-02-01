@@ -14,24 +14,21 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-
-// Type declaration for compiled bundle
-declare module '../dist/server-app.cjs' {
-  export function createApp(): Promise<any>;
-}
+import type { Express } from "express";
 
 // Dynamic import for development vs production
-let appPromise: Promise<any> | null = null;
+let appPromise: Promise<Express> | null = null;
 
-async function getApp() {
+async function getApp(): Promise<Express> {
   if (!appPromise) {
     appPromise = (async () => {
       try {
         // In production (Vercel), import from compiled bundle
         if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
           console.log('[Vercel Function] Loading from compiled bundle...');
-          const { createApp } = await import('../dist/server-app.cjs');
-          return await createApp();
+          // @ts-ignore - Dynamic import of compiled CJS bundle (TS7016 on Vercel)
+          const mod = await import('../dist/server-app.cjs');
+          return await mod.createApp();
         } else {
           // In development, import TypeScript source
           console.log('[Vercel Function] Loading from TypeScript source...');
