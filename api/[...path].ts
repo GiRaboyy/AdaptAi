@@ -23,11 +23,11 @@ async function getApp(): Promise<Express> {
   if (!appPromise) {
     appPromise = (async () => {
       try {
-        // In production (Vercel), import from compiled bundle
+        // In production (Vercel), import from compiled bundle (copied to api folder)
         if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
           console.log('[Vercel Function] Loading from compiled bundle...');
-          // @ts-ignore - Dynamic import of compiled CJS bundle (TS7016 on Vercel)
-          const mod = await import('../dist/server-app.cjs');
+          // @ts-ignore - Dynamic import of compiled CJS bundle
+          const mod = await import('./server-app.cjs');
           return await mod.createApp();
         } else {
           // In development, import TypeScript source

@@ -91,6 +91,13 @@ async function buildAll() {
     "server/server-app.d.ts",
     "dist/server-app.d.ts"
   );
+
+  // Copy server-app bundle to api folder for Vercel functions
+  console.log("copying server-app bundle to api folder...");
+  await copyFile(
+    "dist/server-app.cjs",
+    "api/server-app.cjs"
+  );
 }
 
 buildAll().catch((err) => {

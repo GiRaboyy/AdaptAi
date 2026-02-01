@@ -8,3 +8,4 @@ vite.config.ts.*
 .env.local
 .env-prod
 migrations/.meta
+api/server-app.cjs
