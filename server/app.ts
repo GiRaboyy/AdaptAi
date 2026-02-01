@@ -110,7 +110,7 @@ export async function createApp() {
     const nodeEnv = process.env.NODE_ENV || 'development';
     const hasDatabase = Boolean(process.env.DATABASE_URL);
     const hasSessionSecret = Boolean(process.env.SESSION_SECRET);
-    const hasSupabaseUrl = Boolean(process.env.SUPABASE_URL);
+    const hasSupabaseUrl = Boolean(process.env.DATABASE_FILE_STORAGE_URL);
     const hasSupabaseKey = Boolean(process.env.SUPABASE_ANON_KEY);
 
     // Check runtime dependencies

@@ -1,7 +1,17 @@
 import type { Express } from "express";
 import mammoth from "mammoth";
-// @ts-ignore - pdf-parse v1.x has no type declarations
-import pdfParse from 'pdf-parse';
+// pdf-parse is loaded lazily to avoid its self-test file access on import
+// See: https://gitlab.com/nicklason/pdf-parse/-/issues/24
+let pdfParseModule: ((buffer: Buffer) => Promise<any>) | null = null;
+
+async function getPdfParse(): Promise<(buffer: Buffer) => Promise<any>> {
+  if (!pdfParseModule) {
+    // @ts-ignore - pdf-parse v1.x has no type declarations
+    const mod = await import('pdf-parse');
+    pdfParseModule = mod.default || mod;
+  }
+  return pdfParseModule!;
+}
 
 /**
  * File Parser Module for ADAPT Platform
@@ -144,6 +154,8 @@ export async function extractTextFromPDF(buffer: Buffer, filename?: string): Pro
   console.log(`${logPrefix} PDF extraction started, size=${(buffer.length / 1024).toFixed(1)}KB`);
   
   try {
+    // Lazy load pdf-parse to avoid its self-test file access on import
+    const pdfParse = await getPdfParse();
     // Use pdf-parse v1.x function-based API (Node.js compatible, no DOM required)
     const data = await pdfParse(buffer);
     
