@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { logger } from "./logger";
 import { requestIdMiddleware, type RequestWithId } from "./request-id-middleware";
@@ -30,6 +31,14 @@ export async function createApp() {
   // Trust proxy for Vercel serverless deployment
   // This must be set before session middleware
   app.set('trust proxy', 1);
+
+  // CORS middleware - allow all origins for API
+  app.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  }));
 
   // Body parsing middleware
   app.use(
