@@ -93,72 +93,28 @@ export function useLogin() {
 export function useRegister() {
   const mutation = useMutation({
     mutationFn: async (data: InsertUser) => {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        // Fallback to legacy registration
-        const res = await fetch(api.auth.register.path, {
-          method: api.auth.register.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          if (res.status === 400) {
-            const error = api.auth.register.responses[400].parse(await res.json());
-            throw new Error(error.message);
-          }
-          throw new Error("Registration failed");
-        }
-
-        return api.auth.register.responses[201].parse(await res.json());
-      }
-
-      // Use Supabase Auth for registration
-      const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) || window.location.origin;
-      const redirectUrl = `${appUrl}/auth/callback`;
-      
-      // Ensure password is provided for Supabase signup
-      if (!data.password) {
-        throw new Error('Пароль обязателен');
-      }
-      
-      const signUpOptions: any = {
-        data: {
-          name: data.name,
-          role: data.role,
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      };
-      
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: signUpOptions,
+      // ALWAYS call backend /api/register to create user in public.users
+      // Backend handles Supabase Auth integration for email verification
+      const res = await fetch(api.auth.register.path, {
+        method: api.auth.register.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
       });
 
-      if (error) {
-        if (error.message.includes('already registered')) {
-          throw new Error('Пользователь уже зарегистрирован. Войдите.');
+      if (!res.ok) {
+        if (res.status === 400) {
+          const error = await res.json();
+          throw new Error(error.message || "Ошибка регистрации");
         }
-        throw new Error(error.message || 'Ошибка регистрации');
+        throw new Error("Ошибка регистрации");
       }
 
-      if (!authData.user) {
-        throw new Error('Не удалось создать аккаунт');
-      }
-
-      // Return user data for verification screen
+      const result = await res.json();
       return {
-        user: {
-          id: 0, // Will be assigned by backend
-          email: data.email,
-          name: data.name,
-          role: data.role,
-          emailVerified: false,
-        },
-        message: "Проверьте почту для подтверждения email",
-        needsVerification: true,
+        user: result.user,
+        message: result.message || "Проверьте почту для подтверждения email",
+        needsVerification: result.needsVerification ?? true,
       };
     },
     // No auto-redirect - let the component handle showing verification screen
