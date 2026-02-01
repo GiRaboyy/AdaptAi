@@ -3,12 +3,16 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" }
+  ],
   "routes": [
     { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ], 
   "functions": {
-    "api/**/*": {
+    "api/**/*.ts": {
       "maxDuration": 60,
       "memory": 1024
     }
