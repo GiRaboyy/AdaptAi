@@ -128,11 +128,8 @@ export function useRegister() {
           name: data.name,
           role: data.role,
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       };
-      
-      if (redirectUrl) {
-        signUpOptions.emailRedirectTo = redirectUrl;
-      }
       
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
