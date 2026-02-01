@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import mammoth from "mammoth";
-import { PDFParse } from 'pdf-parse';
+// @ts-ignore - pdf-parse v1.x has no type declarations
+import pdfParse from 'pdf-parse';
 
 /**
  * File Parser Module for ADAPT Platform
@@ -8,7 +9,7 @@ import { PDFParse } from 'pdf-parse';
  * Handles extraction of text content from various file formats:
  * - TXT, MD: Plain text files
  * - DOCX: Word documents (via mammoth)
- * - PDF: PDF documents (via pdf-parse PDFParse class)
+ * - PDF: PDF documents (via pdf-parse v1.x - Node.js compatible)
  * - JPG, PNG: Images (placeholder for future OCR)
  * 
  * All parsers handle errors gracefully with Russian user-friendly messages.
@@ -133,7 +134,7 @@ export interface PDFExtractionResult {
 }
 
 /**
- * Extract text from PDF files using pdf-parse PDFParse class
+ * Extract text from PDF files using pdf-parse v1.x (Node.js compatible)
  * Returns metadata object with extracted text and statistics
  */
 export async function extractTextFromPDF(buffer: Buffer, filename?: string): Promise<PDFExtractionResult> {
@@ -142,20 +143,13 @@ export async function extractTextFromPDF(buffer: Buffer, filename?: string): Pro
   
   console.log(`${logPrefix} PDF extraction started, size=${(buffer.length / 1024).toFixed(1)}KB`);
   
-  let pdfParser: PDFParse | null = null;
-  
   try {
-    // Create PDFParse instance with the buffer data
-    pdfParser = new PDFParse({ data: buffer });
+    // Use pdf-parse v1.x function-based API (Node.js compatible, no DOM required)
+    const data = await pdfParse(buffer);
     
-    // Get info to check encryption and page count
-    const info = await pdfParser.getInfo();
-    const isEncrypted = info.info?.IsEncrypted === true || info.info?.Encrypted === true || false;
-    const pageCount = info.total || 0;
-    
-    // Extract text
-    const textResult = await pdfParser.getText();
-    const rawText = textResult.text || '';
+    const rawText = data.text || '';
+    const pageCount = data.numpages || 0;
+    const isEncrypted = data.info?.IsEncrypted === true || data.info?.Encrypted === true || false;
     
     if (!rawText || rawText.trim().length === 0) {
       throw new Error('PDF не содержит текстового слоя. Это может быть отсканированный документ. Экспортируйте PDF с текстом или используйте TXT/DOCX.');
@@ -206,15 +200,6 @@ export async function extractTextFromPDF(buffer: Buffer, filename?: string): Pro
     }
     
     throw new Error('Не удалось прочитать PDF файл. Проверьте, что файл не повреждён.');
-  } finally {
-    // Clean up the parser
-    if (pdfParser) {
-      try {
-        await pdfParser.destroy();
-      } catch (e) {
-        // Ignore cleanup errors
-      }
-    }
   }
 }
 
