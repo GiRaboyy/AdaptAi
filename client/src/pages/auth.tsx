@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation, Link } from "wouter";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLogin, useRegister } from "@/hooks/use-auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -21,17 +21,36 @@ const registerSchema = insertUserSchema.extend({
   email: z.string().email(),
 });
 
-type AuthMode = "login" | "register";
+type AuthMode = "login" | "register" | "verify-email";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login");
+  const [pendingEmail, setPendingEmail] = useState<string>("");
   const { login, isPending: isLoginPending } = useLogin();
-  const { register: registerUser, isPending: isRegisterPending } = useRegister();
+  const { register: registerUser, isPending: isRegisterPending, isSuccess: isRegisterSuccess, data: registerData, reset: resetRegister } = useRegister();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const params = new URLSearchParams(window.location.search);
   const defaultRole = (params.get("role") as "curator" | "employee") || "employee";
+  const verified = params.get("verified");
+
+  // Show success message if email was verified
+  useEffect(() => {
+    if (verified === "true") {
+      toast({ title: "Email подтверждён!", description: "Теперь вы можете войти" });
+      // Clean URL
+      window.history.replaceState({}, '', '/auth');
+    }
+  }, [verified, toast]);
+
+  // Switch to verification screen when registration succeeds
+  useEffect(() => {
+    if (isRegisterSuccess && registerData?.needsVerification) {
+      setPendingEmail(registerData.user?.email || "");
+      setMode("verify-email");
+    }
+  }, [isRegisterSuccess, registerData]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -54,7 +73,7 @@ export default function AuthPage() {
   const onLogin = async (data: z.infer<typeof loginSchema>) => {
     try {
       await login(data);
-      toast({ title: "Добро пожаловать!", description: "Вы успешно вошли" });
+      // Success redirect is handled in useLogin hook
     } catch (error: any) {
       toast({ variant: "destructive", title: "Ошибка", description: error.message || "Не удалось войти" });
     }
@@ -65,10 +84,13 @@ export default function AuthPage() {
       onError: (error: any) => {
         toast({ variant: "destructive", title: "Ошибка", description: error.message || "Не удалось зарегистрироваться" });
       },
-      onSuccess: () => {
-        toast({ title: "Добро пожаловать!", description: "Аккаунт успешно создан" });
-      }
     });
+  };
+
+  const handleBackFromVerify = () => {
+    resetRegister();
+    setMode("register");
+    setPendingEmail("");
   };
 
   return (
@@ -153,15 +175,52 @@ export default function AuthPage() {
             </div>
 
             <AnimatePresence mode="wait">
-              {mode === "login" ? (
-                <motion.form
+              {mode === "verify-email" ? (
+                <motion.div
+                  key="verify-email"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="space-y-6 text-center"
+                >
+                  <div className="mx-auto w-16 h-16 bg-[#A6E85B]/20 rounded-full flex items-center justify-center">
+                    <Mail className="w-8 h-8 text-[#A6E85B]" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-semibold text-[#0a1f12]">
+                      Подтвердите email
+                    </h2>
+                    <p className="text-[#0a1f12]/60">
+                      Мы отправили письмо с подтверждением на:
+                    </p>
+                    <p className="text-lg font-medium text-[#0a1f12]">
+                      {pendingEmail}
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 bg-[#0a1f12]/5 rounded-xl text-sm text-[#0a1f12]/70">
+                    Перейдите по ссылке в письме, чтобы завершить регистрацию
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={handleBackFromVerify}
+                    className="w-full h-12 border-[#0a1f12]/20 text-[#0a1f12] hover:bg-[#0a1f12]/5"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Назад
+                  </Button>
+                </motion.div>
+              ) : mode === "login" ? (
+                <motion.div
                   key="login"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  onSubmit={loginForm.handleSubmit(onLogin)}
                   className="space-y-5"
                 >
+                  <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="username" className="text-[#0a1f12]">Email</Label>
                     <Input 
@@ -198,16 +257,17 @@ export default function AuthPage() {
                   >
                     {isLoginPending ? <Loader2 className="animate-spin" /> : "Войти"}
                   </Button>
-                </motion.form>
+                  </form>
+                </motion.div>
               ) : (
-                <motion.form
+                <motion.div
                   key="register"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  onSubmit={registerForm.handleSubmit(onRegister)}
                   className="space-y-5"
                 >
+                  <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="reg-name" className="text-[#0a1f12]">Имя</Label>
                     <Input 
@@ -281,7 +341,8 @@ export default function AuthPage() {
                   >
                     {isRegisterPending ? <Loader2 className="animate-spin" /> : "Создать аккаунт"}
                   </Button>
-                </motion.form>
+                  </form>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>

@@ -15,6 +15,11 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+// Type declaration for compiled bundle
+declare module '../dist/server-app.cjs' {
+  export function createApp(): Promise<any>;
+}
+
 // Dynamic import for development vs production
 let appPromise: Promise<any> | null = null;
 
@@ -33,9 +38,9 @@ async function getApp() {
           const { createApp } = await import('../server/app');
           return await createApp();
         }
-      } catch (error) {
-        console.error('[Vercel Function] Failed to import app:', error);
-        throw error;
+      } catch (err) {
+        console.error('[Vercel Function] Failed to import app:', err);
+        throw err;
       }
     })();
   }
@@ -53,23 +58,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Forward the request to Express
     // Express will handle routing, middleware, and response
     return app(req, res);
-  } catch (error) {
-    console.error("[Vercel Function] Error:", error);
-    
-    // If headers already sent, can't send error response
-    if (res.headersSent) {
-      return;
-    }
-    
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "Internal Server Error",
-      },
-    });
-  }
-}
-    console.error("[Vercel Function] Error:", error);
+  } catch (err) {
+    console.error("[Vercel Function] Error:", err);
     
     // If headers already sent, can't send error response
     if (res.headersSent) {

@@ -10,9 +10,10 @@ import {
   exchangeCodeForSession,
   isSupabaseConfigured,
   maskToken,
+  fetchWithAuth,
 } from '@/lib/supabase';
 
-type CallbackStatus = 'loading' | 'success' | 'error' | 'no_params';
+type CallbackStatus = 'loading' | 'success' | 'error' | 'no_params' | 'redirecting';
 
 interface CallbackState {
   status: CallbackStatus;
@@ -111,6 +112,9 @@ export default function AuthCallbackPage() {
           status: 'success',
           email: email,
         });
+        
+        // Auto-redirect to dashboard after a short delay
+        setTimeout(() => autoRedirectToApp(accessToken), 1500);
       } else {
         setState({
           status: 'error',
@@ -146,6 +150,9 @@ export default function AuthCallbackPage() {
           status: 'success',
           email: result.email,
         });
+        
+        // Auto-redirect to dashboard
+        setTimeout(() => autoRedirectToApp(), 1500);
       } else {
         setState({
           status: 'error',
@@ -329,9 +336,32 @@ export default function AuthCallbackPage() {
     return errorMap[error] || `Ошибка: ${error}`;
   }
 
-  function handleGoToApp() {
-    // Redirect to app and refresh to get new user data
+  async function autoRedirectToApp(accessToken?: string) {
+    setState(prev => ({ ...prev, status: 'redirecting' }));
+    
+    try {
+      // Try to fetch user profile to get role
+      const res = await fetchWithAuth('/api/me');
+      if (res.ok) {
+        const user = await res.json();
+        // Redirect based on role
+        if (user.role === 'curator') {
+          window.location.href = '/curator';
+        } else {
+          window.location.href = '/app/join';
+        }
+        return;
+      }
+    } catch (err) {
+      console.warn('[Auth Callback] Could not fetch profile for redirect:', err);
+    }
+    
+    // Fallback: redirect to auth page with verified flag
     window.location.href = '/auth?verified=true';
+  }
+
+  function handleGoToApp() {
+    autoRedirectToApp();
   }
 
   return (
@@ -376,6 +406,9 @@ export default function AuthCallbackPage() {
                     {state.email}
                   </p>
                 )}
+                <p className="text-gray-400 text-sm mt-2">
+                  Перенаправляем в личный кабинет...
+                </p>
               </div>
               <Button
                 onClick={handleGoToApp}
@@ -384,6 +417,22 @@ export default function AuthCallbackPage() {
                 Войти в приложение
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
+            </>
+          )}
+
+          {state.status === 'redirecting' && (
+            <>
+              <div className="mx-auto w-16 h-16 bg-[#C8F65D]/20 rounded-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-[#1A1A2E] animate-spin" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-[#1A1A2E]">
+                  Входим в систему...
+                </h1>
+                <p className="text-gray-500 mt-2">
+                  Пожалуйста, подождите
+                </p>
+              </div>
             </>
           )}
 
