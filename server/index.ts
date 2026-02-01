@@ -1,13 +1,9 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { type Request, Response, NextFunction } from "express";
+import { createApp } from "./app";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { logger } from "./logger";
-import { requestIdMiddleware, type RequestWithId } from "./request-id-middleware";
-import { authFromSupabase } from "./middleware/auth-supabase";
-
-const app = express();
-const httpServer = createServer(app);
+import { type RequestWithId } from "./request-id-middleware";
 
 declare module "http" {
   interface IncomingMessage {
@@ -22,6 +18,7 @@ const SHUTDOWN_TIMEOUT_MS = parseInt(
 let isReady = false;
 let isShuttingDown = false;
 let activeRequests = 0;
+let httpServer: any; // Will be set in async block
 
 function toErrorObject(err: unknown) {
   if (!err) return undefined;
@@ -53,28 +50,38 @@ function initiateShutdown(reason: string, err?: unknown) {
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
 
-  httpServer.close((closeErr) => {
-    if (closeErr) {
-      logger.error({
-        msg: "Error while closing HTTP server",
-        context: "server",
-        error: toErrorObject(closeErr),
-      });
-      process.exit(1);
-    }
-
-    const checkInterval = setInterval(() => {
-      if (activeRequests === 0) {
-        clearInterval(checkInterval);
-        clearTimeout(timeout);
-        logger.info({
-          msg: "Shutdown complete",
+  // Only try to close if httpServer exists (may not exist if error during startup)
+  if (httpServer) {
+    httpServer.close((closeErr: any) => {
+      if (closeErr) {
+        logger.error({
+          msg: "Error while closing HTTP server",
           context: "server",
+          error: toErrorObject(closeErr),
         });
-        process.exit(0);
+        process.exit(1);
       }
-    }, 100);
-  });
+
+      const checkInterval = setInterval(() => {
+        if (activeRequests === 0) {
+          clearInterval(checkInterval);
+          clearTimeout(timeout);
+          logger.info({
+            msg: "Shutdown complete",
+            context: "server",
+          });
+          process.exit(0);
+        }
+      }, 100);
+    });
+  } else {
+    clearTimeout(timeout);
+    logger.info({
+      msg: "Shutdown complete (server not started)",
+      context: "server",
+    });
+    process.exit(0);
+  }
 }
 
 process.on("unhandledRejection", (reason) => {
@@ -105,141 +112,38 @@ process.on("uncaughtException", (err) => {
   });
 });
 
-app.use(
-  express.json({
-    limit: "10mb",
-    verify: (req, _res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
+(async () => {
+  // Create the Express app using the factory function
+  const app = await createApp();
+  httpServer = createServer(app);
 
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
-
-app.use(requestIdMiddleware);
-
-// JWT Authentication Middleware - applied to all routes
-// This validates Supabase JWT tokens and resolves user profiles
-app.use(authFromSupabase());
-
-app.use((req, res, next) => {
-  activeRequests += 1;
-  const start = Date.now();
-
-  res.on("finish", () => {
-    activeRequests -= 1;
-
-    const duration = Date.now() - start;
-    const status = res.statusCode;
-    const level =
-      status >= 500 ? "error" : status >= 400 ? "warn" : "info";
-
-    const sampleRateEnv = process.env.REQUEST_LOG_SAMPLE;
-    const sampleRate = sampleRateEnv ? parseFloat(sampleRateEnv) : 1;
-
-    if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
-      return;
-    }
-
-    if (sampleRate < 1 && Math.random() > sampleRate) {
-      return;
-    }
-
-    const reqWithId = req as RequestWithId;
-
-    (logger as any)[level]?.({
-      msg: "Request completed",
-      context: "http",
-      request_id: reqWithId.requestId,
-      http: {
-        method: req.method,
-        path: req.path,
-        status,
-        duration_ms: duration,
-      },
+  // Middleware to track active requests for graceful shutdown
+  app.use((req, res, next) => {
+    activeRequests += 1;
+    res.on("finish", () => {
+      activeRequests -= 1;
     });
+    next();
   });
 
-  next();
-});
+  // Readiness check that considers shutdown state (local server only)
+  app.get("/readyz", (_req, res) => {
+    if (!isReady || isShuttingDown) {
+      res.status(503).json({
+        ready: false,
+        reason: isShuttingDown
+          ? "Server is shutting down"
+          : "Server is initializing",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
 
-app.get("/healthz", (_req, res) => {
-  res.status(200).json({
-    ok: true,
-    uptime_seconds: Math.round(process.uptime()),
-    timestamp: new Date().toISOString(),
-  });
-});
-
-app.get("/readyz", (_req, res) => {
-  if (!isReady || isShuttingDown) {
-    res.status(503).json({
-      ready: false,
-      reason: isShuttingDown
-        ? "Server is shutting down"
-        : "Server is initializing",
+    res.status(200).json({
+      ready: true,
       timestamp: new Date().toISOString(),
     });
-    return;
-  }
-
-  res.status(200).json({
-    ready: true,
-    timestamp: new Date().toISOString(),
   });
-});
-
-(async () => {
-  await registerRoutes(httpServer, app);
-
-  app.use(
-    (err: any, req: Request, res: Response, _next: NextFunction) => {
-      const status = err?.status || err?.statusCode || 500;
-      const message =
-        status >= 500
-          ? "Internal Server Error"
-          : err?.message || "Bad Request";
-      const code =
-        err?.code ||
-        (status === 400
-          ? "BAD_REQUEST"
-          : status === 401
-          ? "UNAUTHORIZED"
-          : status === 403
-          ? "FORBIDDEN"
-          : status === 404
-          ? "NOT_FOUND"
-          : status >= 500
-          ? "INTERNAL_ERROR"
-          : "INTERNAL_ERROR");
-
-      const reqWithId = req as RequestWithId;
-
-      logger.error({
-        msg: "Request failed",
-        context: "http",
-        request_id: reqWithId.requestId,
-        error: toErrorObject(err),
-        http: {
-          method: req.method,
-          path: req.path,
-          status,
-        },
-      });
-
-      if (res.headersSent) {
-        return;
-      }
-
-      res.status(status).json({
-        error: {
-          code,
-          message,
-          request_id: reqWithId.requestId,
-        },
-      });
-    },
-  );
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
