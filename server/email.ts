@@ -76,14 +76,27 @@ export async function sendVerificationEmail(params: VerificationEmailParams): Pr
     return false; // Gracefully fail
   }
 
-  const appUrl = process.env.APP_URL || 'http://localhost:5000';
+  // APP_URL is required for email links - use environment variable only
+  const appUrl = process.env.APP_URL;
   
-  // Warn if using localhost in production
-  if (process.env.NODE_ENV === 'production' && appUrl.includes('localhost')) {
-    console.warn('[Email] WARNING: APP_URL contains localhost in production mode!');
+  // Validate APP_URL in production
+  if (!appUrl) {
+    console.error('[Email] ERROR: APP_URL environment variable is not set. Email links will not work.');
+    if (process.env.NODE_ENV === 'production') {
+      return false; // Don't send emails with broken links in production
+    }
   }
   
-  const verificationUrl = `${appUrl}/auth/verify-email?token=${params.token}`;
+  // Warn if using localhost in production
+  if (process.env.NODE_ENV === 'production' && appUrl?.includes('localhost')) {
+    console.error('[Email] ERROR: APP_URL contains localhost in production mode! Email links will not work.');
+    return false; // Don't send emails with broken links
+  }
+  
+  // Fallback for development only
+  const finalAppUrl = appUrl || 'http://localhost:5000';
+  
+  const verificationUrl = `${finalAppUrl}/auth/verify-email?token=${params.token}`;
   
   const config = getEmailConfig();
   if (!config) return false;

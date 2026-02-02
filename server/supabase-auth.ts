@@ -71,7 +71,13 @@ export async function signUpWithSupabase(email: string, password: string, metada
   }
 
   try {
-    const appUrl = process.env.APP_URL || 'http://localhost:5000';
+    // APP_URL must be set via environment variable - only use fallback in development
+    const appUrl = process.env.APP_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000' : '');
+    
+    if (!appUrl) {
+      console.error('[Supabase Auth] ERROR: APP_URL is not set. Email verification redirects will fail.');
+      return { success: false, error: 'APP_URL environment variable is required' };
+    }
     
     const { data, error } = await client.auth.signUp({
       email,
@@ -123,7 +129,13 @@ export async function resendVerificationEmail(email: string): Promise<{ success:
   }
 
   try {
-    const appUrl = process.env.APP_URL || 'http://localhost:5000';
+    // APP_URL must be set via environment variable - only use fallback in development
+    const appUrl = process.env.APP_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000' : '');
+    
+    if (!appUrl) {
+      console.error('[Supabase Auth] ERROR: APP_URL is not set for resend email.');
+      return { success: false, error: 'APP_URL environment variable is required' };
+    }
     
     const { error } = await client.auth.resend({
       type: 'signup',

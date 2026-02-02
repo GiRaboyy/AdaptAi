@@ -36,8 +36,21 @@ export function setupAuth(app: Express) {
   const isSecureCookie = process.env.NODE_ENV === "production" && 
                          process.env.COOKIE_SECURE !== "false";
   
+  // Validate SESSION_SECRET in production - never use fallback values
+  const isProduction = app.get("env") === "production" || process.env.NODE_ENV === "production";
+  
+  if (!process.env.SESSION_SECRET && isProduction) {
+    throw new Error(
+      "FATAL: SESSION_SECRET environment variable is required in production. " +
+      "Set it in Vercel Dashboard → Settings → Environment Variables."
+    );
+  }
+  
+  // Only use fallback in development, never in production
+  const sessionSecret = process.env.SESSION_SECRET || (isProduction ? "" : "dev_only_secret_not_for_production");
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "default_secret_dev_only",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
@@ -48,8 +61,8 @@ export function setupAuth(app: Express) {
     },
   };
 
-  if (!process.env.SESSION_SECRET && app.get("env") === "production") {
-    console.warn("WARNING: SESSION_SECRET is not set. Using default secret is insecure for production.");
+  if (!process.env.SESSION_SECRET && !isProduction) {
+    console.warn("[Auth] WARNING: SESSION_SECRET is not set. Using dev-only fallback. Set this in production!");
   }
 
   if (app.get("env") === "production") {
@@ -165,7 +178,13 @@ export function setupAuth(app: Express) {
       let emailSentViaSupabase = false;
       
       // Diagnostic logging for redirect URL configuration
-      const appUrl = process.env.APP_URL || 'http://localhost:5000';
+      // APP_URL must be set via environment variable - only use fallback in development
+      const appUrl = process.env.APP_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000' : '');
+      
+      if (!appUrl && process.env.NODE_ENV === 'production') {
+        console.error('[Auth] ERROR: APP_URL environment variable is not set in production!');
+      }
+      
       console.log(`[Auth] Signup initiated: email=${req.body.email}`);
       console.log(`[Auth] Current APP_URL env: ${process.env.APP_URL}`);
       console.log(`[Auth] Supabase redirect URL: ${appUrl}/auth/callback`);

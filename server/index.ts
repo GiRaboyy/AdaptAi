@@ -5,6 +5,83 @@ import { createServer } from "http";
 import { logger } from "./logger";
 import { type RequestWithId } from "./request-id-middleware";
 
+/**
+ * Validate required environment variables at startup.
+ * Throws an error in production if critical variables are missing.
+ * Logs warnings in development for missing optional variables.
+ */
+function validateEnvironmentVariables(): void {
+  const isProduction = process.env.NODE_ENV === "production";
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Required variables in production
+  const requiredInProduction = [
+    "DATABASE_URL",
+    "SESSION_SECRET",
+    "DATABASE_FILE_STORAGE_URL",
+    "SUPABASE_ANON_KEY",
+    "APP_URL",
+  ];
+  
+  // Recommended variables (warn if missing)
+  const recommended = [
+    "YANDEX_CLOUD_API_KEY",
+    "YANDEX_CLOUD_PROJECT_FOLDER_ID",
+    "YANDEX_PROMPT_ID",
+  ];
+  
+  // Check required variables
+  for (const envVar of requiredInProduction) {
+    if (!process.env[envVar]) {
+      if (isProduction) {
+        errors.push(`Missing required environment variable: ${envVar}`);
+      } else {
+        warnings.push(`Missing environment variable (required in production): ${envVar}`);
+      }
+    }
+  }
+  
+  // Check recommended variables
+  for (const envVar of recommended) {
+    if (!process.env[envVar]) {
+      warnings.push(`Missing recommended environment variable: ${envVar} (AI features will be disabled)`);
+    }
+  }
+  
+  // Check for localhost in APP_URL in production
+  if (isProduction && process.env.APP_URL?.includes("localhost")) {
+    errors.push(
+      "APP_URL contains 'localhost' in production. " +
+      "Set it to your production domain (e.g., https://adapt-ai-nu.vercel.app)"
+    );
+  }
+  
+  // Log warnings
+  for (const warning of warnings) {
+    logger.warn({ msg: warning, context: "env-validation" });
+  }
+  
+  // Throw error in production if required variables are missing
+  if (errors.length > 0 && isProduction) {
+    const errorMessage = 
+      "Environment variable validation failed:\n" +
+      errors.map(e => `  - ${e}`).join("\n") +
+      "\n\nSet these variables in Vercel Dashboard → Settings → Environment Variables";
+    
+    logger.error({ msg: errorMessage, context: "env-validation" });
+    throw new Error(errorMessage);
+  }
+  
+  // Log success
+  if (errors.length === 0) {
+    logger.info({ 
+      msg: `Environment validation passed (${isProduction ? 'production' : 'development'} mode)`,
+      context: "env-validation" 
+    });
+  }
+}
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -113,6 +190,9 @@ process.on("uncaughtException", (err) => {
 });
 
 (async () => {
+  // Validate environment variables before starting the server
+  validateEnvironmentVariables();
+  
   // Create the Express app using the factory function
   const app = await createApp();
   httpServer = createServer(app);
