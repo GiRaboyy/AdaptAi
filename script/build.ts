@@ -100,6 +100,13 @@ async function buildAll() {
     "dist/server-app.cjs",
     "api/server-app.cjs"
   );
+
+  // Copy table.sql to api folder for Vercel serverless (connect-pg-simple needs it)
+  console.log("copying table.sql to api folder for Vercel...");
+  await copyFile(
+    "node_modules/connect-pg-simple/table.sql",
+    "api/table.sql"
+  );
 }
 
 buildAll().catch((err) => {
