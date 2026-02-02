@@ -161,26 +161,34 @@ const supabaseSchema = z.object({
 // =============================================================================
 
 const appUrlSchema = z.object({
-  // Application URL for email links
+  // Application URL for email links - auto-derived from VERCEL_URL if not set
   APP_URL: z.string().optional().transform((val) => {
-    if (!val || val === '') {
-      if (isProduction) {
-        throw new Error(
-          'FATAL: APP_URL is required in production for email verification links. ' +
-          'Set to your production domain (e.g., https://your-app.vercel.app)'
-        );
+    if (val && val !== '') {
+      // User provided explicit value
+      if (isProduction && val.includes('localhost')) {
+        console.warn('[Env] WARNING: APP_URL contains localhost in production');
       }
-      return 'http://localhost:5000';
+      return val;
     }
-    // Warn about localhost in production
-    if (isProduction && val.includes('localhost')) {
-      throw new Error(
-        'FATAL: APP_URL cannot use localhost in production. ' +
-        'Set to your production domain (e.g., https://your-app.vercel.app)'
-      );
+    
+    // Auto-derive from VERCEL_URL in production
+    if (isProduction) {
+      const vercelUrl = process.env.VERCEL_URL;
+      if (vercelUrl) {
+        const derivedUrl = `https://${vercelUrl}`;
+        console.log(`[Env] APP_URL auto-derived from VERCEL_URL: ${derivedUrl}`);
+        return derivedUrl;
+      }
+      // Fallback - will work but email links may be broken
+      console.warn('[Env] WARNING: APP_URL not set and VERCEL_URL not available. Email links may not work.');
+      return '';
     }
-    return val;
+    
+    return 'http://localhost:5000';
   }),
+  
+  // Vercel provides this automatically
+  VERCEL_URL: z.string().optional(),
 });
 
 // =============================================================================
