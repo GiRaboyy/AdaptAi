@@ -1,30 +1,64 @@
 import type { Express } from "express";
 import mammoth from "mammoth";
-// pdf-parse is loaded lazily to avoid its self-test file access on import
-// See: https://gitlab.com/nicklason/pdf-parse/-/issues/24
-let pdfParseModule: ((buffer: Buffer) => Promise<any>) | null = null;
-let pdfParseLoadError: Error | null = null;
 
-async function getPdfParse(): Promise<(buffer: Buffer) => Promise<any>> {
+/**
+ * pdf-parse module loader with Vercel serverless compatibility
+ * 
+ * IMPORTANT: We import 'pdf-parse/lib/pdf-parse.js' directly to bypass
+ * the library's automatic test file loading that causes ENOENT errors
+ * in Vercel serverless environment.
+ * 
+ * The main pdf-parse package runs a test on import that tries to read
+ * './test/data/05-versions-space.pdf' which doesn't exist in production.
+ * See: https://gitlab.com/nicklason/pdf-parse/-/issues/24
+ */
+let pdfParseModule: ((buffer: Buffer, options?: any) => Promise<any>) | null = null;
+let pdfParseLoadError: Error | null = null;
+let pdfParseLoadAttempted = false;
+
+async function getPdfParse(): Promise<(buffer: Buffer, options?: any) => Promise<any>> {
   // Return cached error if previous load failed
   if (pdfParseLoadError) {
+    console.error('[Parser] Re-throwing cached pdf-parse load error:', pdfParseLoadError.message);
     throw pdfParseLoadError;
   }
   
-  if (!pdfParseModule) {
+  if (!pdfParseModule && !pdfParseLoadAttempted) {
+    pdfParseLoadAttempted = true;
+    
     try {
-      console.log('[Parser] Loading pdf-parse module...');
-      // @ts-ignore - pdf-parse v1.x has no type declarations
-      const mod = await import('pdf-parse');
+      console.log('[Parser] Loading pdf-parse module (using lib/pdf-parse.js to bypass test file)...');
+      
+      // CRITICAL: Import from lib/pdf-parse.js directly to avoid test file loading
+      // The main pdf-parse package runs a test on import that reads a test PDF file
+      // @ts-expect-error - pdf-parse has no type declarations
+      const mod = await import('pdf-parse/lib/pdf-parse.js');
       pdfParseModule = mod.default || mod;
+      
       console.log('[Parser] pdf-parse module loaded successfully');
     } catch (err) {
-      pdfParseLoadError = err instanceof Error ? err : new Error(String(err));
-      console.error('[Parser] CRITICAL: Failed to load pdf-parse:', pdfParseLoadError.message);
-      throw new Error('Ошибка загрузки PDF парсера. Используйте формат DOCX или TXT.');
+      // If lib/pdf-parse.js doesn't work, try the main package as fallback
+      console.warn('[Parser] Failed to load pdf-parse/lib/pdf-parse.js, trying main package...');
+      
+      try {
+        // @ts-expect-error - pdf-parse has no type declarations
+        const mod = await import('pdf-parse');
+        pdfParseModule = mod.default || mod;
+        console.log('[Parser] pdf-parse module loaded via main package');
+      } catch (fallbackErr) {
+        const errorMessage = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+        pdfParseLoadError = new Error(`Не удалось загрузить PDF парсер: ${errorMessage}`);
+        console.error('[Parser] CRITICAL: All pdf-parse load attempts failed:', errorMessage);
+        throw new Error('Ошибка загрузки PDF парсера. Используйте формат DOCX или TXT.');
+      }
     }
   }
-  return pdfParseModule!;
+  
+  if (!pdfParseModule) {
+    throw new Error('PDF парсер не инициализирован.');
+  }
+  
+  return pdfParseModule;
 }
 
 /**
@@ -158,45 +192,75 @@ export interface PDFExtractionResult {
 }
 
 /**
- * Extract text from PDF files using pdf-parse v1.x (Node.js compatible)
- * Returns metadata object with extracted text and statistics
+ * Extract text from PDF files using pdf-parse (Node.js compatible)
+ * 
+ * IMPORTANT: Uses pdf-parse/lib/pdf-parse.js directly to avoid the library's
+ * automatic test file loading that fails in Vercel serverless.
+ * 
+ * Returns metadata object with extracted text and statistics.
+ * Supports Buffer input only (no file paths) for serverless compatibility.
  */
 export async function extractTextFromPDF(buffer: Buffer, filename?: string): Promise<PDFExtractionResult> {
   const startTime = Date.now();
   const logPrefix = `[Parser]${filename ? ` file="${filename}"` : ''}`;
+  const sizeKB = (buffer.length / 1024).toFixed(1);
   
-  console.log(`${logPrefix} PDF extraction started, size=${(buffer.length / 1024).toFixed(1)}KB`);
+  console.log(`${logPrefix} PDF extraction started, size=${sizeKB}KB`);
+  
+  // Validate buffer
+  if (!buffer || buffer.length === 0) {
+    console.error(`${logPrefix} Empty buffer received`);
+    throw new Error('Файл PDF пустой или не был загружен.');
+  }
+  
+  // Check PDF magic bytes (PDF files start with %PDF)
+  const pdfMagic = buffer.slice(0, 5).toString('ascii');
+  if (!pdfMagic.startsWith('%PDF')) {
+    console.error(`${logPrefix} Invalid PDF magic bytes: ${pdfMagic}`);
+    throw new Error('Файл не является корректным PDF. Проверьте формат файла.');
+  }
   
   try {
     // Lazy load pdf-parse to avoid its self-test file access on import
     const pdfParse = await getPdfParse();
-    // Use pdf-parse v1.x function-based API (Node.js compatible, no DOM required)
+    
+    // Call pdf-parse with the buffer
+    // Note: pdf-parse expects data buffer, NOT a file path
     const data = await pdfParse(buffer);
     
     const rawText = data.text || '';
     const pageCount = data.numpages || 0;
     const isEncrypted = data.info?.IsEncrypted === true || data.info?.Encrypted === true || false;
     
+    console.log(`${logPrefix} Raw extraction: pages=${pageCount}, rawChars=${rawText.length}, encrypted=${isEncrypted}`);
+    
     if (!rawText || rawText.trim().length === 0) {
       throw new Error('PDF не содержит текстового слоя. Это может быть отсканированный документ. Экспортируйте PDF с текстом или используйте TXT/DOCX.');
     }
     
     // Clean up extracted text
-    // PDFs often have weird spacing, clean it up
+    // PDFs often have weird spacing, ligatures, and encoding issues
     const cleanedText = rawText
-      .replace(/\x00/g, '')
-      .replace(/\r\n/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/\s+/g, ' ')
+      .replace(/\x00/g, '')           // Remove null bytes
+      .replace(/\r\n/g, '\n')         // Normalize line endings
+      .replace(/\r/g, '\n')           // Handle Mac-style line endings
+      .replace(/\n{3,}/g, '\n\n')     // Collapse excessive newlines
+      .replace(/[ \t]+/g, ' ')        // Collapse spaces/tabs but preserve newlines
+      .replace(/\n /g, '\n')          // Remove leading spaces after newlines
+      .replace(/ \n/g, '\n')          // Remove trailing spaces before newlines
       .trim();
     
     const charCount = cleanedText.length;
     const durationMs = Date.now() - startTime;
     
-    // Validate minimum text length (per memory: if < 500, show specific error)
+    // Validate minimum text length
+    if (charCount < 100) {
+      console.warn(`${logPrefix} Very low char count: ${charCount} chars from ${pageCount} pages`);
+      throw new Error(`PDF содержит слишком мало текста (${charCount} символов). Попробуйте загрузить .txt или .docx файл.`);
+    }
+    
     if (charCount < 500) {
-      console.warn(`${logPrefix} Low char count: ${charCount} chars from ${pageCount} pages`);
-      throw new Error(`Не удалось извлечь читаемый текст из PDF (${charCount} символов). Попробуйте экспортировать PDF с текстом или загрузите .txt/.md файл.`);
+      console.warn(`${logPrefix} Low char count: ${charCount} chars from ${pageCount} pages - proceeding with warning`);
     }
     
     console.log(`${logPrefix} PDF extraction success: pages=${pageCount}, chars=${charCount}, duration=${durationMs}ms`);
@@ -211,39 +275,51 @@ export async function extractTextFromPDF(buffer: Buffer, filename?: string): Pro
     };
   } catch (error) {
     const durationMs = Date.now() - startTime;
-    console.error(`${logPrefix} PDF extraction failed after ${durationMs}ms:`, error instanceof Error ? error.message : error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    console.error(`${logPrefix} PDF extraction failed after ${durationMs}ms:`, errorMessage);
     if (error instanceof Error && error.stack) {
       console.error(`${logPrefix} Stack trace:`, error.stack);
     }
     
     // Transform errors into user-friendly messages
     if (error instanceof Error) {
-      // Check for filesystem errors (ENOENT, EACCES, etc.)
-      if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
-        console.error(`${logPrefix} CRITICAL: Filesystem error in pdf-parse - should not happen with Buffer input`);
-        throw new Error('Ошибка обработки PDF. Попробуйте другой файл или формат (DOCX, TXT).');
+      // Already user-friendly errors - pass through
+      if (
+        errorMessage.includes('не содержит текстового слоя') ||
+        errorMessage.includes('слишком мало текста') ||
+        errorMessage.includes('не является корректным PDF') ||
+        errorMessage.includes('пустой или не был загружен') ||
+        errorMessage.includes('Ошибка загрузки PDF парсера')
+      ) {
+        throw error;
       }
       
-      // Check for permission errors
-      if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+      // Filesystem errors (ENOENT, EACCES) - this indicates pdf-parse tried to read a file
+      if (errorMessage.includes('ENOENT') || errorMessage.includes('no such file')) {
+        console.error(`${logPrefix} CRITICAL: Filesystem error in pdf-parse - library tried to read a file instead of buffer`);
+        throw new Error('Ошибка обработки PDF. Пожалуйста, используйте формат DOCX или TXT.');
+      }
+      
+      if (errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
         console.error(`${logPrefix} CRITICAL: Permission error in pdf-parse`);
         throw new Error('Ошибка доступа к файлу. Попробуйте другой формат (DOCX, TXT).');
       }
       
       // Password/encryption errors
-      if (error.message.includes('password') || error.message.includes('encrypted') || error.message.includes('Password')) {
+      if (errorMessage.includes('password') || errorMessage.includes('encrypted') || errorMessage.includes('Password')) {
         throw new Error('PDF защищён паролем. Загрузите незащищённую версию.');
       }
       
-      // Text extraction errors (already handled above)
-      if (error.message.includes('Не удалось извлечь') || error.message.includes('не содержит текстового слоя')) {
-        throw error;
-      }
-      
-      // Native dependency errors
-      if (error.message.includes('canvas') || error.message.includes('DOMMatrix') || error.message.includes('native')) {
+      // Native dependency errors (canvas, DOMMatrix)
+      if (errorMessage.includes('canvas') || errorMessage.includes('DOMMatrix') || errorMessage.includes('native')) {
         console.error(`${logPrefix} CRITICAL: Native dependency error in pdf-parse`);
         throw new Error('Ошибка обработки PDF. Попробуйте экспортировать файл в другой формат (DOCX, TXT).');
+      }
+      
+      // Corrupted PDF
+      if (errorMessage.includes('Invalid PDF') || errorMessage.includes('PDF.js')) {
+        throw new Error('PDF файл повреждён или имеет неподдерживаемый формат.');
       }
     }
     
