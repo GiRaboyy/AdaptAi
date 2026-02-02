@@ -102,24 +102,41 @@ function fixCyrillicFilename(filename: string): string {
 
 async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
   const ext = file.originalname.toLowerCase().split('.').pop();
+  const logPrefix = `[Text Extract] file="${file.originalname}"`;
   
-  if (ext === 'txt' || ext === 'md') {
-    return file.buffer.toString('utf-8').replace(/\x00/g, '');
+  console.log(`${logPrefix} Starting extraction: type=${ext}, size=${(file.size / 1024).toFixed(1)}KB`);
+  
+  try {
+    if (ext === 'txt' || ext === 'md') {
+      const text = file.buffer.toString('utf-8').replace(/\x00/g, '');
+      console.log(`${logPrefix} TXT/MD extraction success: ${text.length} chars`);
+      return text;
+    }
+    
+    if (ext === 'docx') {
+      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      const text = result.value.replace(/\x00/g, '');
+      console.log(`${logPrefix} DOCX extraction success: ${text.length} chars`);
+      return text;
+    }
+    
+    if (ext === 'pdf') {
+      // Use the centralized PDF parser
+      console.log(`${logPrefix} Starting PDF extraction...`);
+      const { extractTextFromPDF } = await import('./ai/parsers');
+      const result = await extractTextFromPDF(file.buffer, file.originalname);
+      console.log(`${logPrefix} PDF extraction success: ${result.extractedCharCount} chars, ${result.pageCount} pages`);
+      return result.fullText;
+    }
+    
+    throw new Error(`Неподдерживаемый формат: ${ext}. Используйте TXT, MD, DOCX или PDF.`);
+  } catch (error) {
+    console.error(`${logPrefix} Extraction failed:`, error instanceof Error ? error.message : error);
+    if (error instanceof Error && error.stack) {
+      console.error(`${logPrefix} Stack:`, error.stack);
+    }
+    throw error;
   }
-  
-  if (ext === 'docx') {
-    const result = await mammoth.extractRawText({ buffer: file.buffer });
-    return result.value.replace(/\x00/g, '');
-  }
-  
-  if (ext === 'pdf') {
-    // Use the centralized PDF parser
-    const { extractTextFromPDF } = await import('./ai/parsers');
-    const result = await extractTextFromPDF(file.buffer);
-    return result.fullText;
-  }
-  
-  throw new Error(`Неподдерживаемый формат: ${ext}. Используйте TXT, MD, DOCX или PDF.`);
 }
 
 // Legacy V1 generator using Yandex Cloud AI Assistant

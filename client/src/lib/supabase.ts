@@ -21,8 +21,9 @@ export function getSupabaseClient(): SupabaseClient | null {
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         autoRefreshToken: true,
-        persistSession: false, // We use our own session management
-        detectSessionInUrl: false, // We handle this manually in callback page
+        persistSession: true, // Keep session in localStorage for API auth headers
+        detectSessionInUrl: true, // Auto-handle auth callback URLs
+        storageKey: 'adapt-ai-auth', // Custom storage key
       },
     });
   }

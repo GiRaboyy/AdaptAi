@@ -3,12 +3,26 @@ import mammoth from "mammoth";
 // pdf-parse is loaded lazily to avoid its self-test file access on import
 // See: https://gitlab.com/nicklason/pdf-parse/-/issues/24
 let pdfParseModule: ((buffer: Buffer) => Promise<any>) | null = null;
+let pdfParseLoadError: Error | null = null;
 
 async function getPdfParse(): Promise<(buffer: Buffer) => Promise<any>> {
+  // Return cached error if previous load failed
+  if (pdfParseLoadError) {
+    throw pdfParseLoadError;
+  }
+  
   if (!pdfParseModule) {
-    // @ts-ignore - pdf-parse v1.x has no type declarations
-    const mod = await import('pdf-parse');
-    pdfParseModule = mod.default || mod;
+    try {
+      console.log('[Parser] Loading pdf-parse module...');
+      // @ts-ignore - pdf-parse v1.x has no type declarations
+      const mod = await import('pdf-parse');
+      pdfParseModule = mod.default || mod;
+      console.log('[Parser] pdf-parse module loaded successfully');
+    } catch (err) {
+      pdfParseLoadError = err instanceof Error ? err : new Error(String(err));
+      console.error('[Parser] CRITICAL: Failed to load pdf-parse:', pdfParseLoadError.message);
+      throw new Error('Ошибка загрузки PDF парсера. Используйте формат DOCX или TXT.');
+    }
   }
   return pdfParseModule!;
 }
