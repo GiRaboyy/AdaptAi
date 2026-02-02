@@ -96,17 +96,29 @@ async function buildAll() {
 
   // Copy server-app bundle to api folder for Vercel functions
   console.log("copying server-app bundle to api folder...");
-  await copyFile(
-    "dist/server-app.cjs",
-    "api/server-app.cjs"
-  );
+  try {
+    await copyFile(
+      "dist/server-app.cjs",
+      "api/server-app.cjs"
+    );
+    console.log("✅ Successfully copied server-app.cjs to api/");
+  } catch (err) {
+    console.error("❌ Failed to copy server-app.cjs:", err);
+    throw new Error("Build failed: server-app.cjs copy failed");
+  }
 
   // Copy table.sql to api folder for Vercel serverless (connect-pg-simple needs it)
   console.log("copying table.sql to api folder for Vercel...");
-  await copyFile(
-    "node_modules/connect-pg-simple/table.sql",
-    "api/table.sql"
-  );
+  try {
+    await copyFile(
+      "node_modules/connect-pg-simple/table.sql",
+      "api/table.sql"
+    );
+    console.log("✅ Successfully copied table.sql to api/");
+  } catch (err) {
+    console.error("❌ Failed to copy table.sql:", err);
+    throw new Error("Build failed: table.sql copy failed");
+  }
 }
 
 buildAll().catch((err) => {

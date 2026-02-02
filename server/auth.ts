@@ -291,18 +291,78 @@ export function setupAuth(app: Express) {
   });
 
   // New JWT-compatible endpoint
-  app.get("/api/me", (req, res) => {
+  app.get("/api/me", async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
     }
+    
+    // Defensive: If user is authenticated via JWT but profile missing, create it
+    const user = req.user as any;
+    if (user.authUid) {
+      // This is a JWT-authenticated user from Supabase
+      let profile = await storage.getUserByEmail(user.email);
+      
+      if (!profile) {
+        console.log(`[Auth /api/me] Creating missing profile for JWT user: ${user.email}`);
+        // Create profile defensively
+        try {
+          profile = await storage.createUser({
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            role: user.role || 'employee',
+            password: null, // Managed by Supabase
+            emailVerified: user.emailConfirmed || false,
+            plan: 'trial',
+            createdCoursesCount: 0,
+          });
+          console.log(`[Auth /api/me] ✅ Created profile id=${profile.id} for ${user.email}`);
+        } catch (err) {
+          console.error(`[Auth /api/me] Failed to create profile:`, err);
+          return res.status(500).json({ code: "PROFILE_CREATE_FAILED", message: "Failed to create user profile" });
+        }
+      }
+      
+      return res.json(profile);
+    }
+    
     res.json(req.user);
   });
 
   // Legacy endpoint - kept for backward compatibility
-  app.get("/api/user", (req, res) => {
+  app.get("/api/user", async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
     }
+    
+    // Defensive: If user is authenticated via JWT but profile missing, create it
+    const user = req.user as any;
+    if (user.authUid) {
+      // This is a JWT-authenticated user from Supabase
+      let profile = await storage.getUserByEmail(user.email);
+      
+      if (!profile) {
+        console.log(`[Auth /api/user] Creating missing profile for JWT user: ${user.email}`);
+        // Create profile defensively
+        try {
+          profile = await storage.createUser({
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            role: user.role || 'employee',
+            password: null, // Managed by Supabase
+            emailVerified: user.emailConfirmed || false,
+            plan: 'trial',
+            createdCoursesCount: 0,
+          });
+          console.log(`[Auth /api/user] ✅ Created profile id=${profile.id} for ${user.email}`);
+        } catch (err) {
+          console.error(`[Auth /api/user] Failed to create profile:`, err);
+          return res.status(500).json({ code: "PROFILE_CREATE_FAILED", message: "Failed to create user profile" });
+        }
+      }
+      
+      return res.json(profile);
+    }
+    
     res.json(req.user);
   });
 
