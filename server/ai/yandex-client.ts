@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getYandexConfig as getYandexEnvConfig } from "../env";
 
 /**
  * Yandex Cloud AI Assistant client wrapper using OpenAI-compatible SDK.
@@ -12,35 +13,36 @@ import OpenAI from "openai";
  */
 
 // ---------------------------------------------------------------------------
-// Configuration
+// Configuration (uses centralized env validation)
 // ---------------------------------------------------------------------------
-
-const YANDEX_API_KEY = process.env.YANDEX_CLOUD_API_KEY || "";
-const YANDEX_PROJECT_FOLDER_ID = process.env.YANDEX_CLOUD_PROJECT_FOLDER_ID || "";
-const YANDEX_BASE_URL =
-  process.env.YANDEX_CLOUD_BASE_URL || "https://rest-assistant.api.cloud.yandex.net/v1";
-const YANDEX_DEFAULT_TIMEOUT_MS = parseInt(process.env.YANDEX_TIMEOUT_MS || "90000", 10);
 
 let cachedClient: OpenAI | null = null;
 
 function getYandexClient(): OpenAI {
   if (!cachedClient) {
-    if (!YANDEX_API_KEY || !YANDEX_PROJECT_FOLDER_ID) {
+    const config = getYandexEnvConfig();
+    
+    if (!config) {
       console.warn(
-        "[YandexClient] Missing YANDEX_CLOUD_API_KEY or YANDEX_CLOUD_PROJECT_FOLDER_ID env vars. AI features will not work until configured."
+        "[YandexClient] AI not configured. Set YANDEX_CLOUD_API_KEY and YANDEX_CLOUD_PROJECT_FOLDER_ID."
       );
+      // Return a dummy client that will fail on use
+      cachedClient = new OpenAI({
+        apiKey: '',
+        baseURL: 'https://rest-assistant.api.cloud.yandex.net/v1',
+      });
+    } else {
+      cachedClient = new OpenAI({
+        apiKey: config.apiKey,
+        baseURL: config.baseUrl,
+        project: config.projectFolderId,
+      });
+
+      console.log("[YandexClient] Initialized", {
+        baseURL: config.baseUrl,
+        project: "[SET]",
+      });
     }
-
-    cachedClient = new OpenAI({
-      apiKey: YANDEX_API_KEY,
-      baseURL: YANDEX_BASE_URL,
-      project: YANDEX_PROJECT_FOLDER_ID,
-    });
-
-    console.log("[YandexClient] Initialized", {
-      baseURL: YANDEX_BASE_URL,
-      project: YANDEX_PROJECT_FOLDER_ID ? "[SET]" : "[MISSING]",
-    });
   }
 
   return cachedClient!;
@@ -79,7 +81,9 @@ export async function callYandexResponseWithPromptId(
   args: CallYandexResponseWithPromptIdArgs
 ): Promise<CallYandexResponseWithPromptIdResult> {
   const { promptId, variables, input } = args;
-  const timeoutMs = args.timeoutMs ?? YANDEX_DEFAULT_TIMEOUT_MS;
+  const config = getYandexEnvConfig();
+  const defaultTimeoutMs = config?.timeoutMs || 90000;
+  const timeoutMs = args.timeoutMs ?? defaultTimeoutMs;
 
   if (!promptId) {
     throw new Error("YANDEX_PROMPT_ID is not configured or promptId is empty");
@@ -151,17 +155,27 @@ export async function callYandexResponseWithPromptId(
  * Lightweight configuration check for health endpoints.
  */
 export function isYandexConfigured(): boolean {
-  return Boolean(YANDEX_API_KEY && YANDEX_PROJECT_FOLDER_ID);
+  const config = getYandexEnvConfig();
+  return config !== null;
 }
 
 /**
  * Expose non-sensitive configuration for diagnostics.
  */
 export function getYandexConfig() {
+  const config = getYandexEnvConfig();
+  if (!config) {
+    return {
+      baseURL: 'https://rest-assistant.api.cloud.yandex.net/v1',
+      projectFolderIdSet: false,
+      apiKeySet: false,
+      timeoutMs: 90000,
+    };
+  }
   return {
-    baseURL: YANDEX_BASE_URL,
-    projectFolderIdSet: Boolean(YANDEX_PROJECT_FOLDER_ID),
-    apiKeySet: Boolean(YANDEX_API_KEY),
-    timeoutMs: YANDEX_DEFAULT_TIMEOUT_MS,
+    baseURL: config.baseUrl,
+    projectFolderIdSet: !!config.projectFolderId,
+    apiKeySet: !!config.apiKey,
+    timeoutMs: config.timeoutMs,
   };
 }

@@ -13,6 +13,7 @@ import {
   resendVerificationEmail as resendSupabaseEmail,
   getSupabaseAuthClient 
 } from "./supabase-auth";
+import { getEnv, getSessionSecret, useSecureCookies, getAppUrl, isProduction } from "./env";
 
 const scryptAsync = promisify(scrypt);
 
@@ -30,14 +31,12 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Cookie secure setting:
-  // - In production with HTTPS: secure=true (default)
-  // - In production without HTTPS (e.g., Docker local): set COOKIE_SECURE=false
-  const isSecureCookie = process.env.NODE_ENV === "production" && 
-                         process.env.COOKIE_SECURE !== "false";
+  // Use centralized environment configuration
+  const sessionSecret = getSessionSecret();
+  const isSecureCookie = useSecureCookies();
   
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "default_secret_dev_only",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
@@ -48,11 +47,7 @@ export function setupAuth(app: Express) {
     },
   };
 
-  if (!process.env.SESSION_SECRET && app.get("env") === "production") {
-    console.warn("WARNING: SESSION_SECRET is not set. Using default secret is insecure for production.");
-  }
-
-  if (app.get("env") === "production") {
+  if (isProduction) {
     app.set("trust proxy", 1);
   }
 
@@ -165,9 +160,8 @@ export function setupAuth(app: Express) {
       let emailSentViaSupabase = false;
       
       // Diagnostic logging for redirect URL configuration
-      const appUrl = process.env.APP_URL || 'http://localhost:5000';
+      const appUrl = getAppUrl();
       console.log(`[Auth] Signup initiated: email=${req.body.email}`);
-      console.log(`[Auth] Current APP_URL env: ${process.env.APP_URL}`);
       console.log(`[Auth] Supabase redirect URL: ${appUrl}/auth/callback`);
       
       if (useSupabaseAuth) {

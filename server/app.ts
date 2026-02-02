@@ -4,6 +4,10 @@ import { registerRoutes } from "./routes";
 import { logger } from "./logger";
 import { requestIdMiddleware, type RequestWithId } from "./request-id-middleware";
 import { authFromSupabase } from "./middleware/auth-supabase";
+import { validateEnv, getEnv, getServiceStatus, logServiceStatus, isProduction } from "./env";
+
+// Validate environment FIRST - fail fast if configuration is invalid
+validateEnv();
 
 declare module "http" {
   interface IncomingMessage {
@@ -62,6 +66,7 @@ export async function createApp() {
   // Request logging middleware
   app.use((req, res, next) => {
     const start = Date.now();
+    const env = getEnv();
 
     res.on("finish", () => {
       const duration = Date.now() - start;
@@ -69,8 +74,7 @@ export async function createApp() {
       const level =
         status >= 500 ? "error" : status >= 400 ? "warn" : "info";
 
-      const sampleRateEnv = process.env.REQUEST_LOG_SAMPLE;
-      const sampleRate = sampleRateEnv ? parseFloat(sampleRateEnv) : 1;
+      const sampleRate = env.REQUEST_LOG_SAMPLE;
 
       if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
         return;
@@ -116,11 +120,8 @@ export async function createApp() {
 
   // Health check for Vercel - includes environment validation
   app.get("/api/health", async (_req, res) => {
-    const nodeEnv = process.env.NODE_ENV || 'development';
-    const hasDatabase = Boolean(process.env.DATABASE_URL);
-    const hasSessionSecret = Boolean(process.env.SESSION_SECRET);
-    const hasSupabaseUrl = Boolean(process.env.DATABASE_FILE_STORAGE_URL);
-    const hasSupabaseKey = Boolean(process.env.SUPABASE_ANON_KEY);
+    const env = getEnv();
+    const services = getServiceStatus();
 
     // Check runtime dependencies
     const dependencies: Record<string, boolean> = {};
@@ -167,7 +168,7 @@ export async function createApp() {
       routes.tracksList = registeredPaths.some((r: string) => r.includes('/api/tracks') && !r.includes('generate')) ? 'registered' : 'missing';
       routes.apiUser = registeredPaths.some((r: string) => r.includes('/api/user') || r.includes('/api/me')) ? 'registered' : 'missing';
       
-      if (nodeEnv === 'development') {
+      if (!isProduction) {
         console.log('[Health] Registered routes:', registeredPaths.length);
       }
     } catch (err) {
@@ -175,27 +176,19 @@ export async function createApp() {
     }
 
     // Log warnings for missing configuration in production
-    if (nodeEnv === 'production') {
-      if (!hasDatabase) {
+    if (isProduction) {
+      if (!services.database) {
         console.warn('[Health] Missing DATABASE_URL in production');
         errors.push('Missing DATABASE_URL');
       }
-      if (!hasSessionSecret) {
-        console.warn('[Health] Missing SESSION_SECRET in production');
-        errors.push('Missing SESSION_SECRET');
-      }
-      if (!hasSupabaseUrl) {
-        console.warn('[Health] Missing SUPABASE_URL in production');
-        errors.push('Missing SUPABASE_URL');
-      }
-      if (!hasSupabaseKey) {
-        console.warn('[Health] Missing SUPABASE_ANON_KEY in production');
-        errors.push('Missing SUPABASE_ANON_KEY');
+      if (!services.supabaseAuth) {
+        console.warn('[Health] Missing Supabase Auth config in production');
+        errors.push('Missing Supabase Auth config');
       }
     }
 
     const allDependenciesOk = Object.values(dependencies).every(v => v === true);
-    const allConfigOk = nodeEnv !== 'production' || (hasDatabase && hasSessionSecret && hasSupabaseUrl && hasSupabaseKey);
+    const allConfigOk = !isProduction || (services.database && services.supabaseAuth);
     const allRoutesOk = Object.values(routes).every(v => v === 'registered');
     const ok = allDependenciesOk && allConfigOk && allRoutesOk;
 
@@ -203,18 +196,18 @@ export async function createApp() {
 
     res.status(statusCode).json({
       ok,
-      nodeEnv,
+      nodeEnv: env.NODE_ENV,
       config: {
-        hasDatabase,
-        hasSessionSecret,
-        hasSupabaseUrl,
-        hasSupabaseKey,
+        database: services.database,
+        supabaseStorage: services.supabaseStorage,
+        supabaseAuth: services.supabaseAuth,
+        email: services.email,
+        ai: services.ai,
       },
       dependencies,
       routes,
       errors: errors.length > 0 ? errors : undefined,
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || 'unknown',
     });
   });
 

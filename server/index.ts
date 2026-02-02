@@ -4,6 +4,11 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { logger } from "./logger";
 import { type RequestWithId } from "./request-id-middleware";
+import { validateEnv, getEnv, logServiceStatus } from "./env";
+
+// Validate environment at startup - fail fast if misconfigured
+validateEnv();
+logServiceStatus();
 
 declare module "http" {
   interface IncomingMessage {
@@ -11,10 +16,7 @@ declare module "http" {
   }
 }
 
-const SHUTDOWN_TIMEOUT_MS = parseInt(
-  process.env.SHUTDOWN_TIMEOUT_MS || "10000",
-  10,
-);
+const SHUTDOWN_TIMEOUT_MS = getEnv().SHUTDOWN_TIMEOUT_MS;
 let isReady = false;
 let isShuttingDown = false;
 let activeRequests = 0;
