@@ -1258,4 +1258,3 @@ function StepItem({
     </div>
   );
 }
-}
