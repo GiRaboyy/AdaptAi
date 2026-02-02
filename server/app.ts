@@ -154,6 +154,26 @@ export async function createApp() {
       errors.push(`multer: ${err instanceof Error ? err.message : String(err)}`);
     }
 
+    // Verify critical route registration (check Express router stack)
+    const routes: Record<string, string> = {};
+    try {
+      const routerStack = (app as any)._router?.stack || [];
+      const registeredPaths = routerStack
+        .filter((layer: any) => layer.route)
+        .map((layer: any) => `${Object.keys(layer.route.methods)[0].toUpperCase()} ${layer.route.path}`);
+      
+      // Check for critical routes
+      routes.tracksGenerate = registeredPaths.some((r: string) => r.includes('/api/tracks/generate')) ? 'registered' : 'missing';
+      routes.tracksList = registeredPaths.some((r: string) => r.includes('/api/tracks') && !r.includes('generate')) ? 'registered' : 'missing';
+      routes.apiUser = registeredPaths.some((r: string) => r.includes('/api/user') || r.includes('/api/me')) ? 'registered' : 'missing';
+      
+      if (nodeEnv === 'development') {
+        console.log('[Health] Registered routes:', registeredPaths.length);
+      }
+    } catch (err) {
+      errors.push(`Route check failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
     // Log warnings for missing configuration in production
     if (nodeEnv === 'production') {
       if (!hasDatabase) {
@@ -176,20 +196,25 @@ export async function createApp() {
 
     const allDependenciesOk = Object.values(dependencies).every(v => v === true);
     const allConfigOk = nodeEnv !== 'production' || (hasDatabase && hasSessionSecret && hasSupabaseUrl && hasSupabaseKey);
-    const ok = allDependenciesOk && allConfigOk;
+    const allRoutesOk = Object.values(routes).every(v => v === 'registered');
+    const ok = allDependenciesOk && allConfigOk && allRoutesOk;
 
     const statusCode = ok ? 200 : 500;
 
     res.status(statusCode).json({
       ok,
       nodeEnv,
-      hasDatabase,
-      hasSessionSecret,
-      hasSupabaseUrl,
-      hasSupabaseKey,
+      config: {
+        hasDatabase,
+        hasSessionSecret,
+        hasSupabaseUrl,
+        hasSupabaseKey,
+      },
       dependencies,
+      routes,
       errors: errors.length > 0 ? errors : undefined,
       timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || 'unknown',
     });
   });
 

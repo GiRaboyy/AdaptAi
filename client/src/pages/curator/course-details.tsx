@@ -39,6 +39,7 @@ import {
   Alert,
   AlertDescription,
 } from "@/components/ui/alert";
+import { apiGet, safeFetch } from "@/lib/api-client";
 
 // ============================================================================
 // Types for Step Editor
@@ -252,9 +253,9 @@ export default function CuratorCourseDetails() {
   const { data: analytics } = useQuery({
     queryKey: ['/api/analytics/track', id],
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/track/${id}`, { credentials: 'include' });
-      if (!res.ok) return null;
-      return res.json();
+      const response = await apiGet(`/api/analytics/track/${id}`);
+      if (!response.ok) return null;
+      return response.data;
     },
     enabled: !!id
   });
@@ -262,14 +263,13 @@ export default function CuratorCourseDetails() {
   const { data: knowledgeSources, isLoading: isLoadingSources, error: sourcesError } = useQuery({
     queryKey: ['/api/tracks', id, 'sources'],
     queryFn: async () => {
-      const res = await fetch(`/api/tracks/${id}/sources`, { credentials: 'include' });
-      if (!res.ok) {
-        console.error(`[KB Sources] Failed to fetch sources: ${res.status}`);
-        throw new Error('Не удалось загрузить файлы');
+      const response = await apiGet(`/api/tracks/${id}/sources`);
+      if (!response.ok) {
+        console.error(`[KB Sources] Failed to fetch sources: ${response.status}`);
+        throw new Error(response.error?.message || 'Не удалось загрузить файлы');
       }
-      const data = await res.json();
-      console.log(`[KB Sources] Loaded ${data.length} sources`);
-      return data;
+      console.log(`[KB Sources] Loaded ${response.data.length} sources`);
+      return response.data;
     },
     enabled: !!id,
     retry: 2
@@ -296,13 +296,21 @@ export default function CuratorCourseDetails() {
 
   const downloadFile = async (sourceId: number, filename: string) => {
     try {
-      const res = await fetch(`/api/tracks/${id}/sources/${sourceId}/download`, {
-        credentials: 'include'
+      const response = await safeFetch(`/api/tracks/${id}/sources/${sourceId}/download`);
+      
+      if (!response.ok) {
+        throw new Error(response.error?.message || 'Не удалось скачать файл');
+      }
+      
+      // For file downloads, we need to use the raw fetch response
+      const rawResponse = await fetch(`/api/tracks/${id}/sources/${sourceId}/download`, {
+        credentials: 'include',
+        headers: {
+          'Authorization': response.data ? `Bearer ${response.data.token}` : '',
+        },
       });
       
-      if (!res.ok) throw new Error('Не удалось скачать файл');
-      
-      const blob = await res.blob();
+      const blob = await rawResponse.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -1249,4 +1257,5 @@ function StepItem({
       </Button>
     </div>
   );
+}
 }

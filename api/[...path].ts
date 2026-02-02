@@ -49,14 +49,25 @@ async function getApp(): Promise<Express> {
  * Forwards all requests to the Express application
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const startTime = Date.now();
+  const method = req.method || 'UNKNOWN';
+  const url = req.url || '/unknown';
+  
   try {
     const app = await getApp();
+    
+    // Log incoming request in production for debugging
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+      const hasAuth = !!req.headers.authorization;
+      console.log(`[Vercel Function] ${method} ${url} auth=${hasAuth ? 'Bearer' : 'none'}`);
+    }
     
     // Forward the request to Express
     // Express will handle routing, middleware, and response
     return app(req, res);
   } catch (err) {
-    console.error("[Vercel Function] Error:", err);
+    const duration = Date.now() - startTime;
+    console.error(`[Vercel Function] Error after ${duration}ms:`, err);
     
     // If headers already sent, can't send error response
     if (res.headersSent) {

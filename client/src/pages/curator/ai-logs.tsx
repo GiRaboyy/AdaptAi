@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Activity, CheckCircle, XCircle, Clock, Eye, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { apiGet } from "@/lib/api-client";
 
 export default function AILogsPage() {
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -20,9 +21,11 @@ export default function AILogsPage() {
       if (actionFilter !== 'all') params.append('actionType', actionFilter);
       if (statusFilter !== 'all') params.append('status', statusFilter);
       
-      const res = await fetch(`/api/ai/logs?${params.toString()}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch logs');
-      return res.json();
+      const response = await apiGet(`/api/ai/logs?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(response.error?.message || 'Failed to fetch logs');
+      }
+      return response.data;
     }
   });
 

@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, BookOpen, Copy, Users, Loader2, Sparkles, ArrowRight, Upload, FileText, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { getAuthHeaders } from "@/lib/supabase";
+import { apiPostForm } from "@/lib/api-client";
 
 // Map English error codes to Russian messages
 const ERROR_MESSAGES: Record<string, string> = {
@@ -100,24 +100,15 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
 
   const generateMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      // Get JWT auth headers (important for Supabase Auth)
-      const authHeaders = await getAuthHeaders();
+      // Use centralized API client with automatic auth header injection
+      const response = await apiPostForm('/api/tracks/generate', formData);
       
-      const response = await fetch('/api/tracks/generate', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        headers: {
-          ...authHeaders,
-          // Note: Do NOT set Content-Type for FormData - browser sets it automatically with boundary
-        },
-      });
       if (!response.ok) {
-        const error = await response.json();
-        const errorMessage = error.message || error.code || 'Ошибка генерации';
+        const errorMessage = response.error?.message || response.error?.code || 'Ошибка генерации';
         throw new Error(translateError(errorMessage));
       }
-      return response.json();
+      
+      return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tracks'] });
