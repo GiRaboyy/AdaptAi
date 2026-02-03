@@ -19,7 +19,8 @@ export interface AuthUser {
 declare global {
   namespace Express {
     // Union type supporting both Supabase JWT (AuthUser) and Passport session (SchemaUser)
-    interface User extends Partial<AuthUser & SchemaUser> {
+    // Note: authUid uses null (from DB) not undefined - important for type compatibility
+    interface User extends Partial<AuthUser> {
       // Common fields that should always exist
       email: string;
       role: 'curator' | 'employee';
@@ -27,9 +28,17 @@ declare global {
       
       // Optional fields depending on auth mode
       id?: number; // Always present, but optional for type safety
-      authUid?: string; // Present for JWT auth
+      authUid?: string | null; // Present for JWT auth, null from DB
       emailConfirmed?: boolean; // Present for JWT auth (Supabase)
-      emailVerified?: boolean; // Present for session auth (Passport)
+      emailVerified?: boolean | null; // Present for session auth (Passport), null from DB
+      password?: string | null; // Null when managed by Supabase
+      avatarUrl?: string | null;
+      preferVoice?: boolean | null;
+      plan?: string | null;
+      createdCoursesCount?: number | null;
+      emailVerificationToken?: string | null;
+      emailVerificationExpires?: Date | null;
+      promoActivatedAt?: Date | null;
     }
 
     interface Request {

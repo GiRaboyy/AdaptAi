@@ -183,7 +183,13 @@ export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
 }));
 
 // Schemas
-export const insertUserSchema = createInsertSchema(users).pick({
+// Full insert schema for user creation (includes all optional fields)
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,  // auto-generated
+});
+
+// Minimal schema for public registration form
+export const registerUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
   role: true,
