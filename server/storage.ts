@@ -47,6 +47,7 @@ export interface IStorage {
   // Knowledge Sources
   createKnowledgeSource(source: typeof knowledgeSources.$inferInsert): Promise<KnowledgeSource>;
   getKnowledgeSourcesByCourseId(courseId: number): Promise<KnowledgeSource[]>;
+  getKnowledgeSourceById(id: number): Promise<KnowledgeSource | undefined>;
   updateKnowledgeSourceStatus(id: number, status: string, errorMessage?: string): Promise<KnowledgeSource | undefined>;
   
   // KB Index
@@ -440,6 +441,14 @@ export class DatabaseStorage implements IStorage {
       .from(knowledgeSources)
       .where(eq(knowledgeSources.courseId, courseId))
       .orderBy(knowledgeSources.createdAt);
+  }
+
+  async getKnowledgeSourceById(id: number): Promise<KnowledgeSource | undefined> {
+    const [source] = await db
+      .select()
+      .from(knowledgeSources)
+      .where(eq(knowledgeSources.id, id));
+    return source;
   }
 
   async updateKnowledgeSourceStatus(

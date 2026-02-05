@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { insertDrillAttemptSchema, enrollments, drillAttempts, steps as stepsTable } from "@shared/schema";
+import { insertDrillAttemptSchema, enrollments, drillAttempts, steps as stepsTable, knowledgeSources } from "@shared/schema";
 import { callYandexResponseWithPromptId } from "./ai/yandex-client";
 import { registerAIRoutes } from "./ai/routes";
 import roleplayRoutes from "./ai/roleplay-routes";
@@ -526,13 +526,15 @@ export async function registerRoutes(
       console.log(`[Track Gen] Created curator membership for trackId=${track.id}`);
 
       // Batch save files to knowledge_sources for better performance
-      console.log(`[Track Gen] Saving ${fileMetadata.length} knowledge sources in batch`);
+      // PHASE 1: Upload files to storage FIRST (before extraction)
+      console.log(`[Track Gen] Phase 1: Uploading ${fileMetadata.length} files to storage`);
       const useSupabaseStorage = isStorageAvailable();
       console.log(`[Track Gen] Supabase Storage available: ${useSupabaseStorage}`);
       
-      const knowledgeSourcePromises = fileMetadata.map(async (fileMeta) => {
+      const uploadPromises = fileMetadata.map(async (fileMeta) => {
         try {
           let storagePath: string;
+          let storageBucket: string | null = null;
           let storageType: string;
           
           // Try Supabase Storage first (recommended for binary files like PDFs)
@@ -546,6 +548,7 @@ export async function registerRoutes(
             
             if (supabasePath) {
               storagePath = supabasePath;
+              storageBucket = process.env.SUPABASE_BUCKET || 'appbase';
               storageType = 'supabase';
               console.log(`[Track Gen] File uploaded to Supabase: ${fileMeta.filename}`);
             } else {
@@ -564,28 +567,85 @@ export async function registerRoutes(
             storageType = shouldStoreFullFile ? 'base64' : 'metadata_only';
           }
           
+          // Create knowledge_sources record immediately after upload
           const source = await storage.createKnowledgeSource({
             courseId: track.id,
             filename: fileMeta.filename,
             storagePath,
+            storageBucket,
             mimetype: fileMeta.mimetype,
             sizeBytes: fileMeta.sizeBytes,
-            extractedCharCount: fileMeta.extractedChars,
-            status: 'indexed'
+            extractedCharCount: 0, // Not extracted yet
+            extractionStatus: 'pending',
+            extractedTextChars: 0,
+            status: 'uploaded'
           });
           
-          console.log(`[Track Gen] Knowledge source saved: sourceId=${source.id}, filename="${fileMeta.filename}", storage=${storageType}`);
-          return source;
+          console.log(`[Track Gen] Knowledge source created: sourceId=${source.id}, filename="${fileMeta.filename}", storage=${storageType}`);
+          return { source, buffer: fileMeta.buffer, extractedChars: fileMeta.extractedChars };
         } catch (err) {
-          console.error(`[Track Gen] Failed to save knowledge source "${fileMeta.filename}":`, err);
-          // Don't fail the whole operation if one source fails
+          console.error(`[Track Gen] Failed to upload/save knowledge source "${fileMeta.filename}":`, err);
           return null;
         }
       });
       
-      const savedSources = await Promise.all(knowledgeSourcePromises);
-      const successfulSaves = savedSources.filter(s => s !== null).length;
-      console.log(`[Track Gen] Successfully saved ${successfulSaves}/${fileMetadata.length} knowledge sources`);
+      const uploadedSources = await Promise.all(uploadPromises);
+      const successfulUploads = uploadedSources.filter(s => s !== null);
+      console.log(`[Track Gen] Phase 1 complete: ${successfulUploads.length}/${fileMetadata.length} files uploaded and saved`);
+
+      // PHASE 2: Extract text from uploaded files (non-blocking failures)
+      console.log(`[Track Gen] Phase 2: Extracting text from ${successfulUploads.length} files`);
+      const warnings: string[] = [];
+      const extractedTexts: string[] = [];
+      
+      const extractionPromises = successfulUploads.map(async (uploaded) => {
+        if (!uploaded) return null;
+        
+        try {
+          // Use the already-extracted text from fileMetadata
+          const text = textParts.find(tp => tp.includes(uploaded.source.filename));
+          if (text && text.trim()) {
+            const charCount = text.length;
+            await storage.updateKnowledgeSourceStatus(uploaded.source.id, 'indexed');
+            await db.update(knowledgeSources)
+              .set({ 
+                extractionStatus: 'ok', 
+                extractedTextChars: charCount,
+                extractedCharCount: charCount 
+              })
+              .where(eq(knowledgeSources.id, uploaded.source.id));
+            console.log(`[Track Gen] Extraction success: sourceId=${uploaded.source.id}, chars=${charCount}`);
+            return { text, sourceId: uploaded.source.id };
+          } else {
+            await db.update(knowledgeSources)
+              .set({ extractionStatus: 'no_text' })
+              .where(eq(knowledgeSources.id, uploaded.source.id));
+            warnings.push(`File "${uploaded.source.filename}" contains no extractable text`);
+            console.warn(`[Track Gen] No text extracted from: ${uploaded.source.filename}`);
+            return null;
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          await db.update(knowledgeSources)
+            .set({ extractionStatus: 'failed', extractionError: errorMsg })
+            .where(eq(knowledgeSources.id, uploaded.source.id));
+          warnings.push(`File "${uploaded.source.filename}" extraction failed: ${errorMsg}`);
+          console.error(`[Track Gen] Extraction error for sourceId=${uploaded.source.id}:`, err);
+          return null;
+        }
+      });
+      
+      const extractionResults = await Promise.all(extractionPromises);
+      const successfulExtractions = extractionResults.filter(r => r !== null);
+      console.log(`[Track Gen] Phase 2 complete: ${successfulExtractions.length}/${successfulUploads.length} files extracted successfully`);
+      
+      if (successfulExtractions.length === 0) {
+        console.error(`[Track Gen] No text extracted from any files: correlationId=${correlationId}`);
+        return res.status(400).json({ message: "Не удалось извлечь текст из файлов", warnings });
+      }
+      
+      // Use the combinedText that was already created above
+      const finalCombinedText = combinedText;
 
       // === CourseGenV2: Batched generation ===
       // Parse generation settings from request body
@@ -689,6 +749,19 @@ export async function registerRoutes(
         console.log(`[Track Gen] V2 Quotas: requested mcq=${result.quotas.requested.mcq}/open=${result.quotas.requested.open}/roleplay=${result.quotas.requested.roleplay}`);
         console.log(`[Track Gen] V2 Quotas: actual mcq=${result.quotas.actual.mcq}/open=${result.quotas.actual.open}/roleplay=${result.quotas.actual.roleplay}`);
         
+        // Prepare resources for response
+        const resources = successfulUploads.map(uploaded => {
+          if (!uploaded) return null;
+          return {
+            id: uploaded.source.id,
+            filename: uploaded.source.filename,
+            mimeType: uploaded.source.mimetype,
+            sizeBytes: uploaded.source.sizeBytes,
+            extractionStatus: uploaded.source.extractionStatus,
+            extractedTextChars: uploaded.source.extractedTextChars
+          };
+        }).filter(r => r !== null);
+        
         res.status(201).json({
           track,
           steps: createdSteps,
@@ -699,6 +772,9 @@ export async function registerRoutes(
             batchCount: result.batches.length,
             quotas: result.quotas,
           },
+          resources,
+          warnings,
+          correlationId
         });
       } else {
         // Legacy V1 generation (kept for backwards compatibility)
@@ -710,7 +786,20 @@ export async function registerRoutes(
         
         console.log(`[Track Gen] V1 Success: trackId=${track.id}, steps=${createdSteps.length}, correlationId=${correlationId}`);
         
-        res.status(201).json({ track, steps: createdSteps });
+        // Prepare resources for response
+        const resources = successfulUploads.map(uploaded => {
+          if (!uploaded) return null;
+          return {
+            id: uploaded.source.id,
+            filename: uploaded.source.filename,
+            mimeType: uploaded.source.mimetype,
+            sizeBytes: uploaded.source.sizeBytes,
+            extractionStatus: uploaded.source.extractionStatus,
+            extractedTextChars: uploaded.source.extractedTextChars
+          };
+        }).filter(r => r !== null);
+        
+        res.status(201).json({ track, steps: createdSteps, resources, warnings, correlationId });
       }
     } catch (err: any) {
       console.error(`[Track Gen] Track generation error: correlationId=${correlationId}:`, err instanceof Error ? err.message : err);
@@ -817,6 +906,83 @@ export async function registerRoutes(
     } catch (err) {
       console.error('[Track Join] Error:', err);
       res.status(500).json({ message: "Ошибка присоединения к курсу" });
+    }
+  });
+
+  // GET /api/courses/:id/resources - New endpoint with signed URLs
+  app.get("/api/courses/:id/resources", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const user = req.user as any;
+    const courseId = Number(req.params.id);
+    
+    console.log(`[Resources API] GET /api/courses/${courseId}/resources - userId=${user.id}`);
+    
+    try {
+      // Fetch course/track by ID
+      const track = await storage.getTrack(courseId);
+      if (!track) {
+        console.log(`[Resources API] Course not found: ${courseId}`);
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Validate access: curator owns OR employee enrolled
+      if (user.role === 'curator') {
+        if (track.curatorId !== user.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (user.role === 'employee') {
+        const enrollment = await storage.getEnrollment(user.id, courseId);
+        if (!enrollment) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Query knowledge_sources
+      const sources = await storage.getKnowledgeSourcesByCourseId(courseId);
+      console.log(`[Resources API] Found ${sources.length} resources for courseId=${courseId}`);
+      
+      // Import getSignedUrl from supabase-storage
+      const { getSignedUrl } = await import('./supabase-storage');
+      const signedUrlExpiry = parseInt(process.env.SUPABASE_STORAGE_SIGNED_URL_EXPIRY || '900', 10);
+      
+      // Generate signed URLs for each resource
+      const resourcesWithUrls = await Promise.all(
+        sources.map(async (source) => {
+          let downloadUrl: string | null = null;
+          
+          // Only generate signed URL for Supabase-stored files
+          if (source.storagePath?.startsWith('supabase:')) {
+            downloadUrl = await getSignedUrl(source.storagePath, signedUrlExpiry);
+            if (downloadUrl) {
+              console.log(`[Resources API] Generated signed URL for sourceId=${source.id}`);
+            } else {
+              console.warn(`[Resources API] Failed to generate signed URL for sourceId=${source.id}`);
+            }
+          }
+          
+          return {
+            id: source.id,
+            filename: source.filename,
+            mimeType: source.mimetype,
+            sizeBytes: source.sizeBytes,
+            extractionStatus: source.extractionStatus || 'pending',
+            extractedTextChars: source.extractedTextChars || 0,
+            extractionError: source.extractionError || null,
+            createdAt: source.createdAt?.toISOString() || new Date().toISOString(),
+            downloadUrl
+          };
+        })
+      );
+      
+      res.json({ resources: resourcesWithUrls });
+    } catch (error) {
+      console.error(`[Resources API] Error fetching resources for courseId=${courseId}:`, error);
+      res.status(500).json({ message: "Failed to retrieve resources" });
     }
   });
 
@@ -951,6 +1117,90 @@ Extraction date: ${source.createdAt?.toISOString() || 'Unknown'}`;
     res.setHeader('Content-Disposition', `attachment; ${encodeFilenameForHeader(fixedFilename)}`);
     res.setHeader('Content-Length', buffer.length);
     res.send(buffer);
+  });
+
+  // GET /api/resources/:id/download - Proxy download endpoint (alternative to signed URLs)
+  app.get("/api/resources/:id/download", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const user = req.user as any;
+    const resourceId = Number(req.params.id);
+    
+    console.log(`[Resource Download] GET /api/resources/${resourceId}/download - userId=${user.id}`);
+    
+    try {
+      // Fetch resource by ID
+      const source = await storage.getKnowledgeSourceById(resourceId);
+      if (!source) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+      
+      // Fetch course by courseId
+      const track = await storage.getTrack(source.courseId);
+      if (!track) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Validate access: curator owns OR employee enrolled
+      if (user.role === 'curator') {
+        if (track.curatorId !== user.id) {
+          return res.status(403).json({ message: "You do not have permission to access this file" });
+        }
+      } else if (user.role === 'employee') {
+        const enrollment = await storage.getEnrollment(user.id, source.courseId);
+        if (!enrollment) {
+          return res.status(403).json({ message: "You do not have permission to access this file" });
+        }
+      } else {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      console.log(`[Resource Download] Access granted for resourceId=${resourceId}, filename="${source.filename}"`);
+      
+      // Fix Cyrillic filename encoding
+      const fixedFilename = fixCyrillicFilename(source.filename);
+      
+      // Download file from Supabase Storage
+      let buffer: Buffer;
+      let contentType = source.mimetype;
+      
+      if (source.storagePath?.startsWith('supabase:')) {
+        console.log(`[Resource Download] Fetching from Supabase: ${source.storagePath}`);
+        const fileData = await downloadFile(source.storagePath);
+        
+        if (!fileData) {
+          console.error(`[Resource Download] Failed to download from Supabase: ${source.storagePath}`);
+          return res.status(500).json({ message: "Failed to retrieve file" });
+        }
+        
+        buffer = fileData.buffer;
+        contentType = fileData.contentType || source.mimetype;
+        console.log(`[Resource Download] Supabase download success: ${fixedFilename} (${(buffer.length / 1024).toFixed(1)}KB)`);
+      } else if (source.storagePath?.startsWith('data:')) {
+        // Base64-encoded file in database
+        const dataUriMatch = source.storagePath.match(/^data:(.+?);base64,([\s\S]+)$/);
+        if (!dataUriMatch) {
+          return res.status(500).json({ message: "Invalid file data format" });
+        }
+        buffer = Buffer.from(dataUriMatch[2], 'base64');
+        console.log(`[Resource Download] Base64 decode success: ${fixedFilename} (${(buffer.length / 1024).toFixed(1)}KB)`);
+      } else {
+        return res.status(500).json({ message: "Unsupported storage format" });
+      }
+      
+      // Set response headers
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; ${encodeFilenameForHeader(fixedFilename)}`);
+      res.setHeader('Content-Length', buffer.length);
+      res.send(buffer);
+      
+      console.log(`[Resource Download] File sent successfully: ${fixedFilename}`);
+    } catch (error) {
+      console.error(`[Resource Download] Error downloading resourceId=${resourceId}:`, error);
+      res.status(500).json({ message: "Failed to download file" });
+    }
   });
 
   // Enrollments

@@ -4,9 +4,10 @@ import { randomUUID } from 'crypto';
 // Supabase Storage config - needs project URL (not PostgreSQL URL)
 // URL format: https://your-project-ref.supabase.co
 const SUPABASE_PROJECT_URL = process.env.DATABASE_FILE_STORAGE_URL;
-// Optional: anon key or service role key from Supabase Dashboard -> Settings -> API
+// Service role key from Supabase Dashboard -> Settings -> API
 const SUPABASE_KEY = process.env.DATABASE_FILE_STORAGE_KEY;
-const BUCKET_NAME = 'adapt-ai-files';
+// Bucket name from environment variable, default to 'appbase'
+const BUCKET_NAME = process.env.SUPABASE_BUCKET || 'appbase';
 
 let supabaseClient: SupabaseClient | null = null;
 
@@ -95,18 +96,62 @@ async function ensureBucketExists(client: SupabaseClient): Promise<boolean> {
 }
 
 /**
+ * Sanitize filename for safe storage path
+ * - Apply NFKD normalization to decompose Unicode characters
+ * - Replace unsafe characters with underscore
+ * - Collapse multiple underscores to single underscore
+ * - Preserve file extension
+ * - Max length: 255 characters
+ */
+function sanitizeFilename(filename: string): string {
+  if (!filename) return 'unnamed';
+  
+  // Prevent path traversal
+  filename = filename.replace(/\.\.[\/\\]/g, '');
+  
+  // Split into name and extension
+  const lastDotIndex = filename.lastIndexOf('.');
+  let name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+  let ext = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+  
+  // Apply NFKD normalization (decompose Unicode characters)
+  name = name.normalize('NFKD');
+  
+  // Replace unsafe characters with underscore
+  // Keep: alphanumeric, dot, dash, underscore, Cyrillic
+  name = name.replace(/[^a-zA-Z0-9._\-\u0400-\u04FF]/g, '_');
+  
+  // Collapse multiple underscores/spaces to single underscore
+  name = name.replace(/_{2,}/g, '_');
+  
+  // Remove leading/trailing underscores
+  name = name.replace(/^_+|_+$/g, '');
+  
+  // Ensure not empty
+  if (!name) name = 'file';
+  
+  // Truncate if too long (leave room for extension and resourceId prefix)
+  const maxNameLength = 200;
+  if (name.length > maxNameLength) {
+    name = name.substring(0, maxNameLength);
+  }
+  
+  return name + ext;
+}
+
+/**
  * Upload a file to Supabase Storage
  * @param buffer File content as Buffer
  * @param filename Original filename
  * @param mimetype File MIME type
- * @param trackId Track ID for organizing files
+ * @param courseId Course ID for organizing files
  * @returns Storage path or null on failure
  */
 export async function uploadFile(
   buffer: Buffer,
   filename: string,
   mimetype: string,
-  trackId: number
+  courseId: number
 ): Promise<string | null> {
   const client = getSupabaseClient();
   if (!client) {
@@ -121,13 +166,13 @@ export async function uploadFile(
       return null;
     }
     
-    // Generate unique storage path: tracks/{trackId}/{uuid}_{filename}
-    const uniqueId = randomUUID().slice(0, 8);
-    // Sanitize filename for storage path
-    const safeFilename = filename.replace(/[^a-zA-Z0-9._\-\u0400-\u04FF]/g, '_');
-    const storagePath = `tracks/${trackId}/${uniqueId}_${safeFilename}`;
+    // Generate unique storage path: courses/{courseId}/resources/{resourceId}-{safeFilename}
+    const resourceId = randomUUID().slice(0, 8);
+    const safeFilename = sanitizeFilename(filename);
+    const storagePath = `courses/${courseId}/resources/${resourceId}-${safeFilename}`;
     
     console.log(`[Supabase Storage] Uploading: ${storagePath} (${(buffer.length / 1024).toFixed(1)}KB)`);
+    console.log(`[Supabase Storage] Original filename: "${filename}" -> Sanitized: "${safeFilename}"`);
     
     const { data, error } = await client.storage
       .from(BUCKET_NAME)
@@ -142,7 +187,7 @@ export async function uploadFile(
     }
     
     console.log(`[Supabase Storage] Upload success: ${storagePath}`);
-    return `supabase:${BUCKET_NAME}/${data.path}`;
+    return `supabase:${BUCKET_NAME}/${storagePath}`;
   } catch (err) {
     console.error(`[Supabase Storage] Upload error for ${filename}:`, err);
     return null;
