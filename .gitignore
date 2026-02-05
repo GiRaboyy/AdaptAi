@@ -9,3 +9,4 @@ vite.config.ts.*
 .env-prod
 migrations/.meta
 api/server-app.cjs
+api/table.sql
