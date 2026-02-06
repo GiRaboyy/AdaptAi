@@ -17,7 +17,6 @@ import NotFound from "@/pages/not-found";
 import EmployeeCourses from "@/pages/employee/courses";
 import EmployeeProfile from "@/pages/employee/profile";
 import Player from "@/pages/employee/player";
-import JoinTrack from "@/pages/app/join";
 
 import CuratorLibrary from "@/pages/curator/library";
 import CuratorCourseDetails from "@/pages/curator/course-details";
@@ -32,14 +31,13 @@ function EmployeeLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-background-2">
+      <div className="flex h-screen w-full bg-[#F8FAFC]">
         <EmployeeSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <main className="flex-1 overflow-auto p-6 bg-background">
             <Switch>
               <Route path="/app" component={EmployeeCourses} />
               <Route path="/app/courses" component={EmployeeCourses} />
-              <Route path="/app/join" component={JoinTrack} />
               <Route path="/app/profile" component={EmployeeProfile} />
               <Route path="/app/player/:trackId" component={Player} />
               <Route component={NotFound} />
@@ -59,7 +57,7 @@ function CuratorLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-background-2">
+      <div className="flex h-screen w-full bg-[#F8FAFC]">
         <CuratorSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <main className="flex-1 overflow-auto p-6 bg-background">
@@ -84,7 +82,7 @@ function AuthenticatedRouter() {
   if (isLoading) {
     return (
       <div className="h-screen grid place-items-center bg-background">
-        <Loader2 className="animate-spin w-8 h-8 text-primary" />
+        <Loader2 className="animate-spin w-8 h-8 text-[#A6E85B]" />
       </div>
     );
   }
@@ -115,7 +113,7 @@ function AuthenticatedRouter() {
 
   // Для сотрудника проверяем валидные роуты ПЕРЕД рендером Layout
   if (user.role === "employee") {
-    const validEmployeeRoutes = ["/app", "/app/courses", "/app/profile", "/app/join"];
+    const validEmployeeRoutes = ["/app", "/app/courses", "/app/profile"];
     const isPlayerRoute = /^\/app\/player\/\d+$/.test(location);
     const isValidRoute = validEmployeeRoutes.includes(location) || isPlayerRoute;
     

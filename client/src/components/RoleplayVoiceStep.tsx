@@ -418,8 +418,8 @@ export function RoleplayVoiceStep({
                     className={cn(
                       'rounded-lg p-3 max-w-[80%]',
                       turn.role === 'ai'
-                        ? 'bg-muted text-left'
-                        : 'bg-primary/10 text-right'
+                        ? 'bg-gray-100 text-left'
+                        : 'bg-green-100 text-right'
                     )}
                   >
                     <p className="text-xs font-bold mb-1">
@@ -460,12 +460,12 @@ export function RoleplayVoiceStep({
                     className={cn(
                       'w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all',
                       isEmployeeRecording
-                        ? 'bg-destructive animate-pulse border border-destructive'
-                        : 'bg-primary border border-border hover:scale-105'
+                        ? 'bg-red-500 animate-pulse border-2 border-red-600'
+                        : 'bg-[#A6E85B] border-2 border-black hover:scale-105'
                     )}
                     disabled={isProcessing}
                   >
-                    <Mic className={cn('w-8 h-8', isEmployeeRecording ? 'text-white' : 'text-primary-foreground')} />
+                    <Mic className={cn('w-8 h-8', isEmployeeRecording ? 'text-white' : 'text-black')} />
                   </button>
 
                   <p className="text-sm font-medium">
@@ -473,7 +473,7 @@ export function RoleplayVoiceStep({
                   </p>
 
                   {partialTranscript && (
-                    <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
+                    <div className="rounded-lg border border-[#A6E85B] bg-[#A6E85B]/10 p-3">
                       <p className="text-sm italic">{partialTranscript}</p>
                     </div>
                   )}
@@ -491,7 +491,7 @@ export function RoleplayVoiceStep({
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     placeholder="Введите ваш ответ..."
-                    className="w-full p-4 rounded-lg border border-input bg-background min-h-[120px] resize-none"
+                    className="w-full p-4 rounded-lg border border-black bg-secondary min-h-[120px] resize-none"
                   />
                   {hasSpeechSupport && (
                     <button
@@ -528,10 +528,10 @@ export function RoleplayVoiceStep({
     if (!evaluation) return null;
 
     const getScoreColor = (score: number) => {
-      if (score <= 3) return 'text-destructive';
-      if (score <= 6) return 'text-orange-500';
-      if (score <= 8) return 'text-green-500';
-      return 'text-green-600';
+      if (score <= 3) return 'text-red-600';
+      if (score <= 6) return 'text-orange-600';
+      if (score <= 8) return 'text-green-600';
+      return 'text-green-700';
     };
 
     return (
