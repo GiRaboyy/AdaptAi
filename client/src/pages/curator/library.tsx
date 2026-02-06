@@ -46,7 +46,11 @@ export default function CuratorLibrary() {
             Управляйте учебными материалами
           </p>
         </div>
-        <CreateTrackDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        <CreateTrackDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          showTrigger={!!tracks?.length}
+        />
       </div>
 
       {tracks && tracks.length > 0 ? (
@@ -89,7 +93,15 @@ const COURSE_SIZE_OPTIONS: { value: CourseSize; label: string; description: stri
   { value: 'L', label: 'Большой', description: '36 вопросов' },
 ];
 
-function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+function CreateTrackDialog({
+  open,
+  onOpenChange,
+  showTrigger = true,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  showTrigger?: boolean;
+}) {
   const [title, setTitle] = useState("");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [courseSize, setCourseSize] = useState<CourseSize>('M');
@@ -229,9 +241,11 @@ function CreateTrackDialog({ open, onOpenChange }: { open: boolean, onOpenChange
 
   return (
     <>
-      <Button size="lg" onClick={() => onOpenChange(true)} data-testid="button-create-track">
-        <Plus className="w-5 h-5 mr-2" /> Создать тренинг
-      </Button>
+      {showTrigger && (
+        <Button size="lg" onClick={() => onOpenChange(true)} data-testid="button-create-track">
+          <Plus className="w-5 h-5 mr-2" /> Создать тренинг
+        </Button>
+      )}
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

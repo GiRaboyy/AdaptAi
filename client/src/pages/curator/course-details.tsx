@@ -460,7 +460,7 @@ export default function CuratorCourseDetails() {
   if (isLoading) {
     return (
       <div className="h-full grid place-items-center">
-        <Loader2 className="animate-spin w-8 h-8 text-[#A6E85B]" />
+        <Loader2 className="animate-spin w-8 h-8 text-primary" />
       </div>
     );
   }
@@ -506,8 +506,8 @@ export default function CuratorCourseDetails() {
           <div className="grid gap-4 md:grid-cols-3 mb-6">
             <Card>
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#A6E85B]/15 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-[#3D7A1E]" />
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-3xl font-bold text-foreground">{visibleSteps.length}</p>
@@ -518,8 +518,8 @@ export default function CuratorCourseDetails() {
 
             <Card>
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-3xl font-bold text-foreground">{employeeCount}</p>
@@ -530,11 +530,11 @@ export default function CuratorCourseDetails() {
 
             <Card>
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-teal-600" />
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-[#3D7A1E]">{completionRate}%</p>
+                  <p className="text-3xl font-bold text-primary">{completionRate}%</p>
                   <p className="text-sm text-muted-foreground">Завершили</p>
                 </div>
               </CardContent>
@@ -621,8 +621,8 @@ export default function CuratorCourseDetails() {
                       className="flex items-center justify-between p-4 rounded-xl bg-muted border border-border"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#A6E85B]/15 flex items-center justify-center">
-                          <span className="text-sm font-medium text-[#3D7A1E]">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary">
                             {emp.name?.charAt(0).toUpperCase() || 'U'}
                           </span>
                         </div>
@@ -651,7 +651,7 @@ export default function CuratorCourseDetails() {
                 </div>
                 <h3 className="text-lg font-bold mb-2 text-foreground">Нет сотрудников</h3>
                 <p className="text-muted-foreground max-w-sm">
-                  Поделитесь кодом <span className="font-mono text-[#3D7A1E]">{track.joinCode}</span> с сотрудниками
+                  Поделитесь кодом <span className="font-mono text-primary">{track.joinCode}</span> с сотрудниками
                 </p>
               </CardContent>
             )}
@@ -662,7 +662,7 @@ export default function CuratorCourseDetails() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
-                <FileText className="w-5 h-5 text-[#3D7A1E]" />
+                <FileText className="w-5 h-5 text-primary" />
                 База знаний
               </CardTitle>
             </CardHeader>
@@ -685,8 +685,8 @@ export default function CuratorCourseDetails() {
                       className="flex items-center justify-between p-4 rounded-xl bg-muted border border-border hover:border-border-strong transition-colors"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-[#A6E85B]/15 flex items-center justify-center shrink-0">
-                          <FileText className="w-5 h-5 text-[#3D7A1E]" />
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground truncate" title={source.filename}>
@@ -832,7 +832,7 @@ function MCQEditor({
                 name="correctOption"
                 checked={state.correctIndex === i}
                 onChange={() => setState({ ...state, correctIndex: i })}
-                className="w-4 h-4 text-[#3D7A1E] border-gray-300 focus:ring-[#A6E85B]"
+                className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
               />
               <Input
                 value={opt}
@@ -843,7 +843,7 @@ function MCQEditor({
                 }}
                 placeholder={`Вариант ${i + 1}`}
                 className={cn(
-                  state.correctIndex === i && "border-[#A6E85B] bg-[#A6E85B]/5",
+                  state.correctIndex === i && "border-primary bg-primary/5",
                   errors.options?.[i] && "border-red-500"
                 )}
                 data-testid={`input-mcq-option-${i}`}
@@ -1159,12 +1159,12 @@ function StepItem({
   if (isEditing && editState) {
     return (
       <div 
-        className="p-4 rounded-xl bg-[#A6E85B]/10 border border-[#A6E85B]/25"
+        className="p-4 rounded-xl bg-primary/10 border border-primary/25"
         data-testid={`step-edit-${step.id}`}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-[#A6E85B]/20 flex items-center justify-center text-sm font-medium text-[#3D7A1E]">
+            <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
               {index + 1}
             </span>
             <Badge variant={getBadgeVariant(step.type) as any}>
@@ -1229,7 +1229,7 @@ function StepItem({
       onClick={onStartEdit}
       data-testid={`step-${step.id}`}
     >
-      <span className="w-7 h-7 rounded-full bg-[#A6E85B]/15 flex items-center justify-center text-sm font-medium text-[#3D7A1E]">
+      <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">

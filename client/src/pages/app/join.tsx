@@ -4,7 +4,15 @@ import { useJoinTrack } from "@/hooks/use-tracks";
 import { useUser, useLogout } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowRight, LogOut } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Loader2, ArrowRight, LogOut, ArrowLeftRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -15,6 +23,8 @@ export default function JoinTrack() {
   const { data: user } = useUser();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const switchRoleLabel = user?.role === "curator" ? "Режим сотрудника" : "Режим куратора";
+  const switchRoleHref = user?.role === "curator" ? "/app/courses" : "/curator";
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,12 +49,26 @@ export default function JoinTrack() {
           </div>
           <span>ADAPT</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user?.name}</span>
-          <Button variant="ghost" size="icon" onClick={() => logout()}>
-            <LogOut className="w-4 h-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+              {user?.name || "Профиль"}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel>Аккаунт</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setLocation(switchRoleHref)}>
+              <ArrowLeftRight className="w-4 h-4" />
+              {switchRoleLabel}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => logout()}>
+              <LogOut className="w-4 h-4" />
+              Выйти
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto w-full">
@@ -57,9 +81,9 @@ export default function JoinTrack() {
             <span className="text-3xl font-bold">#</span>
           </div>
 
-          <h1 className="text-4xl font-display font-bold mb-4">Enter Join Code</h1>
+          <h1 className="text-4xl font-display font-bold mb-4">Введите код доступа</h1>
           <p className="text-muted-foreground mb-8">
-            Enter the 6-character code provided by your curator to start your training session.
+            Введите 6-значный код, который вы получили от куратора, чтобы начать обучение.
           </p>
 
           <form onSubmit={handleJoin} className="space-y-4">
@@ -78,7 +102,7 @@ export default function JoinTrack() {
               className="w-full text-lg h-14"
               disabled={code.length < 6 || isPending}
             >
-              {isPending ? <Loader2 className="animate-spin" /> : <>Start Training <ArrowRight className="ml-2" /></>}
+              {isPending ? <Loader2 className="animate-spin" /> : <>Начать обучение <ArrowRight className="ml-2" /></>}
             </Button>
           </form>
         </motion.div>

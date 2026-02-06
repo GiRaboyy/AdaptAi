@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useTrack, useEnrollments, useUpdateProgress, useRecordDrill, useAddNeedsRepeatTag } from "@/hooks/use-tracks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Mic, Volume2, ArrowRight, CheckCircle, XCircle, RotateCcw, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, ArrowRight, CheckCircle, XCircle, RotateCcw, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -22,148 +23,41 @@ import { RoleplayVoiceStep } from "@/components/RoleplayVoiceStep";
 // Using string for backwards compatibility with existing data
 type StepType = string;
 
-function VoiceOnlyQuestion({ question, onAnswer, currentAnswer }: { 
+function OpenQuestion({ question, onAnswer, currentAnswer }: { 
   question: string; 
   onAnswer: (answer: string) => void;
   currentAnswer: string;
 }) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [showTextInput, setShowTextInput] = useState(false);
-  const recognitionRef = useRef<any>(null);
-  
-  const hasSpeechSupport = typeof window !== 'undefined' && 
-    (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window));
-
-  const startListening = () => {
-    if (!hasSpeechSupport) {
-      setShowTextInput(true);
-      return;
-    }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.lang = 'ru-RU';
-    recognitionRef.current.continuous = true;
-    recognitionRef.current.interimResults = true;
-
-    recognitionRef.current.onstart = () => setIsRecording(true);
-    
-    recognitionRef.current.onresult = (event: any) => {
-      let finalTranscript = '';
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcriptText = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcriptText;
-        }
-      }
-      
-      if (finalTranscript) {
-        const newAnswer = (currentAnswer ? currentAnswer + ' ' : '') + finalTranscript;
-        onAnswer(newAnswer);
-      }
-    };
-
-    recognitionRef.current.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-      setShowTextInput(true);
-    };
-
-    recognitionRef.current.onend = () => setIsRecording(false);
-    
-    recognitionRef.current.start();
-  };
-
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsRecording(false);
-  };
-
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold" data-testid="open-question">
         {question}
       </h3>
-      
-      {hasSpeechSupport && !showTextInput ? (
-        <div className="bg-secondary rounded-2xl border border-black p-6 text-center">
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground font-medium mb-2">
-              Ответьте голосом на этот вопрос
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Нажмите на микрофон и говорите
-            </p>
-          </div>
-          
-          <button
-            onClick={isRecording ? stopListening : startListening}
-            className={cn(
-              "w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all",
-              isRecording 
-                ? "bg-red-500 animate-pulse border-2 border-red-600" 
-                : "bg-[#A6E85B] border-2 border-black hover-elevate"
-            )}
-            data-testid="button-voice-record"
-          >
-            <Mic className={cn("w-8 h-8", isRecording ? "text-white" : "text-black")} />
-          </button>
-          
-          <p className="mt-4 text-sm font-medium">
-            {isRecording ? "Слушаю..." : "Нажмите для записи"}
-          </p>
-          
-          <button 
-            onClick={() => setShowTextInput(true)}
-            className="mt-3 text-xs text-muted-foreground underline"
-            data-testid="button-switch-text"
-          >
-            Ввести текстом
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <textarea
-            value={currentAnswer}
-            onChange={(e) => onAnswer(e.target.value)}
-            placeholder="Введите ваш ответ..."
-            className="w-full p-4 rounded-xl border border-black bg-secondary min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-[#A6E85B] focus:border-[#A6E85B]"
-            data-testid="input-open-answer"
-          />
-          {hasSpeechSupport && (
-            <button 
-              onClick={() => setShowTextInput(false)}
-              className="text-xs text-muted-foreground underline flex items-center gap-1"
-              data-testid="button-switch-voice"
-            >
-              <Mic className="w-3 h-3" /> Голосовой ввод
-            </button>
-          )}
-        </div>
-      )}
 
-      {currentAnswer && hasSpeechSupport && !showTextInput && (
-        <div className="rounded-xl border border-[#A6E85B] bg-[#A6E85B]/10 p-4">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="text-sm font-bold">Ваш ответ:</p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+      <div className="space-y-2">
+        <Textarea
+          value={currentAnswer}
+          onChange={(e) => onAnswer(e.target.value)}
+          placeholder="Введите ваш ответ..."
+          rows={5}
+          className="rounded-xl bg-background"
+          data-testid="input-open-answer"
+        />
+        {currentAnswer && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Ответ сохранится до проверки</span>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onAnswer("")}
-              className="text-xs"
+              className="h-auto px-0 text-xs"
               data-testid="button-clear-answer"
             >
               Очистить
             </Button>
           </div>
-          <p className="text-muted-foreground" data-testid="text-voice-answer">
-            {currentAnswer}
-          </p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -182,8 +76,6 @@ export default function Player() {
   const [feedbackState, setFeedbackState] = useState<'neutral' | 'correct' | 'incorrect'>('neutral');
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [openAnswer, setOpenAnswer] = useState("");
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [drillAttempt, setDrillAttempt] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -216,24 +108,6 @@ export default function Player() {
       setCurrentStepIndex(Math.min(enrollment.lastStepIndex || 0, steps.length - 1));
     }
   }, [enrollment, steps.length]);
-
-  useEffect(() => {
-    return () => {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    };
-  }, [currentStepIndex]);
-
-  const speak = (text: string) => {
-    if (!voiceEnabled) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ru-RU';
-    utterance.rate = 1.0;
-    window.speechSynthesis.speak(utterance);
-    setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-  };
 
   const handleNext = async () => {
     setFeedbackState('neutral');
@@ -446,16 +320,16 @@ export default function Player() {
       <div className="max-w-3xl mx-auto">
         {/* Модальное окно результатов */}
         <Dialog open={showCompletionModal} onOpenChange={setShowCompletionModal}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">
-                {completionResults && completionResults.successRate >= 80 ? (
-                  <span className="flex items-center gap-2 text-green-700">
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-2xl">
+                  {completionResults && completionResults.successRate >= 80 ? (
+                  <span className="flex items-center gap-2 text-success">
                     <CheckCircle className="w-6 h-6" />
                     Поздравляем!
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2 text-orange-700">
+                  <span className="flex items-center gap-2 text-warning">
                     <XCircle className="w-6 h-6" />
                     Курс завершён
                   </span>
@@ -471,27 +345,27 @@ export default function Player() {
             {completionResults && (
               <div className="space-y-6 py-4">
                 {/* Общий результат */}
-                <div className="bg-gray-100 rounded-xl p-6 border border-gray-200">
+                <div className="bg-muted rounded-xl p-6 border border-border">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-lg font-semibold">Общий результат</span>
                     <span className={cn(
                       "text-4xl font-bold",
-                      completionResults.successRate >= 80 ? "text-green-700" : "text-orange-700"
+                      completionResults.successRate >= 80 ? "text-success" : "text-warning"
                     )}>
                       {completionResults.successRate}%
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                    <div className="bg-card rounded-lg p-3 border border-border">
                       <p className="text-2xl font-bold text-foreground">{completionResults.scorePoints}</p>
                       <p className="text-xs text-muted-foreground">Баллов</p>
                     </div>
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
-                      <p className="text-2xl font-bold text-green-700">{completionResults.correctAnswers}</p>
+                    <div className="bg-card rounded-lg p-3 border border-border">
+                      <p className="text-2xl font-bold text-success">{completionResults.correctAnswers}</p>
                       <p className="text-xs text-muted-foreground">Правильных</p>
                     </div>
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
-                      <p className="text-2xl font-bold text-red-700">{completionResults.totalAnswers - completionResults.correctAnswers}</p>
+                    <div className="bg-card rounded-lg p-3 border border-border">
+                      <p className="text-2xl font-bold text-destructive">{completionResults.totalAnswers - completionResults.correctAnswers}</p>
                       <p className="text-xs text-muted-foreground">Неправильных</p>
                     </div>
                   </div>
@@ -499,14 +373,14 @@ export default function Player() {
 
                 {/* Сильные стороны */}
                 {completionResults.strongTopics && completionResults.strongTopics.length > 0 && (
-                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                  <div className="bg-success/10 rounded-xl p-4 border border-success/20">
                     <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp className="w-5 h-5 text-green-700" />
-                      <span className="font-semibold text-green-900">Сильные стороны</span>
+                      <TrendingUp className="w-5 h-5 text-success" />
+                      <span className="font-semibold text-success">Сильные стороны</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {completionResults.strongTopics.map((topic, i) => (
-                        <Badge key={i} className="bg-green-100 text-green-700 border-green-300">
+                        <Badge key={i} className="bg-success/20 text-success border-success/30">
                           {topic}
                         </Badge>
                       ))}
@@ -516,14 +390,14 @@ export default function Player() {
 
                 {/* Слабые стороны */}
                 {completionResults.weakTopics && completionResults.weakTopics.length > 0 && (
-                  <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                  <div className="bg-warning/10 rounded-xl p-4 border border-warning/20">
                     <div className="flex items-center gap-2 mb-3">
-                      <TrendingDown className="w-5 h-5 text-orange-700" />
-                      <span className="font-semibold text-orange-900">Нужно повторить</span>
+                      <TrendingDown className="w-5 h-5 text-warning" />
+                      <span className="font-semibold text-warning">Нужно повторить</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {completionResults.weakTopics.map((topic, i) => (
-                        <Badge key={i} className="bg-orange-100 text-orange-700 border-orange-300">
+                        <Badge key={i} className="bg-warning/20 text-warning border-warning/30">
                           {topic}
                         </Badge>
                       ))}
@@ -558,7 +432,7 @@ export default function Player() {
           <h1 className="text-xl font-display font-bold truncate">{trackData?.track.title}</h1>
           <div className="flex items-center gap-2">
             {drillAttempt > 0 && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
                 Drill {drillAttempt}/2
               </Badge>
             )}
@@ -599,18 +473,18 @@ export default function Player() {
                         className={cn(
                           "w-full p-4 rounded-lg border text-left transition-all flex items-center gap-3",
                           isSelectedOption && !showFeedback && "border-primary bg-primary/5",
-                          showFeedback && isCorrectOption && "border-green-500 bg-green-50",
-                          isWrongSelection && "border-red-500 bg-red-50",
+                          showFeedback && isCorrectOption && "border-success/50 bg-success/10",
+                          isWrongSelection && "border-destructive/40 bg-destructive/10",
                           !showFeedback && "hover:bg-secondary"
                         )}
                         data-testid={`option-${idx}`}
                       >
                         <span className="flex-1">{option}</span>
                         {showFeedback && isCorrectOption && (
-                          <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                          <CheckCircle className="w-5 h-5 text-success shrink-0" />
                         )}
                         {isWrongSelection && (
-                          <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+                          <XCircle className="w-5 h-5 text-destructive shrink-0" />
                         )}
                       </button>
                     );
@@ -621,13 +495,13 @@ export default function Player() {
                 {showFeedback && (
                   <div className={cn(
                     "p-4 rounded-lg mt-4 space-y-3",
-                    feedbackState === 'correct' ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
+                    feedbackState === 'correct' ? "bg-success/10 border border-success/20" : "bg-destructive/10 border border-destructive/20"
                   )}>
                     <div className="flex items-center gap-2">
                       {feedbackState === 'correct' ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <CheckCircle className="w-5 h-5 text-success" />
                       ) : (
-                        <XCircle className="w-5 h-5 text-red-600" />
+                        <XCircle className="w-5 h-5 text-destructive" />
                       )}
                       <span className="font-bold text-lg">
                         {feedbackState === 'correct' ? "Правильно!" : "Неправильно"}
@@ -638,14 +512,14 @@ export default function Player() {
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-2">
                         <span className="font-semibold text-muted-foreground w-32">Ваш ответ:</span>
-                        <span className={feedbackState === 'correct' ? "text-green-700" : "text-red-700"}>
+                        <span className={feedbackState === 'correct' ? "text-success" : "text-destructive"}>
                           {options[selectedAnswer!] || 'Не выбран'}
                         </span>
                       </div>
                       {feedbackState === 'incorrect' && (
                         <div className="flex items-start gap-2">
                           <span className="font-semibold text-muted-foreground w-32">Правильный:</span>
-                          <span className="text-green-700 font-medium">
+                          <span className="text-success font-medium">
                             {options[correctIdx] || 'Не найден'}
                           </span>
                         </div>
@@ -654,9 +528,9 @@ export default function Player() {
                     
                     {/* Explanation (Почему) */}
                     {content.explanation && (
-                      <div className="pt-2 border-t border-gray-200">
+                      <div className="pt-2 border-t border-border">
                         <p className="text-sm font-semibold text-muted-foreground mb-1">Почему:</p>
-                        <p className="text-sm text-gray-700">{content.explanation}</p>
+                        <p className="text-sm text-muted-foreground">{content.explanation}</p>
                       </div>
                     )}
                   </div>
@@ -667,7 +541,7 @@ export default function Player() {
 
           {(currentStep.type === 'open') && (
             <div className="space-y-4">
-              <VoiceOnlyQuestion 
+              <OpenQuestion 
                 question={content.question}
                 onAnswer={(answer) => setOpenAnswer(answer)}
                 currentAnswer={openAnswer}
@@ -678,19 +552,19 @@ export default function Player() {
                 <div className={cn(
                   "rounded-lg border overflow-hidden",
                   evaluation.isCorrect 
-                    ? "bg-green-50 border-green-200" 
-                    : "bg-amber-50 border-amber-200"
+                    ? "bg-success/10 border-success/20" 
+                    : "bg-warning/10 border-warning/20"
                 )}>
                   {/* Header with score */}
                   <div className={cn(
                     "p-4 flex items-center justify-between",
-                    evaluation.isCorrect ? "bg-green-100" : "bg-amber-100"
+                    evaluation.isCorrect ? "bg-success/20" : "bg-warning/20"
                   )}>
                     <div className="flex items-center gap-2">
                       {evaluation.isCorrect ? (
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+                        <CheckCircle className="w-6 h-6 text-success" />
                       ) : (
-                        <AlertCircle className="w-6 h-6 text-amber-600" />
+                        <AlertCircle className="w-6 h-6 text-warning" />
                       )}
                       <span className="font-bold text-lg">
                         {evaluation.score >= 8 ? "Отлично!" : evaluation.score >= 6 ? "Хорошо" : "Можно лучше"}
@@ -700,7 +574,7 @@ export default function Player() {
                       variant={evaluation.score >= 6 ? "default" : "secondary"}
                       className={cn(
                         "text-lg font-bold px-3 py-1",
-                        evaluation.score >= 8 ? "bg-green-600" : evaluation.score >= 6 ? "bg-blue-600" : "bg-amber-600"
+                        evaluation.score >= 8 ? "bg-success text-success-foreground" : evaluation.score >= 6 ? "bg-primary text-primary-foreground" : "bg-warning text-warning-foreground"
                       )}
                     >
                       {evaluation.score}/10
@@ -711,26 +585,26 @@ export default function Player() {
                     {/* Main feedback */}
                     {evaluation.feedback && (
                       <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-1">Оценка ответа:</p>
-                        <p className="text-sm text-gray-600">{evaluation.feedback}</p>
+                        <p className="text-sm font-semibold text-foreground mb-1">Оценка ответа:</p>
+                        <p className="text-sm text-muted-foreground">{evaluation.feedback}</p>
                       </div>
                     )}
                     
                     {/* Improvements / Missing points */}
                     {evaluation.improvements && (
-                      <div className="bg-white rounded-lg p-3 border border-amber-200">
-                        <p className="text-sm font-semibold text-amber-700 mb-1 flex items-center gap-1">
+                      <div className="bg-background rounded-lg p-3 border border-warning/30">
+                        <p className="text-sm font-semibold text-warning mb-1 flex items-center gap-1">
                           <AlertCircle className="w-4 h-4" />
                           Что можно улучшить:
                         </p>
-                        <p className="text-sm text-gray-600">{evaluation.improvements}</p>
+                        <p className="text-sm text-muted-foreground">{evaluation.improvements}</p>
                       </div>
                     )}
                     
                     {/* KB_GAP indicator */}
                     {(evaluation as any).kb_gap && (
-                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                        <p className="text-sm text-blue-700">
+                      <div className="bg-primary/10 rounded-lg p-3 border border-primary/20">
+                        <p className="text-sm text-primary">
                           ℹ️ Ответ требует уточнения у куратора (информация не найдена в базе знаний)
                         </p>
                       </div>

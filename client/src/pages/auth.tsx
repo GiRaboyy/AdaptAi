@@ -94,17 +94,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-[#A6E85B] relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground flex">
+      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 -left-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#0a1f12]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         </div>
         
-        <div className="relative z-10 flex flex-col justify-between p-12 text-[#0a1f12] w-full">
+        <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
           <Link href="/">
             <div className="flex items-center gap-3 text-2xl font-bold cursor-pointer">
-              <div className="w-10 h-10 rounded-xl bg-[#0a1f12]/10 flex items-center justify-center backdrop-blur">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center backdrop-blur">
                 <span className="text-lg font-black">A</span>
               </div>
               <span>ADAPT</span>
@@ -115,21 +115,21 @@ export default function AuthPage() {
             <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
               Обучение через практику
             </h2>
-            <p className="text-lg text-[#0a1f12]/70 leading-relaxed">
+            <p className="text-lg text-primary-foreground/70 leading-relaxed">
               Короткие уроки, тесты и ролевые сценарии для эффективного обучения сотрудников
             </p>
           </div>
 
-          <p className="text-sm text-[#0a1f12]/50">
+          <p className="text-sm text-primary-foreground/60">
             © 2026 ADAPT
           </p>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-background">
         <div className="p-6 lg:hidden">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="text-[#0a1f12]">
+            <Button variant="ghost" size="sm" className="text-foreground">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Назад
             </Button>
@@ -139,23 +139,23 @@ export default function AuthPage() {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
           <div className="w-full max-w-md space-y-8">
             <div className="text-center lg:text-left">
-              <h1 className="text-3xl font-bold text-[#0a1f12]" data-testid="text-auth-title">
+              <h1 className="text-3xl font-bold text-foreground" data-testid="text-auth-title">
                 {mode === "login" ? "Вход в систему" : "Регистрация"}
               </h1>
-              <p className="mt-2 text-[#0a1f12]/60">
+              <p className="mt-2 text-muted-foreground">
                 {mode === "login" 
                   ? "Введите данные для входа" 
                   : "Создайте бесплатный аккаунт"}
               </p>
             </div>
 
-            <div className="flex p-1 bg-[#0a1f12]/5 rounded-2xl">
+            <div className="flex p-1 bg-muted rounded-2xl">
               <button
                 onClick={() => setMode("login")}
                 className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${
                   mode === "login" 
-                    ? "bg-[#A6E85B] text-[#0a1f12] shadow-sm" 
-                    : "text-[#0a1f12]/60 hover:text-[#0a1f12]"
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 data-testid="button-tab-login"
               >
@@ -165,8 +165,8 @@ export default function AuthPage() {
                 onClick={() => setMode("register")}
                 className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${
                   mode === "register" 
-                    ? "bg-[#A6E85B] text-[#0a1f12] shadow-sm" 
-                    : "text-[#0a1f12]/60 hover:text-[#0a1f12]"
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 data-testid="button-tab-register"
               >
@@ -183,30 +183,30 @@ export default function AuthPage() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="space-y-6 text-center"
                 >
-                  <div className="mx-auto w-16 h-16 bg-[#A6E85B]/20 rounded-full flex items-center justify-center">
-                    <Mail className="w-8 h-8 text-[#A6E85B]" />
+                  <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                    <Mail className="w-8 h-8 text-primary" />
                   </div>
                   
                   <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-[#0a1f12]">
+                    <h2 className="text-xl font-semibold text-foreground">
                       Подтвердите email
                     </h2>
-                    <p className="text-[#0a1f12]/60">
+                    <p className="text-muted-foreground">
                       Мы отправили письмо с подтверждением на:
                     </p>
-                    <p className="text-lg font-medium text-[#0a1f12]">
+                    <p className="text-lg font-medium text-foreground">
                       {pendingEmail}
                     </p>
                   </div>
                   
-                  <div className="p-4 bg-[#0a1f12]/5 rounded-xl text-sm text-[#0a1f12]/70">
+                  <div className="p-4 bg-muted rounded-xl text-sm text-muted-foreground">
                     Перейдите по ссылке в письме, чтобы завершить регистрацию
                   </div>
                   
                   <Button
                     variant="outline"
                     onClick={handleBackFromVerify}
-                    className="w-full h-12 border-[#0a1f12]/20 text-[#0a1f12] hover:bg-[#0a1f12]/5"
+                    className="w-full h-12"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Назад
@@ -222,13 +222,13 @@ export default function AuthPage() {
                 >
                   <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="username" className="text-[#0a1f12]">Email</Label>
+                    <Label htmlFor="username" className="text-foreground">Email</Label>
                     <Input 
                       id="username" 
                       type="email" 
                       placeholder="name@example.com" 
                       {...loginForm.register("username")} 
-                      className="h-12 bg-white border-[#0a1f12]/20 text-[#0a1f12] placeholder:text-[#0a1f12]/40 focus:border-[#A6E85B]"
+                      className="h-12 bg-background"
                       data-testid="input-login-email"
                     />
                     {loginForm.formState.errors.username && (
@@ -236,13 +236,13 @@ export default function AuthPage() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-[#0a1f12]">Пароль</Label>
+                    <Label htmlFor="password" className="text-foreground">Пароль</Label>
                     <Input 
                       id="password" 
                       type="password" 
                       placeholder="Введите пароль" 
                       {...loginForm.register("password")} 
-                      className="h-12 bg-white border-[#0a1f12]/20 text-[#0a1f12] placeholder:text-[#0a1f12]/40 focus:border-[#A6E85B]"
+                      className="h-12 bg-background"
                       data-testid="input-login-password"
                     />
                     {loginForm.formState.errors.password && (
@@ -251,7 +251,7 @@ export default function AuthPage() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 text-base bg-[#A6E85B] text-[#0a1f12] font-semibold rounded-xl" 
+                    className="w-full h-12 text-base font-semibold rounded-xl" 
                     disabled={isLoginPending} 
                     data-testid="button-login-submit"
                   >
@@ -269,45 +269,45 @@ export default function AuthPage() {
                 >
                   <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="reg-name" className="text-[#0a1f12]">Имя</Label>
+                    <Label htmlFor="reg-name" className="text-foreground">Имя</Label>
                     <Input 
                       id="reg-name" 
                       placeholder="Иван Иванов" 
                       {...registerForm.register("name")} 
-                      className="h-12 bg-white border-[#0a1f12]/20 text-[#0a1f12] placeholder:text-[#0a1f12]/40 focus:border-[#A6E85B]"
+                      className="h-12 bg-background"
                       data-testid="input-register-name"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reg-email" className="text-[#0a1f12]">Email</Label>
+                    <Label htmlFor="reg-email" className="text-foreground">Email</Label>
                     <Input 
                       id="reg-email" 
                       type="email" 
                       placeholder="name@example.com" 
                       {...registerForm.register("email")} 
-                      className="h-12 bg-white border-[#0a1f12]/20 text-[#0a1f12] placeholder:text-[#0a1f12]/40 focus:border-[#A6E85B]"
+                      className="h-12 bg-background"
                       data-testid="input-register-email"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reg-pass" className="text-[#0a1f12]">Пароль</Label>
+                    <Label htmlFor="reg-pass" className="text-foreground">Пароль</Label>
                     <Input 
                       id="reg-pass" 
                       type="password" 
                       placeholder="Создайте пароль" 
                       {...registerForm.register("password")} 
-                      className="h-12 bg-white border-[#0a1f12]/20 text-[#0a1f12] placeholder:text-[#0a1f12]/40 focus:border-[#A6E85B]"
+                      className="h-12 bg-background"
                       data-testid="input-register-password"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[#0a1f12]">Я...</Label>
+                    <Label className="text-foreground">Я...</Label>
                     <div className="grid grid-cols-2 gap-3">
                       <label className={`
                         flex items-center justify-center px-4 py-3 border-2 rounded-xl cursor-pointer transition-all
                         ${registerForm.watch("role") === "employee" 
-                          ? "border-[#A6E85B] bg-[#A6E85B]/10 text-[#0a1f12] font-semibold" 
-                          : "border-[#0a1f12]/20 text-[#0a1f12]/60 hover:border-[#A6E85B]/50"}
+                          ? "border-primary bg-primary/10 text-foreground font-semibold" 
+                          : "border-border text-muted-foreground hover:border-primary/50"}
                       `}>
                         <input 
                           type="radio" 
@@ -320,8 +320,8 @@ export default function AuthPage() {
                       <label className={`
                         flex items-center justify-center px-4 py-3 border-2 rounded-xl cursor-pointer transition-all
                         ${registerForm.watch("role") === "curator" 
-                          ? "border-[#A6E85B] bg-[#A6E85B]/10 text-[#0a1f12] font-semibold" 
-                          : "border-[#0a1f12]/20 text-[#0a1f12]/60 hover:border-[#A6E85B]/50"}
+                          ? "border-primary bg-primary/10 text-foreground font-semibold" 
+                          : "border-border text-muted-foreground hover:border-primary/50"}
                       `}>
                         <input 
                           type="radio" 
@@ -335,7 +335,7 @@ export default function AuthPage() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 text-base bg-[#A6E85B] text-[#0a1f12] font-semibold rounded-xl" 
+                    className="w-full h-12 text-base font-semibold rounded-xl" 
                     disabled={isRegisterPending} 
                     data-testid="button-register-submit"
                   >

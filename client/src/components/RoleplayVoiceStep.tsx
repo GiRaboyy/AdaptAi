@@ -418,8 +418,8 @@ export function RoleplayVoiceStep({
                     className={cn(
                       'rounded-lg p-3 max-w-[80%]',
                       turn.role === 'ai'
-                        ? 'bg-gray-100 text-left'
-                        : 'bg-green-100 text-right'
+                        ? 'bg-muted text-left'
+                        : 'bg-primary/10 text-right'
                     )}
                   >
                     <p className="text-xs font-bold mb-1">
@@ -460,12 +460,12 @@ export function RoleplayVoiceStep({
                     className={cn(
                       'w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all',
                       isEmployeeRecording
-                        ? 'bg-red-500 animate-pulse border-2 border-red-600'
-                        : 'bg-[#A6E85B] border-2 border-black hover:scale-105'
+                        ? 'bg-destructive animate-pulse border border-destructive'
+                        : 'bg-primary border border-border hover:scale-105'
                     )}
                     disabled={isProcessing}
                   >
-                    <Mic className={cn('w-8 h-8', isEmployeeRecording ? 'text-white' : 'text-black')} />
+                    <Mic className={cn('w-8 h-8', isEmployeeRecording ? 'text-white' : 'text-primary-foreground')} />
                   </button>
 
                   <p className="text-sm font-medium">
@@ -473,7 +473,7 @@ export function RoleplayVoiceStep({
                   </p>
 
                   {partialTranscript && (
-                    <div className="rounded-lg border border-[#A6E85B] bg-[#A6E85B]/10 p-3">
+                    <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
                       <p className="text-sm italic">{partialTranscript}</p>
                     </div>
                   )}
@@ -491,7 +491,7 @@ export function RoleplayVoiceStep({
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     placeholder="Введите ваш ответ..."
-                    className="w-full p-4 rounded-lg border border-black bg-secondary min-h-[120px] resize-none"
+                    className="w-full p-4 rounded-lg border border-input bg-background min-h-[120px] resize-none"
                   />
                   {hasSpeechSupport && (
                     <button
@@ -528,10 +528,10 @@ export function RoleplayVoiceStep({
     if (!evaluation) return null;
 
     const getScoreColor = (score: number) => {
-      if (score <= 3) return 'text-red-600';
-      if (score <= 6) return 'text-orange-600';
-      if (score <= 8) return 'text-green-600';
-      return 'text-green-700';
+      if (score <= 3) return 'text-destructive';
+      if (score <= 6) return 'text-warning';
+      if (score <= 8) return 'text-success';
+      return 'text-success';
     };
 
     return (
@@ -547,14 +547,14 @@ export function RoleplayVoiceStep({
 
           {/* Strengths */}
           {evaluation.strengths && evaluation.strengths.length > 0 && (
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <div className="bg-success/10 rounded-lg p-4 border border-success/20">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="w-5 h-5 text-green-700" />
-                <span className="font-semibold text-green-900">Что получилось</span>
+                <CheckCircle className="w-5 h-5 text-success" />
+                <span className="font-semibold text-success">Что получилось</span>
               </div>
               <ul className="space-y-1">
                 {evaluation.strengths.map((strength, idx) => (
-                  <li key={idx} className="text-sm text-green-800">• {strength}</li>
+                  <li key={idx} className="text-sm text-success">• {strength}</li>
                 ))}
               </ul>
             </div>
@@ -562,14 +562,14 @@ export function RoleplayVoiceStep({
 
           {/* Improvements */}
           {evaluation.improvements && evaluation.improvements.length > 0 && (
-            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <div className="bg-warning/10 rounded-lg p-4 border border-warning/20">
               <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-5 h-5 text-orange-700" />
-                <span className="font-semibold text-orange-900">Что улучшить</span>
+                <AlertTriangle className="w-5 h-5 text-warning" />
+                <span className="font-semibold text-warning">Что улучшить</span>
               </div>
               <ul className="space-y-1">
                 {evaluation.improvements.map((improvement, idx) => (
-                  <li key={idx} className="text-sm text-orange-800">• {improvement}</li>
+                  <li key={idx} className="text-sm text-warning">• {improvement}</li>
                 ))}
               </ul>
             </div>
@@ -577,12 +577,12 @@ export function RoleplayVoiceStep({
 
           {/* Better Example */}
           {evaluation.better_example && (
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
               <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="w-5 h-5 text-blue-700" />
-                <span className="font-semibold text-blue-900">Пример ответа лучше</span>
+                <Lightbulb className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-primary">Пример ответа лучше</span>
               </div>
-              <p className="text-sm text-blue-800 italic">"{evaluation.better_example}"</p>
+              <p className="text-sm text-primary italic">"{evaluation.better_example}"</p>
             </div>
           )}
 
