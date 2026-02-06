@@ -1,218 +1,219 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  GraduationCap,
-  Upload,
-  Sparkles,
-  BarChart3,
-  ArrowRight,
-  CheckCircle,
-} from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Users, CheckCircle, BarChart3, Volume2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
-const steps = [
-  {
-    number: "01",
-    icon: Upload,
-    title: "Загрузите",
-    description: "Загрузите учебные материалы — PDF, документы или просто название курса.",
-  },
-  {
-    number: "02",
-    icon: Sparkles,
-    title: "Генерация",
-    description: "AI автоматически создаёт тесты, открытые вопросы и голосовые ролевые сценарии.",
-  },
-  {
-    number: "03",
-    icon: BarChart3,
-    title: "Отслеживание",
-    description: "Следите за прогрессом сотрудников, оценками и выявляйте пробелы в знаниях.",
-  },
-];
+const trustedCompanies = ['Яндекс', 'Сбер', 'Тинькофф', 'VK', 'Авито', 'Ozon'];
 
-const features = [
-  "AI-генерация тестов с выбором ответа",
-  "Оценка открытых ответов",
-  "Голосовые ролевые сценарии",
-  "Отслеживание прогресса в реальном времени",
-  "Подробная аналитика",
-  "Простой шаринг кодов курсов",
-];
-
-const logos = [
-  "Яндекс",
-  "Сбер",
-  "Тинькофф",
-  "VK",
-  "Авито",
-];
-
-export default function LandingPage() {
+export default function Landing() {
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="border-b">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">ADAPT</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link href="/auth">Войти</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/auth">Начать</Link>
-            </Button>
-          </nav>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="bg-primary text-primary-foreground text-center py-3 text-sm font-medium">
+        <Sparkles className="w-4 h-4 inline mr-2" />
+        Мы запустились! Попробуйте бесплатно
+        <ArrowRight className="w-4 h-4 inline ml-1" />
+      </div>
+      <header className="sticky top-0 z-50 bg-background border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <span className="font-bold tracking-tight text-[30px] text-foreground">ADAPT</span>
+          <div className="flex items-center gap-4">
+            <Link href="/auth">
+              <span className="text-foreground hover:text-primary font-semibold cursor-pointer" data-testid="button-login">
+                Войти
+              </span>
+            </Link>
+            <Link href="/auth?role=curator">
+              <Button 
+                className="bg-primary text-primary-foreground border border-border h-12 px-8 rounded-full font-bold text-base"
+                data-testid="button-start"
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Получить доступ
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
-
-      {/* Hero */}
-      <section className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-        <h1 className="max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          AI-обучение для бизнеса — просто и эффективно
-        </h1>
-        <p className="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
-          Превратите учебные материалы в интерактивные курсы за минуты. 
-          Отслеживайте прогресс сотрудников и улучшайте результаты на основе данных.
-        </p>
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <Button size="lg" asChild>
-            <Link href="/auth">
-              Начать бесплатно
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/curator/courses">Демо</Link>
-          </Button>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="border-t bg-muted/30 px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-12 text-center text-3xl font-bold">Как это работает</h2>
-          <div className="grid gap-8 md:grid-cols-3">
-            {steps.map((step) => (
-              <Card key={step.number} className="relative overflow-hidden">
-                <CardContent className="p-6">
-                  <span className="absolute right-4 top-4 text-6xl font-bold text-muted/20">
-                    {step.number}
-                  </span>
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <step.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div>
-              <h2 className="mb-6 text-3xl font-bold">
-                Всё необходимое для эффективного обучения
-              </h2>
-              <p className="mb-8 text-muted-foreground">
-                От создания контента до отслеживания прогресса — ADAPT предоставляет все инструменты 
-                для создания и проведения результативных программ обучения.
+      <main>
+        <section className="py-24 md:py-32 px-6">
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="text-[52px] md:text-[64px] lg:text-[72px] font-bold leading-[1.05] mb-8 tracking-tight text-foreground">
+                Платформа<br />
+                для обучения,<br />
+                <span className="text-primary">которую<br />полюбят.</span>
+              </h1>
+              <p className="text-xl text-muted-foreground mb-10 max-w-md leading-relaxed font-medium">
+                ADAPT — современный способ обучать команду.
+                Загрузите материалы, AI создаст интерактивный тренинг.
               </p>
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative">
-              <div className="aspect-video rounded-lg border bg-muted/50 p-4">
-                <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                    <GraduationCap className="h-8 w-8 text-primary" />
+              <Link href="/auth?role=curator">
+                <Button 
+                  className="bg-primary text-primary-foreground border border-border rounded-2xl font-bold text-[28px] px-[60px] py-[48px]"
+                  data-testid="button-cta-main"
+                >
+                  <Sparkles className="w-7 h-7 mr-4" />
+                  Запросить демо
+                </Button>
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative hidden md:block"
+            >
+              <div className="bg-background rounded-3xl shadow-lg border border-border overflow-hidden">
+                <div className="flex items-center gap-2 px-6 py-4 bg-muted border-b border-border">
+                  <div className="w-4 h-4 rounded-full bg-[#FF5F56]" />
+                  <div className="w-4 h-4 rounded-full bg-[#FFBD2E]" />
+                  <div className="w-4 h-4 rounded-full bg-[#27C93F]" />
+                  <span className="ml-6 text-base font-semibold text-foreground">ADAPT Platform</span>
+                </div>
+                
+                <div className="flex">
+                  <div className="w-64 bg-background border-r border-border p-5">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-xl bg-primary border border-border flex items-center justify-center">
+                        <span className="text-primary-foreground text-lg font-bold">A</span>
+                      </div>
+                      <span className="font-bold text-lg text-foreground">ADAPT</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/20 border border-primary">
+                        <BookOpen className="w-5 h-5 text-foreground" />
+                        <span className="text-sm font-bold text-foreground">Мои курсы</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-xl text-muted-foreground border border-transparent">
+                        <BarChart3 className="w-5 h-5" />
+                        <span className="text-sm font-medium">Аналитика</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-xl text-muted-foreground border border-transparent">
+                        <Users className="w-5 h-5" />
+                        <span className="text-sm font-medium">Профиль</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">Интерактивное демо</p>
-                    <p className="text-sm text-muted-foreground">
-                      Нажмите, чтобы изучить платформу
-                    </p>
+                  
+                  <div className="flex-1 p-6 bg-muted">
+                    <div className="mb-6">
+                      <h3 className="font-bold text-lg mb-2">Продуктовые продажи</h3>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+                        <span>Шаг 2 из 8</span>
+                        <Progress value={25} className="h-2 flex-1" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-background rounded-2xl border border-border p-5 mb-4">
+                      <p className="text-sm leading-relaxed mb-4 font-medium text-foreground">
+                        Клиент говорит: "Мне нужно подумать". Какой ваш следующий шаг?
+                      </p>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 rounded-xl border border-primary bg-primary/15 text-sm">
+                          <CheckCircle className="w-5 h-5 text-primary" />
+                          <span className="font-bold text-foreground">Уточнить сомнения</span>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 rounded-xl border border-border text-sm text-muted-foreground">
+                          <div className="w-5 h-5 rounded-full border border-border" />
+                          <span className="font-medium">Предложить скидку</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <button className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-foreground">
+                          <Volume2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-sm font-bold text-primary-foreground border border-border">
+                        <span>Далее</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <Button size="sm" asChild>
-                    <Link href="/curator/courses">Попробовать</Link>
-                  </Button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Trust logos */}
-      <section className="border-t bg-muted/30 px-6 py-12">
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-8 text-center text-sm text-muted-foreground">
-            Нам доверяют ведущие компании
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8">
-            {logos.map((logo) => (
-              <div
-                key={logo}
-                className="text-lg font-semibold text-muted-foreground/50"
-              >
-                {logo}
-              </div>
+        <section className="py-6 px-6 border-y border-border bg-muted">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            {trustedCompanies.map((company) => (
+              <span key={company} className="text-muted-foreground font-bold text-lg">{company}</span>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="mb-4 text-3xl font-bold">
-            Готовы трансформировать обучение?
-          </h2>
-          <p className="mb-8 text-muted-foreground">
-            Присоединяйтесь к тысячам компаний, которые используют ADAPT для оптимизации онбординга и обучения.
-          </p>
-          <Button size="lg" asChild>
-            <Link href="/auth">
-              Начать бесплатно
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href="/auth?role=curator">
+              <button 
+                className="bg-primary transition-all duration-200 text-primary-foreground border border-border py-5 px-12 rounded-xl text-xl font-bold flex items-center gap-3 hover:opacity-90"
+                data-testid="button-cta-companies"
+              >
+                Получить доступ
+                <ArrowRight className="w-6 h-6" />
+              </button>
             </Link>
-          </Button>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* Footer */}
-      <footer className="border-t px-6 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <GraduationCap className="h-4 w-4 text-primary-foreground" />
+        <section className="py-24 px-6 bg-background">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-5 tracking-tight text-foreground">Как это работает</h2>
+              <p className="text-muted-foreground max-w-lg mx-auto text-xl font-medium">
+                Три простых шага для запуска обучения
+              </p>
             </div>
-            <span className="font-semibold">ADAPT</span>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { num: '1', title: 'Загрузите материалы', desc: 'Вставьте текст или загрузите документы с базой знаний' },
+                { num: '2', title: 'AI создаст курс', desc: 'Уроки, тесты и ролевые сценарии сгенерируются автоматически' },
+                { num: '3', title: 'Пригласите команду', desc: 'Поделитесь кодом и отслеживайте прогресс в реальном времени' },
+              ].map((step) => (
+                <div key={step.num} className="text-center p-8 rounded-3xl bg-background border border-primary">
+                  <div className="w-16 h-16 rounded-2xl bg-primary border border-border flex items-center justify-center mx-auto mb-6">
+                    <span className="text-2xl font-bold text-primary-foreground">{step.num}</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-foreground">{step.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed font-medium">{step.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © 2026 ADAPT. AI-платформа корпоративного обучения.
+        </section>
+
+        <section className="py-24 px-6 bg-primary">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-primary-foreground tracking-tight">
+              Готовы начать обучение?
+            </h2>
+            <p className="text-xl text-primary-foreground/80 mb-12 max-w-lg mx-auto font-medium">
+              Создайте первый курс бесплатно и оцените возможности платформы
+            </p>
+            <Link href="/auth?role=curator">
+              <Button 
+                className="bg-foreground hover:bg-foreground/90 text-background border border-foreground h-[80px] px-16 rounded-2xl text-2xl font-bold"
+                data-testid="button-cta-final"
+              >
+                Создать курс бесплатно
+                <ArrowRight className="w-7 h-7 ml-4" />
+              </Button>
+            </Link>
+          </div>
+        </section>
+      </main>
+      <footer className="py-8 px-6 border-t border-border bg-background">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="font-bold text-lg text-foreground">ADAPT</span>
+          <p className="text-sm text-muted-foreground font-medium">
+            © 2026 ADAPT. Платформа адаптивного обучения.
           </p>
-          <div className="flex gap-4 text-sm text-muted-foreground">
-            <Link href="#" className="hover:underline">Конфиденциальность</Link>
-            <Link href="#" className="hover:underline">Условия</Link>
-            <Link href="#" className="hover:underline">Контакты</Link>
-          </div>
         </div>
       </footer>
     </div>
