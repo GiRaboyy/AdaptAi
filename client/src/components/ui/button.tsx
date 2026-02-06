@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap font-bold transition-all duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#A6E85B]/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+  "inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-[#A6E85B] hover:bg-[#93D94B] text-[#0a1f12] border-2 border-[#0a1f12] shadow-md rounded-xl",
-        destructive: "bg-destructive text-destructive-foreground border-2 border-destructive rounded-xl hover:bg-destructive/90",
-        outline: "bg-white border-2 border-[#0a1f12] text-[#0a1f12] rounded-xl hover:bg-[#0a1f12]/5 shadow-sm",
-        secondary: "bg-muted text-[#0a1f12] border-2 border-[#0a1f12]/30 rounded-xl hover:border-[#0a1f12] shadow-sm",
-        ghost: "text-[#0a1f12] rounded-xl hover:bg-[#0a1f12]/10",
-        link: "text-[#A6E85B] underline-offset-4 hover:underline",
+        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover rounded-xl",
+        destructive: "bg-destructive text-destructive-foreground rounded-xl hover:bg-destructive/90",
+        outline: "bg-background border border-border text-foreground rounded-xl hover:bg-muted shadow-xs",
+        secondary: "bg-secondary text-secondary-foreground border border-border rounded-xl hover:bg-muted/70 shadow-xs",
+        ghost: "text-foreground rounded-xl hover:bg-muted",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-12 px-5 py-3 text-base lg:h-14 lg:px-6 lg:py-4",

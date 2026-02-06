@@ -10,34 +10,46 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { BookOpen, BarChart3, User, Settings, LogOut } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BookOpen, BarChart3, User, LogOut, ArrowLeftRight } from "lucide-react";
 
 const menuItems = [
   { title: "Мои курсы", url: "/curator", icon: BookOpen },
   { title: "Аналитика", url: "/curator/analytics", icon: BarChart3 },
   { title: "Профиль", url: "/curator/profile", icon: User },
-  { title: "Настройки", url: "/curator/settings", icon: Settings },
 ];
 
 export function CuratorSidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { data: user } = useUser();
   const { mutate: logout } = useLogout();
+  const switchRoleLabel = user?.role === "curator" ? "Режим сотрудника" : "Режим куратора";
+  const switchRoleHref = user?.role === "curator" ? "/app/courses" : "/curator";
 
   return (
-    <Sidebar className="bg-white border-r border-[#0a1f12]/20">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#A6E85B] border border-[#0a1f12]/30 flex items-center justify-center">
-            <span className="text-[#0B1220] text-lg font-black">A</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black">
+              A
+            </div>
+            <div className="group-data-[collapsible=icon]:hidden">
+              <h1 className="font-bold text-lg text-sidebar-foreground">ADAPT</h1>
+              <p className="text-xs text-muted-foreground">Куратор</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-lg text-[#0a1f12]">ADAPT</h1>
-            <p className="text-xs text-[#0a1f12]/60">Куратор</p>
-          </div>
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
         </div>
       </SidebarHeader>
       
@@ -50,19 +62,12 @@ export function CuratorSidebar() {
                   (item.url !== "/curator" && location.startsWith(item.url));
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={isActive}
-                      className={isActive 
-                        ? "bg-[#A6E85B]/20 text-[#0a1f12] border border-[#A6E85B]" 
-                        : "text-[#0a1f12]/70 hover:bg-[#A6E85B]/15 hover:text-[#0a1f12] border border-transparent transition-all"
-                      }
-                    >
-                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}>
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                  <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+                    <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}>
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
@@ -71,29 +76,38 @@ export function CuratorSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-4 border-t border-[#0a1f12]/20 mt-auto">
-        <div className="flex items-center justify-between gap-2 rounded-xl p-3 border border-[#0a1f12]/20 bg-[#FAFAFA]">
-          <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="w-10 h-10 border border-[#A6E85B]">
-              <AvatarFallback className="bg-[#A6E85B]/20 text-[#0a1f12] text-sm font-bold">
-                {user?.name?.charAt(0).toUpperCase() || "C"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="text-sm font-bold truncate text-[#0a1f12]">{user?.name}</p>
-              <p className="text-xs text-[#0a1f12]/60 truncate">{user?.email}</p>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => logout()}
-            className="border border-[#0a1f12]/20 hover:border-[#0a1f12] hover:bg-red-50"
-            data-testid="button-logout"
-          >
-            <LogOut className="w-5 h-5 text-[#0a1f12]" />
-          </Button>
-        </div>
+      <SidebarFooter className="p-4 border-t border-sidebar-border mt-auto">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 text-left transition-colors hover:border-border-strong">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar className="w-10 h-10 border border-border">
+                  <AvatarFallback className="bg-primary/10 text-foreground text-sm font-bold">
+                    {user?.name?.charAt(0).toUpperCase() || "C"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 text-left group-data-[collapsible=icon]:hidden">
+                  <p className="text-sm font-semibold truncate text-foreground">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                </div>
+              </div>
+              <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">Меню</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-56">
+            <DropdownMenuLabel>Аккаунт</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setLocation(switchRoleHref)}>
+              <ArrowLeftRight className="w-4 h-4" />
+              {switchRoleLabel}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => logout()} data-testid="button-logout">
+              <LogOut className="w-4 h-4" />
+              Выйти
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   );

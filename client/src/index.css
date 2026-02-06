@@ -9,29 +9,29 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* === Light Theme === */
-  --bg: 0 0% 100%;
-  --bg-2: 0 0% 98%;
+  --bg: 210 20% 98%;
+  --bg-2: 210 16% 96%;
   --background: var(--bg);
-  --foreground: 220 20% 10%;
+  --foreground: 222 22% 12%;
 
   /* Surfaces */
   --surface: 0 0% 100%;
-  --surface-2: 0 0% 96%;
+  --surface-2: 210 18% 97%;
 
-  /* Borders - BLACK */
-  --border: 0 0% 0%;
-  --border-strong: 0 0% 0%;
+  /* Borders */
+  --border: 210 14% 87%;
+  --border-strong: 210 12% 78%;
 
   /* Text */
-  --text: 220 20% 10%;
-  --muted-foreground: 220 10% 45%;
-  --muted-2: 220 10% 55%;
+  --text: 222 22% 12%;
+  --muted-foreground: 215 14% 42%;
+  --muted-2: 215 12% 52%;
 
-  /* Primary - lime accent */
-  --primary: 83 74% 60%;
-  --primary-hover: 83 70% 54%;
-  --primary-soft: 83 74% 60% / 0.15;
-  --primary-ink: 220 20% 10%;
+  /* Primary - green accent */
+  --primary: 98 58% 55%;
+  --primary-hover: 98 58% 50%;
+  --primary-soft: 98 58% 55% / 0.16;
+  --primary-ink: 222 22% 12%;
   --primary-foreground: var(--primary-ink);
 
   /* Secondary accents */
@@ -54,14 +54,14 @@
   --card-foreground: var(--text);
   --popover: var(--surface);
   --popover-foreground: var(--text);
-  --secondary: var(--surface-2);
+  --secondary: 210 14% 96%;
   --secondary-foreground: var(--text);
   --accent: var(--primary-soft);
   --accent-foreground: var(--text);
-  --muted: var(--surface-2);
+  --muted: 210 16% 95%;
 
   --input: var(--border);
-  --ring: var(--primary);
+  --ring: 98 58% 50%;
 
   /* Radii - NOT pill */
   --r-sm: 10px;
@@ -71,19 +71,19 @@
   --radius: var(--r-md);
 
   /* Shadows - light mode */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
-  --shadow-md: 0 10px 24px rgba(0,0,0,0.1);
-  --shadow-lg: 0 20px 48px rgba(0,0,0,0.15);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 20px 48px rgba(15, 23, 42, 0.12);
 
   /* Sidebar */
-  --sidebar-background: var(--surface);
-  --sidebar-foreground: var(--text);
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222 22% 16%;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-ink);
-  --sidebar-accent: var(--primary-soft);
+  --sidebar-accent: 98 58% 55% / 0.14;
   --sidebar-accent-foreground: var(--text);
-  --sidebar-border: 0 0% 0%;
-  --sidebar-ring: var(--primary);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
   /* Charts */
   --chart-1: var(--primary);
@@ -162,7 +162,7 @@
 
   /* Primary gradient */
   .gradient-primary {
-    background: linear-gradient(180deg, #A6E85B 0%, #93D94B 100%);
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%);
   }
 
   /* Hover/active utilities */
@@ -186,7 +186,7 @@
   }
   .toggle-elevated {
     background: hsl(var(--primary-soft));
-    border-color: hsl(83 74% 60% / 0.35);
+    border-color: hsl(var(--primary) / 0.35);
   }
 
   .no-default-hover-elevate:hover {
@@ -202,7 +202,7 @@
     @apply focus-visible:outline-none;
   }
   .focus-ring:focus-visible {
-    box-shadow: 0 0 0 3px rgba(166,232,91,0.25);
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.25);
   }
 
   /* Dividers */
